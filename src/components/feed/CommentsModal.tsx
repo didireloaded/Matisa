@@ -1,2 +1,62 @@
-"import { useState, useRef, useEffect } from 'react';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';\nimport { useComments } from '../../hooks/useComments';\nimport { useAuthStore } from '../../store/authStore';\nimport { Send, Loader2 } from 'lucide-react';\nimport { AudioPlayer } from '../ui/AudioPlayer';\nimport { AudioRecorder } from '../ui/AudioRecorder';\n\ninterface CommentsModalProps {\n  postId: string;\n  children: React.ReactNode;\n  onCommentCountChange?: (delta: number) => void;\n}\n\nexport function CommentsModal({ postId, children, onCommentCountChange }: CommentsModalProps) {\n  const [open, setOpen] = useState(false);\n  const { comments, isLoading, addComment } = useComments(postId);\n  const { session } = useAuthStore();\n  const [content, setContent] = useState('');\n  const [isSubmitting, setIsSubmitting] = useState(false);\n  const messagesEndRef = useRef<HTMLDivElement>(null);\n  \n  // Track previous length to notify parent of changes\n  const [prevCount, setPrevCount] = useState(comments.length);\n\n  useEffect(() => {\n    if (comments.length > prevCount) {\n      if (onCommentCountChange) {\n        onCommentCountChange(comments.length - prevCount);\n      }\n      setPrevCount(comments.length);\n      // Auto-scroll to bottom on new comment\n      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });\n    }\n  }, [comments.length, prevCount, onCommentCountChange]);\n\n  const handleSend = async () => {\n    if (!content.trim() || isSubmitting) return;\n    setIsSubmitting(true);\n    try {\n      await addComment(content.trim());\n      setContent('');\n    } catch (err) {\n      console.error(err);\n    } finally {\n      setIsSubmitting(false);\n    }\n  };\n\n  const handleVoiceUpload = async (url: string) => {\n    try {\n      await addComment(null, url, 'voice');\n    } catch (err) {\n      console.error(err);\n    }\n  };\n\n  return (\n    <Dialog open={open} onOpenChange={setOpen}>\n      <DialogTrigger asChild>\n    
+import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { useComments } from '../../hooks/useComments';
+import { useAuthStore } from '../../store/authStore';
+import { Send, Loader2 } from 'lucide-react';
+import { AudioPlayer } from '../ui/AudioPlayer';
+import { AudioRecorder } from '../ui/AudioRecorder';
+
+interface CommentsModalProps {
+  postId: string;
+  children: React.ReactNode;
+  onCommentCountChange?: (delta: number) => void;
+}
+
+export function CommentsModal({ postId, children, onCommentCountChange }: CommentsModalProps) {
+  const [open, setOpen] = useState(false);
+  const { comments, isLoading, addComment } = useComments(postId);
+  const { session } = useAuthStore();
+  const [content, setContent] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Track previous length to notify parent of changes
+  const [prevCount, setPrevCount] = useState(comments.length);
+
+  useEffect(() => {
+    if (comments.length > prevCount) {
+      if (onCommentCountChange) {
+        onCommentCountChange(comments.length - prevCount);
+      }
+      setPrevCount(comments.length);
+      // Auto-scroll to bottom on new comment
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [comments.length, prevCount, onCommentCountChange]);
+
+  const handleSend = async () => {
+    if (!content.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    try {
+      await addComment(content.trim());
+      setContent('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleVoiceUpload = async (url: string) => {
+    try {
+      await addComment(null, url, 'voice');
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+    
 <truncated 4073 bytes>

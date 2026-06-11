@@ -1,2 +1,72 @@
-"import { useEffect, useState } from 'react';\nimport { supabase } from '../lib/supabase';\nimport { useAuthStore } from '../store/authStore';\n\nexport interface Message {\n  id: string;\n  conversation_id: string;\n  sender_id: string;\n  content: string;\n  voice_url: string;\n  is_read: boolean;\n  created_at: string;\n}\n\nexport interface Conversation {\n  id: string;\n  updated_at: string;\n  other_user: {\n    id: string;\n    username: string;\n    full_name: string;\n    avatar_url: string;\n  };\n  last_message?: Message;\n  unread_count: number;\n}\n\nexport function useConversations() {\n  const { session } = useAuthStore();\n  const [conversations, setConversations] = useState<Conversation[]>([]);\n  const [isLoading, setIsLoading] = useState(true);\n\n  useEffect(() => {\n    if (!session?.user) return;\n\n    const fetchConversations = async () => {\n      try {\n        // Fetch conversations user is part of\n        const { data: participantsData, error: participantsError } = await supabase\n          .from('conversation_participants')\n          .select('conversation_id')\n          .eq('user_id', session.user.id);\n\n        if (participantsError) throw participantsError;\n        \n        if (!participantsData || participantsData.length === 0) {\n          setConversations([]);\n          setIsLoading(false);\n          return;\n        }\n\n        const convIds = participantsData.map(p => p.conversation_id);\n\n        // Fetch conversation details including the other participant\n        const { data: convData, error: convError } = await supabase\n          .from('conversations')\n          .select(`\n            id,\n            updated_at,\n            conversation_participants!inner (\n              user_id,\n              profiles (id, username, full_name, avatar_url)\n            )\n          `)\n          .in('id', convIds)\n          .order('updated_at', { ascending: false });\n\n        if (convError) throw convError;\n\n        // Map data to our interface\n        const formatte
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store/authStore';
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  voice_url: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface Conversation {
+  id: string;
+  updated_at: string;
+  other_user: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url: string;
+  };
+  last_message?: Message;
+  unread_count: number;
+}
+
+export function useConversations() {
+  const { session } = useAuthStore();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session?.user) return;
+
+    const fetchConversations = async () => {
+      try {
+        // Fetch conversations user is part of
+        const { data: participantsData, error: participantsError } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', session.user.id);
+
+        if (participantsError) throw participantsError;
+        
+        if (!participantsData || participantsData.length === 0) {
+          setConversations([]);
+          setIsLoading(false);
+          return;
+        }
+
+        const convIds = participantsData.map(p => p.conversation_id);
+
+        // Fetch conversation details including the other participant
+        const { data: convData, error: convError } = await supabase
+          .from('conversations')
+          .select(`
+            id,
+            updated_at,
+            conversation_participants!inner (
+              user_id,
+              profiles (id, username, full_name, avatar_url)
+            )
+          `)
+          .in('id', convIds)
+          .order('updated_at', { ascending: false });
+
+        if (convError) throw convError;
+
+        // Map data to our interface
+        const formatte
 <truncated 5192 bytes>

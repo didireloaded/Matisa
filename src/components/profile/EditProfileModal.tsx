@@ -1,2 +1,52 @@
-"import { useState, useRef, useEffect } from 'react';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';\nimport { Camera, Loader2, Save } from 'lucide-react';\nimport { useAuthStore } from '../../store/authStore';\nimport { supabase } from '../../lib/supabase';\nimport { toast } from 'sonner';\n\ninterface EditProfileModalProps {\n  children: React.ReactNode;\n  currentProfile: any;\n  onProfileUpdated?: () => void;\n}\n\nexport function EditProfileModal({ children, currentProfile, onProfileUpdated }: EditProfileModalProps) {\n  const [open, setOpen] = useState(false);\n  const [isSubmitting, setIsSubmitting] = useState(false);\n  \n  const [fullName, setFullName] = useState(currentProfile?.fullName || '');\n  const [bio, setBio] = useState(currentProfile?.bio || '');\n  const [location, setLocation] = useState(currentProfile?.location || '');\n  const [ghostMode, setGhostMode] = useState(currentProfile?.ghost_mode || false);\n  const [avatarUrl, setAvatarUrl] = useState(currentProfile?.avatarUrl || '');\n  \n  const fileInputRef = useRef<HTMLInputElement>(null);\n  const { user } = useAuthStore();\n\n  useEffect(() => {\n    if (open && currentProfile) {\n      setFullName(currentProfile.fullName || '');\n      setBio(currentProfile.bio || '');\n      setLocation(currentProfile.location || '');\n      setGhostMode(currentProfile.ghost_mode || false);\n      setAvatarUrl(currentProfile.avatarUrl || '');\n    }\n  }, [open, currentProfile]);\n\n  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {\n    const file = e.target.files?.[0];\n    if (file && user) {\n      if (file.size > 5 * 1024 * 1024) {\n        toast.error('Image must be less than 5MB');\n        return;\n      }\n      \n      try {\n        setIsSubmitting(true);\n        const fileExt = file.name.split('.').pop();\n        const fileName = `${user.id}-${Date.now()}.${fileExt}`;\n        \n        const { error: uploadError } = await supabase.storage\n          .from('avatars
+import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Camera, Loader2, Save } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
+import { toast } from 'sonner';
+
+interface EditProfileModalProps {
+  children: React.ReactNode;
+  currentProfile: any;
+  onProfileUpdated?: () => void;
+}
+
+export function EditProfileModal({ children, currentProfile, onProfileUpdated }: EditProfileModalProps) {
+  const [open, setOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const [fullName, setFullName] = useState(currentProfile?.fullName || '');
+  const [bio, setBio] = useState(currentProfile?.bio || '');
+  const [location, setLocation] = useState(currentProfile?.location || '');
+  const [ghostMode, setGhostMode] = useState(currentProfile?.ghost_mode || false);
+  const [avatarUrl, setAvatarUrl] = useState(currentProfile?.avatarUrl || '');
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { user } = useAuthStore();
+
+  useEffect(() => {
+    if (open && currentProfile) {
+      setFullName(currentProfile.fullName || '');
+      setBio(currentProfile.bio || '');
+      setLocation(currentProfile.location || '');
+      setGhostMode(currentProfile.ghost_mode || false);
+      setAvatarUrl(currentProfile.avatarUrl || '');
+    }
+  }, [open, currentProfile]);
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && user) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image must be less than 5MB');
+        return;
+      }
+      
+      try {
+        setIsSubmitting(true);
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars
 <truncated 5926 bytes>

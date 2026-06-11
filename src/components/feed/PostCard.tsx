@@ -1,2 +1,57 @@
-"import { Heart, MessageCircle, Repeat2, Send, Bookmark, Mic } from 'lucide-react';\nimport { VoicePlayer } from './VoicePlayer';\n\ninterface PostCardProps {\n  post: {\n    id: string;\n    author: {\n      name: string;\n      username: string;\n      avatar: string;\n    };\n    type: 'text' | 'voice' | 'photo' | 'video' | 'poll' | 'location';\n    content?: string;\n    mediaUrl?: string;\n    voiceDuration?: number;\n    likes: number;\n    comments: number;\n    reposts: number;\n    timeAgo: string;\n  };\n}\n\nexport function PostCard({ post }: PostCardProps) {\n  return (\n    <article className=\"p-4 border-b border-border/50 bg-card\">\n      <div className=\"flex gap-3\">\n        <img \n          src={post.author.avatar} \n          alt={post.author.name} \n          className=\"w-10 h-10 rounded-full object-cover bg-secondary shrink-0\"\n        />\n        <div className=\"flex-1 min-w-0\">\n          <div className=\"flex items-center gap-2 mb-1\">\n            <span className=\"font-semibold text-foreground truncate\">{post.author.name}</span>\n            <span className=\"text-sm text-muted-foreground truncate\">@{post.author.username}</span>\n            <span className=\"text-sm text-muted-foreground\">·</span>\n            <span className=\"text-sm text-muted-foreground whitespace-nowrap\">{post.timeAgo}</span>\n          </div>\n\n          {post.type === 'text' && post.content && (\n            <p className=\"text-foreground/90 whitespace-pre-wrap mb-3\">{post.content}</p>\n          )}\n\n          {post.type === 'voice' && post.voiceDuration && (\n            <div className=\"mb-3\">\n              <VoicePlayer duration={post.voiceDuration} />\n            </div>\n          )}\n\n          {post.type === 'photo' && post.mediaUrl && (\n            <div className=\"mb-3 rounded-2xl overflow-hidden border border-border/50\">\n              <img src={post.mediaUrl} alt=\"Post content\" className=\"w-full h-auto max-h-96 object-cover\" />\n            </div>\n          )}\n\n          <div 
+import { Heart, MessageCircle, Repeat2, Send, Bookmark, Mic } from 'lucide-react';
+import { VoicePlayer } from './VoicePlayer';
+
+interface PostCardProps {
+  post: {
+    id: string;
+    author: {
+      name: string;
+      username: string;
+      avatar: string;
+    };
+    type: 'text' | 'voice' | 'photo' | 'video' | 'poll' | 'location';
+    content?: string;
+    mediaUrl?: string;
+    voiceDuration?: number;
+    likes: number;
+    comments: number;
+    reposts: number;
+    timeAgo: string;
+  };
+}
+
+export function PostCard({ post }: PostCardProps) {
+  return (
+    <article className="p-4 border-b border-border/50 bg-card">
+      <div className="flex gap-3">
+        <img 
+          src={post.author.avatar} 
+          alt={post.author.name} 
+          className="w-10 h-10 rounded-full object-cover bg-secondary shrink-0"
+        />
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-semibold text-foreground truncate">{post.author.name}</span>
+            <span className="text-sm text-muted-foreground truncate">@{post.author.username}</span>
+            <span className="text-sm text-muted-foreground">·</span>
+            <span className="text-sm text-muted-foreground whitespace-nowrap">{post.timeAgo}</span>
+          </div>
+
+          {post.type === 'text' && post.content && (
+            <p className="text-foreground/90 whitespace-pre-wrap mb-3">{post.content}</p>
+          )}
+
+          {post.type === 'voice' && post.voiceDuration && (
+            <div className="mb-3">
+              <VoicePlayer duration={post.voiceDuration} />
+            </div>
+          )}
+
+          {post.type === 'photo' && post.mediaUrl && (
+            <div className="mb-3 rounded-2xl overflow-hidden border border-border/50">
+              <img src={post.mediaUrl} alt="Post content" className="w-full h-auto max-h-96 object-cover" />
+            </div>
+          )}
+
+          <div 
 <truncated 2304 bytes>

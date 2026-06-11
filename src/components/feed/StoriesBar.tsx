@@ -1,2 +1,59 @@
-"import { Plus } from 'lucide-react';\n\ninterface Story {\n  id: string;\n  user: {\n    name: string;\n    avatar: string;\n  };\n  hasUnseen: boolean;\n  isAdd?: boolean;\n}\n\nconst mockStories: Story[] = [\n  {\n    id: 'add',\n    user: { name: 'Your Story', avatar: 'https://i.pravatar.cc/150?u=current' },\n    hasUnseen: false,\n    isAdd: true,\n  },\n  {\n    id: '1',\n    user: { name: 'Sarah', avatar: 'https://i.pravatar.cc/150?u=sarah' },\n    hasUnseen: true,\n  },\n  {\n    id: '2',\n    user: { name: 'David', avatar: 'https://i.pravatar.cc/150?u=david' },\n    hasUnseen: true,\n  },\n];\n\nexport function StoriesBar() {\n  return (\n    <div className=\"w-full bg-card border-b border-border/50 py-3 overflow-x-auto no-scrollbar\">\n      <div className=\"flex gap-4 px-4 w-max\">\n        {mockStories.map((story) => (\n          <div key={story.id} className=\"flex flex-col items-center gap-1 w-16 cursor-pointer group\">\n            <div className=\"relative\">\n              <div className={`w-16 h-16 rounded-full p-[2px] ${story.hasUnseen ? 'bg-gradient-to-tr from-primary to-purple-500' : 'bg-border'}`}>\n                <div className=\"w-full h-full rounded-full border-2 border-card overflow-hidden\">\n                  <img \n                    src={story.user.avatar} \n                    alt={story.user.name} \n                    className=\"w-full h-full object-cover group-active:scale-95 transition-transform\"\n                  />\n                </div>\n              </div>\n              {story.isAdd && (\n                <div className=\"absolute bottom-0 right-0 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center border-2 border-card\">\n                  <Plus className=\"w-3 h-3\" strokeWidth={3} />\n                </div>\n              )}\n            </div>\n            <span className=\"text-[11px] font-medium text-foreground/80 truncate w-full text-center\">\n              {story.user.name}\n            </span>\n          </div>\n        )
+import { Plus } from 'lucide-react';
+
+interface Story {
+  id: string;
+  user: {
+    name: string;
+    avatar: string;
+  };
+  hasUnseen: boolean;
+  isAdd?: boolean;
+}
+
+const mockStories: Story[] = [
+  {
+    id: 'add',
+    user: { name: 'Your Story', avatar: 'https://i.pravatar.cc/150?u=current' },
+    hasUnseen: false,
+    isAdd: true,
+  },
+  {
+    id: '1',
+    user: { name: 'Sarah', avatar: 'https://i.pravatar.cc/150?u=sarah' },
+    hasUnseen: true,
+  },
+  {
+    id: '2',
+    user: { name: 'David', avatar: 'https://i.pravatar.cc/150?u=david' },
+    hasUnseen: true,
+  },
+];
+
+export function StoriesBar() {
+  return (
+    <div className="w-full bg-card border-b border-border/50 py-3 overflow-x-auto no-scrollbar">
+      <div className="flex gap-4 px-4 w-max">
+        {mockStories.map((story) => (
+          <div key={story.id} className="flex flex-col items-center gap-1 w-16 cursor-pointer group">
+            <div className="relative">
+              <div className={`w-16 h-16 rounded-full p-[2px] ${story.hasUnseen ? 'bg-gradient-to-tr from-primary to-purple-500' : 'bg-border'}`}>
+                <div className="w-full h-full rounded-full border-2 border-card overflow-hidden">
+                  <img 
+                    src={story.user.avatar} 
+                    alt={story.user.name} 
+                    className="w-full h-full object-cover group-active:scale-95 transition-transform"
+                  />
+                </div>
+              </div>
+              {story.isAdd && (
+                <div className="absolute bottom-0 right-0 w-5 h-5 bg-primary text-primary-foreground rounded-full flex items-center justify-center border-2 border-card">
+                  <Plus className="w-3 h-3" strokeWidth={3} />
+                </div>
+              )}
+            </div>
+            <span className="text-[11px] font-medium text-foreground/80 truncate w-full text-center">
+              {story.user.name}
+            </span>
+          </div>
+        )
 <truncated 40 bytes>

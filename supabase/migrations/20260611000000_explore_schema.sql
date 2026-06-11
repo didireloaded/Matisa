@@ -1,2 +1,69 @@
-"-- Add location to Profiles\nALTER TABLE public.profiles\nADD COLUMN IF NOT EXISTS lat float8,\nADD COLUMN IF NOT EXISTS lng float8;\n\n-- Create Communities Table\nCREATE TABLE IF NOT EXISTS public.communities (\n    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,\n    name text NOT NULL,\n    description text,\n    cover_url text,\n    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL\n);\n\n-- Enable RLS for Communities\nALTER TABLE public.communities ENABLE ROW LEVEL SECURITY;\n\nCREATE POLICY \"Communities are viewable by everyone.\"\n    ON public.communities FOR SELECT\n    USING ( true );\n\nCREATE POLICY \"Authenticated users can insert communities.\"\n    ON public.communities FOR INSERT\n    WITH CHECK ( auth.role() = 'authenticated' );\n\n-- Create Function for finding nearby users\nCREATE OR REPLACE FUNCTION public.find_nearby_users(\n  user_lat float8,\n  user_lng float8,\n  radius_meters float8\n)\nRETURNS TABLE (\n  id uuid,\n  username text,\n  full_name text,\n  avatar_url text,\n  lat float8,\n  lng float8,\n  distance float8\n)\nLANGUAGE sql\nSECURITY DEFINER\nAS $$\n  SELECT * FROM (\n    SELECT \n      p.id,\n      p.username,\n      p.full_name,\n      p.avatar_url,\n      p.lat,\n      p.lng,\n      (6371000 * acos(\n        least(1.0, cos(radians(user_lat)) * cos(radians(p.lat)) * \n        cos(radians(p.lng) - radians(user_lng)) + \n        sin(radians(user_lat)) * sin(radians(p.lat)))\n      )) AS distance\n    FROM public.profiles p\n    WHERE p.lat IS NOT NULL AND p.lng IS NOT NULL AND p.id != auth.uid()\n  ) sub\n  WHERE sub.distance <= radius_meters\n  ORDER BY sub.distance ASC;\n$$;\n\n-- Insert Mock Communities (Namibian Context)\nINSERT INTO public.communities (name, description, cover_url)\nVALUES \n    ('Windhoek Nights', 'Nightlife and events in the capital city', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80'),\n    ('Namibian Creatives', 'A hub for artists, photographers, and musicians', 'https://images.unsplash.com/
+-- Add location to Profiles
+ALTER TABLE public.profiles
+ADD COLUMN IF NOT EXISTS lat float8,
+ADD COLUMN IF NOT EXISTS lng float8;
+
+-- Create Communities Table
+CREATE TABLE IF NOT EXISTS public.communities (
+    id uuid DEFAULT gen_random_uuid() PRIMARY KEY,
+    name text NOT NULL,
+    description text,
+    cover_url text,
+    created_at timestamp with time zone DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable RLS for Communities
+ALTER TABLE public.communities ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Communities are viewable by everyone."
+    ON public.communities FOR SELECT
+    USING ( true );
+
+CREATE POLICY "Authenticated users can insert communities."
+    ON public.communities FOR INSERT
+    WITH CHECK ( auth.role() = 'authenticated' );
+
+-- Create Function for finding nearby users
+CREATE OR REPLACE FUNCTION public.find_nearby_users(
+  user_lat float8,
+  user_lng float8,
+  radius_meters float8
+)
+RETURNS TABLE (
+  id uuid,
+  username text,
+  full_name text,
+  avatar_url text,
+  lat float8,
+  lng float8,
+  distance float8
+)
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT * FROM (
+    SELECT 
+      p.id,
+      p.username,
+      p.full_name,
+      p.avatar_url,
+      p.lat,
+      p.lng,
+      (6371000 * acos(
+        least(1.0, cos(radians(user_lat)) * cos(radians(p.lat)) * 
+        cos(radians(p.lng) - radians(user_lng)) + 
+        sin(radians(user_lat)) * sin(radians(p.lat)))
+      )) AS distance
+    FROM public.profiles p
+    WHERE p.lat IS NOT NULL AND p.lng IS NOT NULL AND p.id != auth.uid()
+  ) sub
+  WHERE sub.distance <= radius_meters
+  ORDER BY sub.distance ASC;
+$$;
+
+-- Insert Mock Communities (Namibian Context)
+INSERT INTO public.communities (name, description, cover_url)
+VALUES 
+    ('Windhoek Nights', 'Nightlife and events in the capital city', 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=400&q=80'),
+    ('Namibian Creatives', 'A hub for artists, photographers, and musicians', 'https://images.unsplash.com/
 <truncated 354 bytes>

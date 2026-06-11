@@ -1,2 +1,49 @@
-"import { useState, useRef, useEffect } from 'react';\nimport { ArrowLeft, Send, Phone, Video, Info, Mic } from 'lucide-react';\nimport { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';\nimport { useChat } from '../../hooks/useMessages';\nimport { useAuthStore } from '../../store/authStore';\nimport { AudioPlayer } from '../ui/AudioPlayer';\nimport { AudioRecorder } from '../ui/AudioRecorder';\n\ninterface ChatWindowProps {\n  conversationId: string;\n  otherUser: any;\n  onBack: () => void;\n}\n\nexport function ChatWindow({ conversationId, otherUser, onBack }: ChatWindowProps) {\n  const { session } = useAuthStore();\n  const { messages, isLoading, sendMessage } = useChat(conversationId);\n  const [inputText, setInputText] = useState('');\n  const [showRecorder, setShowRecorder] = useState(false);\n  const messagesEndRef = useRef<HTMLDivElement>(null);\n\n  useEffect(() => {\n    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });\n  }, [messages]);\n\n  const handleSend = async () => {\n    if (!inputText.trim()) return;\n    await sendMessage(inputText);\n    setInputText('');\n  };\n\n  const handleVoiceUpload = async (url: string) => {\n    await sendMessage('', url);\n    setShowRecorder(false);\n  };\n\n  return (\n    <div className=\"flex flex-col h-screen bg-background z-50 fixed inset-0\">\n      {/* Header */}\n      <div className=\"flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border shadow-sm z-10\">\n        <div className=\"flex items-center gap-3\">\n          <button onClick={onBack} className=\"p-2 -ml-2 rounded-full hover:bg-secondary text-foreground transition-colors\">\n            <ArrowLeft className=\"w-5 h-5\" />\n          </button>\n          <div className=\"flex items-center gap-3 cursor-pointer\">\n            <Avatar className=\"w-10 h-10 border border-border\">\n              <AvatarImage src={otherUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherUser?.id}`} />\n              <Avata
+import { useState, useRef, useEffect } from 'react';
+import { ArrowLeft, Send, Phone, Video, Info, Mic } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { useChat } from '../../hooks/useMessages';
+import { useAuthStore } from '../../store/authStore';
+import { AudioPlayer } from '../ui/AudioPlayer';
+import { AudioRecorder } from '../ui/AudioRecorder';
+
+interface ChatWindowProps {
+  conversationId: string;
+  otherUser: any;
+  onBack: () => void;
+}
+
+export function ChatWindow({ conversationId, otherUser, onBack }: ChatWindowProps) {
+  const { session } = useAuthStore();
+  const { messages, isLoading, sendMessage } = useChat(conversationId);
+  const [inputText, setInputText] = useState('');
+  const [showRecorder, setShowRecorder] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  const handleSend = async () => {
+    if (!inputText.trim()) return;
+    await sendMessage(inputText);
+    setInputText('');
+  };
+
+  const handleVoiceUpload = async (url: string) => {
+    await sendMessage('', url);
+    setShowRecorder(false);
+  };
+
+  return (
+    <div className="flex flex-col h-screen bg-background z-50 fixed inset-0">
+      {/* Header */}
+      <div className="flex items-center justify-between px-4 py-3 bg-background/95 backdrop-blur-md border-b border-border shadow-sm z-10">
+        <div className="flex items-center gap-3">
+          <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-secondary text-foreground transition-colors">
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-3 cursor-pointer">
+            <Avatar className="w-10 h-10 border border-border">
+              <AvatarImage src={otherUser?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${otherUser?.id}`} />
+              <Avata
 <truncated 5157 bytes>

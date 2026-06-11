@@ -1,2 +1,60 @@
-"import { useParams, useNavigate } from 'react-router-dom';\nimport { useState, useEffect } from 'react';\nimport { supabase } from '../lib/supabase';\nimport { ChevronLeft, Hash, Users, MapPin, Loader2 } from 'lucide-react';\n\nexport function Community() {\n  const { id } = useParams<{ id: string }>();\n  const navigate = useNavigate();\n  const [community, setCommunity] = useState<any>(null);\n  const [isLoading, setIsLoading] = useState(true);\n\n  useEffect(() => {\n    if (!id) return;\n\n    const fetchCommunity = async () => {\n      try {\n        const { data, error } = await supabase\n          .from('communities')\n          .select('*')\n          .eq('id', id)\n          .single();\n\n        if (error) throw error;\n        setCommunity(data);\n      } catch (err) {\n        console.error('Error fetching community:', err);\n      } finally {\n        setIsLoading(false);\n      }\n    };\n\n    fetchCommunity();\n  }, [id]);\n\n  if (isLoading) {\n    return (\n      <div className=\"flex flex-col min-h-screen items-center justify-center bg-background\">\n        <Loader2 className=\"w-8 h-8 animate-spin text-primary\" />\n      </div>\n    );\n  }\n\n  if (!community) {\n    return (\n      <div className=\"flex flex-col min-h-screen items-center justify-center bg-background\">\n        <p className=\"text-muted-foreground\">Community not found.</p>\n        <button onClick={() => navigate(-1)} className=\"mt-4 text-primary font-semibold\">Go Back</button>\n      </div>\n    );\n  }\n\n  return (\n    <div className=\"flex flex-col min-h-screen bg-background pb-20\">\n      {/* Header */}\n      <div className=\"sticky top-0 z-30 bg-background/90 backdrop-blur-md px-4 py-3 border-b border-border flex items-center gap-3\">\n        <button onClick={() => navigate(-1)} className=\"p-2 -ml-2 hover:bg-muted rounded-full transition-colors\">\n          <ChevronLeft className=\"w-6 h-6 text-foreground\" />\n        </button>\n        <h1 className=\"text-lg font-bold font-display text-foreground truncat
+import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { ChevronLeft, Hash, Users, MapPin, Loader2 } from 'lucide-react';
+
+export function Community() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [community, setCommunity] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return;
+
+    const fetchCommunity = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('communities')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) throw error;
+        setCommunity(data);
+      } catch (err) {
+        console.error('Error fetching community:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCommunity();
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center bg-background">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  if (!community) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center bg-background">
+        <p className="text-muted-foreground">Community not found.</p>
+        <button onClick={() => navigate(-1)} className="mt-4 text-primary font-semibold">Go Back</button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-background pb-20">
+      {/* Header */}
+      <div className="sticky top-0 z-30 bg-background/90 backdrop-blur-md px-4 py-3 border-b border-border flex items-center gap-3">
+        <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-muted rounded-full transition-colors">
+          <ChevronLeft className="w-6 h-6 text-foreground" />
+        </button>
+        <h1 className="text-lg font-bold font-display text-foreground truncat
 <truncated 2125 bytes>

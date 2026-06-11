@@ -1,2 +1,78 @@
-"import { useEffect, useState } from 'react';\nimport { supabase } from '../lib/supabase';\nimport { useAuthStore } from '../store/authStore';\n\nexport interface Conversation {\n  id: string;\n  is_group: boolean;\n  name: string | null;\n  updated_at: string;\n  otherParticipants: {\n    id: string;\n    username: string;\n    full_name: string;\n    avatar_url: string;\n  }[];\n  lastMessage?: {\n    content: string;\n    media_type: string | null;\n    created_at: string;\n  };\n}\n\nexport function useConversations() {\n  const { session } = useAuthStore();\n  const [conversations, setConversations] = useState<Conversation[]>([]);\n  const [isLoading, setIsLoading] = useState(true);\n\n  const fetchConversations = async () => {\n    if (!session?.user?.id) return;\n    setIsLoading(true);\n\n    try {\n      // Get all conversations the user is part of\n      const { data: participations, error: partError } = await supabase\n        .from('conversation_participants')\n        .select('conversation_id')\n        .eq('user_id', session.user.id);\n\n      if (partError) throw partError;\n\n      const conversationIds = participations.map(p => p.conversation_id);\n\n      if (conversationIds.length === 0) {\n        setConversations([]);\n        setIsLoading(false);\n        return;\n      }\n\n      // Fetch conversation details + latest message + participants\n      const { data: convos, error: convError } = await supabase\n        .from('conversations')\n        .select(`\n          id,\n          is_group,\n          name,\n          updated_at,\n          conversation_participants (\n            user_id,\n            profiles (\n              id,\n              username,\n              full_name,\n              avatar_url\n            )\n          ),\n          messages (\n            content,\n            media_type,\n            created_at\n          )\n        `)\n        .in('id', conversationIds)\n        .order('updated_at', { ascending: false });\n\n      if (convError) throw convError;\n\n      con
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuthStore } from '../store/authStore';
+
+export interface Conversation {
+  id: string;
+  is_group: boolean;
+  name: string | null;
+  updated_at: string;
+  otherParticipants: {
+    id: string;
+    username: string;
+    full_name: string;
+    avatar_url: string;
+  }[];
+  lastMessage?: {
+    content: string;
+    media_type: string | null;
+    created_at: string;
+  };
+}
+
+export function useConversations() {
+  const { session } = useAuthStore();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchConversations = async () => {
+    if (!session?.user?.id) return;
+    setIsLoading(true);
+
+    try {
+      // Get all conversations the user is part of
+      const { data: participations, error: partError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', session.user.id);
+
+      if (partError) throw partError;
+
+      const conversationIds = participations.map(p => p.conversation_id);
+
+      if (conversationIds.length === 0) {
+        setConversations([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch conversation details + latest message + participants
+      const { data: convos, error: convError } = await supabase
+        .from('conversations')
+        .select(`
+          id,
+          is_group,
+          name,
+          updated_at,
+          conversation_participants (
+            user_id,
+            profiles (
+              id,
+              username,
+              full_name,
+              avatar_url
+            )
+          ),
+          messages (
+            content,
+            media_type,
+            created_at
+          )
+        `)
+        .in('id', conversationIds)
+        .order('updated_at', { ascending: false });
+
+      if (convError) throw convError;
+
+      con
 <truncated 1400 bytes>

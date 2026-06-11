@@ -1,2 +1,68 @@
-"import { useEffect, useState } from 'react';\nimport { supabase } from '../lib/supabase';\n\nexport interface FeedPost {\n  id: string;\n  user: {\n    name: string;\n    username: string;\n    avatarUrl?: string;\n  };\n  content?: string;\n  mediaUrl?: string;\n  location?: string;\n  timePosted: string;\n  type: 'text' | 'photo' | 'video' | 'voice';\n  voiceDuration?: string;\n  likes: number;\n  comments: number;\n  shares: number;\n}\n\nexport function useFeed() {\n  const [posts, setPosts] = useState<FeedPost[]>([]);\n  const [isLoading, setIsLoading] = useState(true);\n  const [error, setError] = useState<string | null>(null);\n\n  useEffect(() => {\n    async function fetchFeed() {\n      try {\n        const { data, error } = await supabase\n          .from('posts')\n          .select(`\n            id,\n            content,\n            media_urls,\n            created_at,\n            author_id,\n            profiles:author_id (\n              username,\n              full_name,\n              avatar_url\n            )\n          `)\n          .order('created_at', { ascending: false });\n\n        if (error) throw error;\n\n        // Transform Supabase data into FeedPost format\n        const formattedPosts: FeedPost[] = data.map((post: any) => {\n          const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;\n          \n          let type: 'text' | 'photo' | 'video' | 'voice' = 'text';\n          let mediaUrl = undefined;\n          \n          if (post.media_urls && post.media_urls.length > 0) {\n            type = 'photo'; // Simplified: assume photo if media exists\n            mediaUrl = post.media_urls[0];\n          }\n\n          // Calculate time ago\n          const created = new Date(post.created_at);\n          const now = new Date();\n          const diffMs = now.getTime() - created.getTime();\n          const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));\n          const timePosted = diffHrs > 0 ? `${diffHrs}h` : `${Math.floor(diffMs / 60000)}m`;\n\n     
+import { useEffect, useState } from 'react';
+import { supabase } from '../lib/supabase';
+
+export interface FeedPost {
+  id: string;
+  user: {
+    name: string;
+    username: string;
+    avatarUrl?: string;
+  };
+  content?: string;
+  mediaUrl?: string;
+  location?: string;
+  timePosted: string;
+  type: 'text' | 'photo' | 'video' | 'voice';
+  voiceDuration?: string;
+  likes: number;
+  comments: number;
+  shares: number;
+}
+
+export function useFeed() {
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchFeed() {
+      try {
+        const { data, error } = await supabase
+          .from('posts')
+          .select(`
+            id,
+            content,
+            media_urls,
+            created_at,
+            author_id,
+            profiles:author_id (
+              username,
+              full_name,
+              avatar_url
+            )
+          `)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform Supabase data into FeedPost format
+        const formattedPosts: FeedPost[] = data.map((post: any) => {
+          const profile = Array.isArray(post.profiles) ? post.profiles[0] : post.profiles;
+          
+          let type: 'text' | 'photo' | 'video' | 'voice' = 'text';
+          let mediaUrl = undefined;
+          
+          if (post.media_urls && post.media_urls.length > 0) {
+            type = 'photo'; // Simplified: assume photo if media exists
+            mediaUrl = post.media_urls[0];
+          }
+
+          // Calculate time ago
+          const created = new Date(post.created_at);
+          const now = new Date();
+          const diffMs = now.getTime() - created.getTime();
+          const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const timePosted = diffHrs > 0 ? `${diffHrs}h` : `${Math.floor(diffMs / 60000)}m`;
+
+     
 <truncated 814 bytes>

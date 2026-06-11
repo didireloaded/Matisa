@@ -1,2 +1,60 @@
-"import { useState, useRef, useEffect } from 'react';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';\nimport { Mic, Square, Loader2, Send } from 'lucide-react';\nimport { useAuthStore } from '../../store/authStore';\nimport { supabase } from '../../lib/supabase';\nimport { toast } from 'sonner';\n\ninterface VoiceRecorderModalProps {\n  children: React.ReactNode;\n  onPostCreated?: () => void;\n}\n\nexport function VoiceRecorderModal({ children, onPostCreated }: VoiceRecorderModalProps) {\n  const [open, setOpen] = useState(false);\n  const [isRecording, setIsRecording] = useState(false);\n  const [isSubmitting, setIsSubmitting] = useState(false);\n  const [duration, setDuration] = useState(0);\n  const [audioUrl, setAudioUrl] = useState<string | null>(null);\n  \n  const { user } = useAuthStore();\n  \n  const mediaRecorderRef = useRef<MediaRecorder | null>(null);\n  const audioChunksRef = useRef<Blob[]>([]);\n  const timerRef = useRef<number | null>(null);\n\n  useEffect(() => {\n    if (!open) {\n      stopRecording();\n      setAudioUrl(null);\n      setDuration(0);\n    }\n  }, [open]);\n\n  const startRecording = async () => {\n    try {\n      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });\n      const mediaRecorder = new MediaRecorder(stream);\n      mediaRecorderRef.current = mediaRecorder;\n      audioChunksRef.current = [];\n\n      mediaRecorder.ondataavailable = (event) => {\n        if (event.data.size > 0) {\n          audioChunksRef.current.push(event.data);\n        }\n      };\n\n      mediaRecorder.onstop = () => {\n        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });\n        const url = URL.createObjectURL(audioBlob);\n        setAudioUrl(url);\n        stream.getTracks().forEach(track => track.stop());\n      };\n\n      mediaRecorder.start();\n      setIsRecording(true);\n      \n      timerRef.current = window.setInterval(() => {\n        setDuration(prev => prev + 1);\n      }, 100
+import { useState, useRef, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Mic, Square, Loader2, Send } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
+import { toast } from 'sonner';
+
+interface VoiceRecorderModalProps {
+  children: React.ReactNode;
+  onPostCreated?: () => void;
+}
+
+export function VoiceRecorderModal({ children, onPostCreated }: VoiceRecorderModalProps) {
+  const [open, setOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  
+  const { user } = useAuthStore();
+  
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!open) {
+      stopRecording();
+      setAudioUrl(null);
+      setDuration(0);
+    }
+  }, [open]);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const url = URL.createObjectURL(audioBlob);
+        setAudioUrl(url);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      
+      timerRef.current = window.setInterval(() => {
+        setDuration(prev => prev + 1);
+      }, 100
 <truncated 4723 bytes>

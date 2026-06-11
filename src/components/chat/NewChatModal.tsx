@@ -1,2 +1,64 @@
-"import { useState, useEffect } from 'react';\nimport { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';\nimport { Search, Loader2, Users } from 'lucide-react';\nimport { useAuthStore } from '../../store/authStore';\nimport { supabase } from '../../lib/supabase';\nimport { useNavigate } from 'react-router-dom';\nimport { toast } from 'sonner';\n\nexport function NewChatModal({ children }: { children: React.ReactNode }) {\n  const [open, setOpen] = useState(false);\n  const [search, setSearch] = useState('');\n  const [users, setUsers] = useState<any[]>([]);\n  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);\n  const [groupName, setGroupName] = useState('');\n  const [isLoading, setIsLoading] = useState(false);\n  const [isSubmitting, setIsSubmitting] = useState(false);\n  const { session } = useAuthStore();\n  const navigate = useNavigate();\n\n  useEffect(() => {\n    if (!open) {\n      setSearch('');\n      setSelectedUsers([]);\n      setGroupName('');\n    }\n  }, [open]);\n\n  useEffect(() => {\n    if (!search.trim()) {\n      setUsers([]);\n      return;\n    }\n\n    const searchUsers = async () => {\n      setIsLoading(true);\n      try {\n        const { data, error } = await supabase\n          .from('profiles')\n          .select('id, username, full_name, avatar_url')\n          .ilike('username', `%${search}%`)\n          .neq('id', session?.user?.id)\n          .limit(10);\n          \n        if (error) throw error;\n        setUsers(data || []);\n      } catch (err) {\n        console.error(err);\n      } finally {\n        setIsLoading(false);\n      }\n    };\n\n    const debounce = setTimeout(searchUsers, 300);\n    return () => clearTimeout(debounce);\n  }, [search, session]);\n\n  const toggleUser = (user: any) => {\n    const isSelected = selectedUsers.find(u => u.id === user.id);\n    if (isSelected) {\n      setSelectedUsers(selectedUsers.filter(u => u.id !== user.id));\n    } else {\n      setSelectedUsers([...selectedUsers, user]);\n 
+import { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Search, Loader2, Users } from 'lucide-react';
+import { useAuthStore } from '../../store/authStore';
+import { supabase } from '../../lib/supabase';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+
+export function NewChatModal({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const [users, setUsers] = useState<any[]>([]);
+  const [selectedUsers, setSelectedUsers] = useState<any[]>([]);
+  const [groupName, setGroupName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { session } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+      setSelectedUsers([]);
+      setGroupName('');
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setUsers([]);
+      return;
+    }
+
+    const searchUsers = async () => {
+      setIsLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, username, full_name, avatar_url')
+          .ilike('username', `%${search}%`)
+          .neq('id', session?.user?.id)
+          .limit(10);
+          
+        if (error) throw error;
+        setUsers(data || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    const debounce = setTimeout(searchUsers, 300);
+    return () => clearTimeout(debounce);
+  }, [search, session]);
+
+  const toggleUser = (user: any) => {
+    const isSelected = selectedUsers.find(u => u.id === user.id);
+    if (isSelected) {
+      setSelectedUsers(selectedUsers.filter(u => u.id !== user.id));
+    } else {
+      setSelectedUsers([...selectedUsers, user]);
+ 
 <truncated 6173 bytes>
