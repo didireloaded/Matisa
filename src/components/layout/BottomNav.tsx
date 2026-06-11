@@ -1,12 +1,12 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Music, MessageSquare, Bell, User } from 'lucide-react';
+import { Home, Compass, PlusSquare, Calendar, User } from 'lucide-react';
 
 export function BottomNav() {
   const navItems = [
     { name: 'Home', path: '/', icon: Home },
-    { name: 'Explore', path: '/explore', icon: Search },
-    { name: 'Music', path: '/music', icon: Music },
-    { name: 'Activity', path: '/activity', icon: Bell },
+    { name: 'Radar', path: '/radar', icon: Compass },
+    { name: 'Create', path: '/create', icon: PlusSquare },
+    { name: 'Events', path: '/events', icon: Calendar },
     { name: 'Profile', path: '/profile', icon: User },
   ];
 

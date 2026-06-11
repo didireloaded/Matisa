@@ -18,41 +18,76 @@ const files = {};
 
 for (const cid of conversations) {
     const logPath = path.join(brainDir, cid, '.system_generated', 'logs', 'transcript.jsonl');
-    if (!fs.existsSync(logPath)) {
-        console.log('Not found: ' + logPath);
-        continue;
-    }
+    if (!fs.existsSync(logPath)) continue;
     
     console.log('Processing: ' + cid);
     const lines = fs.readFileSync(logPath, 'utf8').split('\n');
-    let errCount = 0;
     for (const line of lines) {
         if (!line.trim()) continue;
         try {
             const entry = JSON.parse(line);
             if (entry.tool_calls) {
                 for (const call of entry.tool_calls) {
-                    const args = call.arguments;
+                    const args = call.args || call.arguments;
                     if (!args) continue;
                     
+                    const getArg = (key) => {
+                        let val = args[key];
+                        if (typeof val === 'string' && val.startsWith('"')) {
+                            try { val = JSON.parse(val); } catch(e) {}
+                        }
+                        return val;
+                    };
+                    
                     if (call.name === 'default_api:write_to_file' || call.name === 'write_to_file') {
-                        if (args.TargetFile && args.CodeContent) {
-                            files[args.TargetFile] = args.CodeContent;
-                            console.log('Found write: ' + args.TargetFile);
+                        const target = getArg('TargetFile');
+                        const code = getArg('CodeContent');
+                        if (target && code) {
+                            files[target] = code;
                         }
                     } else if (call.name === 'default_api:replace_file_content' || call.name === 'replace_file_content') {
-                        if (args.TargetFile && args.TargetContent && args.ReplacementContent && files[args.TargetFile]) {
-                            files[args.TargetFile] = files[args.TargetFile].replace(args.TargetContent, args.ReplacementContent);
-                            console.log('Found replace: ' + args.TargetFile);
+                        const target = getArg('TargetFile');
+                        const targetCode = getArg('TargetContent');
+                        const replaceCode = getArg('ReplacementContent');
+                        if (target && targetCode && replaceCode && files[target]) {
+                            files[target] = files[target].replace(targetCode, replaceCode);
+                        }
+                    } else if (call.name === 'default_api:multi_replace_file_content' || call.name === 'multi_replace_file_content') {
+                        const target = getArg('TargetFile');
+                        const chunks = getArg('ReplacementChunks');
+                        if (target && chunks && files[target]) {
+                            let content = files[target];
+                            for (const chunk of chunks) {
+                                content = content.replace(chunk.TargetContent, chunk.ReplacementContent);
+                            }
+                            files[target] = content;
                         }
                     }
                 }
             }
         } catch (e) {
-            errCount++;
+            
         }
     }
-    console.log('Errors: ' + errCount);
 }
 
-console.log('Total files found: ' + Object.keys(files).length);
+for (const [filepath, content] of Object.entries(files)) {
+    if (!filepath.toLowerCase().includes('matisa')) continue;
+    if (filepath.toLowerCase().includes('.gemini')) continue;
+    
+    let relPath = filepath;
+    if (filepath.includes('Matisa')) {
+        relPath = filepath.substring(filepath.indexOf('Matisa') + 7);
+    } else if (filepath.includes('matisa')) {
+        relPath = filepath.substring(filepath.indexOf('matisa') + 7);
+    }
+    relPath = relPath.replace(/\\\\/g, '/');
+    if (!relPath || relPath.includes('..')) continue;
+    
+    const fullPath = path.join(outputDir, relPath);
+    const dir = path.dirname(fullPath);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(fullPath, content, 'utf8');
+    console.log('Recovered: ' + relPath);
+}
+console.log('Total files recovered: ' + Object.keys(files).length);

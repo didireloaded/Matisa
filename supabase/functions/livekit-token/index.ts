@@ -22,7 +22,7 @@ serve(async (req) => {
       })
     }
 
-    const apiKey = Deno.env.get('LIVEKIT_API_KEY') || Deno.env.get('VITE_LIVEKIT_API_KEY')
+    const apiKey = Deno.env.get('LIVEKIT_API_KEY')
     const apiSecret = Deno.env.get('LIVEKIT_API_SECRET')
 
     if (!apiKey || !apiSecret) {
