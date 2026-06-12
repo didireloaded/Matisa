@@ -584,3 +584,31 @@ insert into public.communities (name, slug, description, category) values
   ('Namibia Sports',      'sports',       'Football, athletics, everything sport.',   'Sports'),
   ('Namibia Food',        'food',         'Restaurants, braais, kapana culture.',     'Food')
 on conflict (slug) do nothing;
+
+-- ================================================================
+-- STORAGE BUCKETS
+-- ================================================================
+insert into storage.buckets (id, name, public) values 
+  ('avatars', 'avatars', true),
+  ('covers', 'covers', true),
+  ('posts-media', 'posts-media', true),
+  ('voice-notes', 'voice-notes', true),
+  ('story-media', 'story-media', true),
+  ('event-covers', 'event-covers', true),
+  ('message-media', 'message-media', false)
+on conflict (id) do nothing;
+
+-- Ensure public access to public buckets
+create policy "Public Access" on storage.objects for select using (bucket_id in ('avatars', 'covers', 'posts-media', 'voice-notes', 'story-media', 'event-covers'));
+create policy "Auth Insert" on storage.objects for insert with check (auth.role() = 'authenticated');
+create policy "Auth Update" on storage.objects for update using (auth.role() = 'authenticated');
+create policy "Auth Delete" on storage.objects for delete using (auth.role() = 'authenticated');
+
+-- ================================================================
+-- REALTIME
+-- ================================================================
+begin;
+  drop publication if exists supabase_realtime;
+  create publication supabase_realtime;
+commit;
+alter publication supabase_realtime add table messages, notifications, stories, posts;
