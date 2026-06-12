@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { NavLink } from '@/lib/router-compat';
 import { Home, Compass, Music2, Bell, User } from 'lucide-react';
 import { T } from '../shared';
 

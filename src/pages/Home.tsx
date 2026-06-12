@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Bell, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link } from '@/lib/router-compat';
 import { T, Avatar } from '../components/shared';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';

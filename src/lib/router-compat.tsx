@@ -86,6 +86,27 @@ export const Link = forwardRef<HTMLAnchorElement, LinkCompatProps>(function Link
   );
 });
 
+export const NavLink = forwardRef<HTMLAnchorElement, LinkCompatProps & { className?: string | ((props: { isActive: boolean; isPending: boolean }) => string) }>(function NavLink(
+  { to, replace, className, ...rest },
+  ref,
+) {
+  return (
+    <TSLink
+      ref={ref}
+      to={to}
+      replace={replace}
+      activeProps={{ 'data-active': true }}
+      className={(props: any) => {
+        if (typeof className === 'function') {
+          return className({ isActive: props.isActive, isPending: false });
+        }
+        return className;
+      }}
+      {...(rest as Record<string, unknown>)}
+    />
+  );
+});
+
 export function BrowserRouter({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
