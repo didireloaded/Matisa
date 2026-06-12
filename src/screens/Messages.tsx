@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "@/lib/router-compat";
 import { Search, Edit, Mic, Image, Users, Check, CheckCheck } from "lucide-react";
-import { CONVERSATIONS, getProfile, fmt } from "../data/mock";
+import { CONVERSATIONS, getProfile, fmt, ME_ID } from "../data/mock";
 
 const T = { bg: "#0F0D0B", surface: "#1C1814", s2: "#221D18", border: "#2E2822", text: "#F5F0EA", muted: "#8A7F74", primary: "#C8521A", sand: "#E8A055", sky: "#2D7DD2", success: "#4CAF7D" };
 
@@ -63,8 +63,8 @@ export function Messages() {
           if (conv.is_group) {
             name = conv.group_name || "Group";
           } else {
-            // Find the other user (assuming current user is 'u1')
-            const otherUserId = conv.participants.find(p => p !== "u1");
+            // Find the other user
+            const otherUserId = (conv.member_ids || conv.participants || []).find((p: string) => p !== ME_ID && p !== "u1");
             const profile = otherUserId ? getProfile(otherUserId) : null;
             if (profile) {
               name = profile.name;

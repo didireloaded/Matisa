@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Search, TrendingUp, Users } from 'lucide-react';
+import { MapPin, Search, TrendingUp, Users, CalendarDays, Plus, PenSquare } from 'lucide-react';
 import { T, PostCard, PostSkeleton, Avatar, EmptyState } from '../components/shared';
 import { supabase } from '../lib/supabase';
 import type { Post, RadarUser } from '../types';
 import { useAuth } from '../contexts/AuthContext';
 import { CreateEventModal } from '../components/events/CreateEventModal';
 import { useEvents } from '../hooks/useEvents';
-import { CalendarDays, Plus } from 'lucide-react';
+import { CreatePostModal } from '../components/feed/CreatePostModal';
+import { CommentsModal } from '../components/feed/CommentsModal';
+import { toast } from 'sonner';
 
 export function Explore() {
   const { profile } = useAuth();
@@ -14,8 +16,11 @@ export function Explore() {
   const [trending, setTrending] = useState<Post[]>([]);
   const [nearby, setNearby] = useState<RadarUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateEvent, setShowCreateEvent] = useState(false);
   
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [commentPostId, setCommentPostId] = useState<string | null>(null);
+
   const { events, isLoading: eventsLoading } = useEvents();
 
   useEffect(() => {
@@ -24,17 +29,12 @@ export function Explore() {
       if (view === 'trending') {
         const { data } = await supabase.rpc('get_trending_posts', { p_limit: 20 });
         if (data) {
-          // Since get_trending_posts returns post records, we need to join profiles.
-          // For simplicity in UI, we fetch profiles in parallel or use a custom query instead.
           const { data: enriched } = await supabase
             .from('posts')
             .select('*, profiles(*)')
-            .in('id', data.map((p: any) => p.id));
+            .in('id', data.map((p: any) => p.id))
+            .order('created_at', { ascending: false });
           if (enriched) setTrending(enriched as Post[]);
-        }
-      } else {
-        if (profile?.location) {
-           // We would call get_nearby_users here, assuming we have lat/lng
         }
       }
       setLoading(false);
@@ -42,8 +42,17 @@ export function Explore() {
     loadData();
   }, [view, profile]);
 
+  const handleLike = async (postId: string, liked: boolean) => {
+    if (!profile) return;
+    if (liked) {
+      await supabase.from('likes').insert({ post_id: postId, user_id: profile.id });
+    } else {
+      await supabase.from('likes').delete().match({ post_id: postId, user_id: profile.id });
+    }
+  };
+
   return (
-    <div className="pb-24">
+    <div className="pb-24 relative min-h-screen bg-[#0F0D0B]">
       {/* Header */}
       <header className="sticky top-0 z-40 px-4 pt-4 pb-2 bg-[#0F0D0B]/90 backdrop-blur-md border-b border-[#2E2822]">
         <div className="flex h-10 items-center rounded-xl bg-[#1C1814] px-3 border border-[#2E2822]">
@@ -89,21 +98,32 @@ export function Explore() {
         {loading ? (
           <div className="mt-4">{Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)}</div>
         ) : view === 'trending' ? (
-          trending.length > 0 ? (
-            trending.map(post => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onLike={() => {}}
-                onSave={() => {}}
-                onRepost={() => {}}
-                onComment={() => {}}
-                onProfile={() => {}}
-              />
-            ))
-          ) : (
-            <EmptyState icon={<TrendingUp />} title="No trending posts yet" />
-          )
+          <>
+            <div className="p-4 border-b border-[#2E2822] flex items-center gap-3">
+              <Avatar profile={profile!} size={40} />
+              <button 
+                onClick={() => setShowCreatePost(true)}
+                className="flex-1 bg-[#1C1814] border border-[#2E2822] rounded-full px-4 py-2 text-left text-sm text-[#8A7F74] hover:bg-[#221D18] transition"
+              >
+                Share what's happening...
+              </button>
+            </div>
+            {trending.length > 0 ? (
+              trending.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                  onLike={(liked) => handleLike(post.id, liked)}
+                  onSave={() => toast.success('Post saved')}
+                  onRepost={() => toast.success('Reposted')}
+                  onComment={() => setCommentPostId(post.id)}
+                  onProfile={() => {}}
+                />
+              ))
+            ) : (
+              <EmptyState icon={<TrendingUp />} title="No trending posts yet" />
+            )}
+          </>
         ) : view === 'events' ? (
           <div className="p-4 space-y-4">
             <div className="flex items-center justify-between mb-2">
@@ -160,11 +180,20 @@ export function Explore() {
         </button>
       )}
 
-      {/* Create Event Modal */}
-      <CreateEventModal 
-        open={showCreateEvent} 
-        onOpenChange={setShowCreateEvent} 
-      />
+      {/* Floating Action Button for Posts */}
+      {view === 'trending' && (
+        <button 
+          onClick={() => setShowCreatePost(true)}
+          className="fixed bottom-20 right-4 w-12 h-12 bg-[#C8521A] text-white rounded-full flex items-center justify-center shadow-lg shadow-black/50 hover:bg-[#E8A055] transition z-40"
+        >
+          <PenSquare size={20} />
+        </button>
+      )}
+
+      {/* Modals */}
+      <CreateEventModal open={showCreateEvent} onOpenChange={setShowCreateEvent} />
+      {showCreatePost && <CreatePostModal onClose={() => setShowCreatePost(false)} onSuccess={() => setShowCreatePost(false)} />}
+      {commentPostId && <CommentsModal postId={commentPostId} onClose={() => setCommentPostId(null)} />}
     </div>
   );
 }

@@ -6,67 +6,151 @@ export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string;
-  content: string;
-  voice_url: string;
-  is_read: boolean;
+  content: string | null;
+  media_url: string | null;
+  media_type: 'image' | 'video' | 'voice' | null;
   created_at: string;
-}
-
-export interface Conversation {
-  id: string;
-  updated_at: string;
-  other_user: {
-    id: string;
+  profiles: {
     username: string;
     full_name: string;
     avatar_url: string;
   };
-  last_message?: Message;
-  unread_count: number;
 }
 
-export function useConversations() {
+export function useMessages(conversationId?: string) {
   const { session } = useAuthStore();
-  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const fetchMessages = async () => {
+    if (!conversationId || !session?.user) return;
+    setIsLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select(`
+          id,
+          conversation_id,
+          sender_id,
+          content,
+          media_url,
+          media_type,
+          created_at,
+          profiles:sender_id (
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      setMessages(data || []);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
-    if (!session?.user) return;
+    fetchMessages();
 
-    const fetchConversations = async () => {
-      try {
-        // Fetch conversations user is part of
-        const { data: participantsData, error: participantsError } = await supabase
-          .from('conversation_participants')
-          .select('conversation_id')
-          .eq('user_id', session.user.id);
+    if (!conversationId) return;
 
-        if (participantsError) throw participantsError;
-        
-        if (!participantsData || participantsData.length === 0) {
-          setConversations([]);
-          setIsLoading(false);
-          return;
+    // Real-time subscription to new messages
+    const channel = supabase.channel(`messages:${conversationId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: `conversation_id=eq.${conversationId}`
+        },
+        async (payload) => {
+          // Fetch the newly inserted message with profile data
+          const { data: newMsg } = await supabase
+            .from('messages')
+            .select(`
+              id,
+              conversation_id,
+              sender_id,
+              content,
+              media_url,
+              media_type,
+              created_at,
+              profiles:sender_id (
+                username,
+                full_name,
+                avatar_url
+              )
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (newMsg) {
+            setMessages(prev => [...prev, newMsg]);
+          }
         }
+      )
+      .subscribe();
 
-        const convIds = participantsData.map(p => p.conversation_id);
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [conversationId]);
 
-        // Fetch conversation details including the other participant
-        const { data: convData, error: convError } = await supabase
-          .from('conversations')
-          .select(`
-            id,
-            updated_at,
-            conversation_participants!inner (
-              user_id,
-              profiles (id, username, full_name, avatar_url)
-            )
-          `)
-          .in('id', convIds)
-          .order('updated_at', { ascending: false });
+  const sendMessage = async (content: string | null, mediaUrl?: string, mediaType?: 'image' | 'video' | 'voice') => {
+    if (!conversationId || !session?.user) return;
 
-        if (convError) throw convError;
+    try {
+      const { error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: conversationId,
+          sender_id: session.user.id,
+          content,
+          media_url: mediaUrl,
+          media_type: mediaType,
+        });
 
-        // Map data to our interface
-        const formatte
-<truncated 5192 bytes>
+      if (error) throw error;
+
+      // Update the conversation's updated_at timestamp to bubble it up in the inbox
+      await supabase
+        .from('conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
+
+      // Trigger Push Notification to the other participant(s)
+      const { data: convData } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', conversationId)
+        .neq('user_id', session.user.id);
+
+      if (convData && convData.length > 0) {
+        // In a real app we might batch this, but for now we loop
+        for (const p of convData) {
+          supabase.functions.invoke('send-notification', {
+            body: {
+              userId: p.user_id,
+              title: `New message from ${session.user.user_metadata?.full_name || 'Someone'}`,
+              body: content ? content : (mediaType === 'voice' ? 'Sent a voice note 🎤' : 'Sent an attachment'),
+              data: { url: `/messages/${conversationId}` }
+            }
+          }).catch(console.error); // don't await/block
+        }
+      }
+
+    } catch (err) {
+      console.error('Error sending message:', err);
+      throw err;
+    }
+  };
+
+  return { messages, isLoading, sendMessage };
+}

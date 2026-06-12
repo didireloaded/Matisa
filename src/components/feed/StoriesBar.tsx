@@ -55,5 +55,8 @@ export function StoriesBar() {
               {story.user.name}
             </span>
           </div>
-        )
-<truncated 40 bytes>
+        ))}
+      </div>
+    </div>
+  );
+}

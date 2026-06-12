@@ -7,6 +7,8 @@ import { Music } from './pages/Music';
 import { Activity } from './pages/Activity';
 import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
+import { Chat } from './pages/Chat';
+import { KaraokeRoom } from './components/karaoke/KaraokeRoom';
 
 function App() {
   return (
@@ -21,6 +23,10 @@ function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/messages" element={<Messages />} />
           </Route>
+          {/* Standalone Route for Chat */}
+          <Route path="/chat/:id" element={<Chat />} />
+          {/* Standalone Route for Karaoke */}
+          <Route path="/room/:id" element={<KaraokeRoom />} />
         </Routes>
       </BrowserRouter>
     </Providers>

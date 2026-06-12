@@ -15,7 +15,7 @@ export function Messages() {
     async function loadConversations() {
       if (!profile) return;
       const { data } = await supabase
-        .from('conversation_members')
+        .from('conversation_participants')
         .select('conversation_id, conversations(*)')
         .eq('user_id', profile.id);
 
@@ -62,7 +62,7 @@ export function Messages() {
         ) : (
           <div className="divide-y divide-[#2E2822]">
             {conversations.map((conv) => (
-              <div key={conv.id} className="flex items-center gap-3 p-4 hover:bg-[#1C1814] transition cursor-pointer">
+              <Link to={`/chat/${conv.id}`} key={conv.id} className="flex items-center gap-3 p-4 hover:bg-[#1C1814] transition cursor-pointer">
                 <div className="h-12 w-12 rounded-full bg-[#2E2822] flex items-center justify-center text-[#8A7F74]">
                   {/* Placeholder for conversation avatar */}
                   <MessageCircle size={20} />
@@ -82,7 +82,7 @@ export function Messages() {
                     {conv.last_message || 'No messages yet'}
                   </p>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}

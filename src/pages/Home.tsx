@@ -2,28 +2,19 @@ import { useState, useEffect } from 'react';
 import { Bell, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { T, PostCard, PostSkeleton, EmptyState, Avatar } from '../components/shared';
+import { T, Avatar } from '../components/shared';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import type { Post, Story } from '../types';
+import type { Story } from '../types';
+import { RadarCanvas } from '../components/radar/RadarCanvas';
 
 export function Home() {
   const { profile } = useAuth();
-  const [posts, setPosts] = useState<Post[]>([]);
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadFeed() {
-      // Fetch posts
-      const { data: pData } = await supabase
-        .from('posts')
-        .select('*, profiles(*)')
-        .order('created_at', { ascending: false })
-        .limit(20);
-
-      if (pData) setPosts(pData as Post[]);
-
       // Fetch stories
       const { data: sData } = await supabase
         .from('stories')
@@ -80,46 +71,9 @@ export function Home() {
         </div>
       </section>
 
-      {/* Main Feed */}
-      <main>
-        {loading ? (
-          Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)
-        ) : posts.length === 0 ? (
-          <EmptyState
-            title="No posts yet"
-            subtitle="Follow people to see their updates here."
-            action={<Link to="/explore" className="text-[#C8521A] font-medium">Find people</Link>}
-          />
-        ) : (
-          <motion.div 
-            initial="hidden" 
-            animate="show" 
-            variants={{
-              hidden: { opacity: 0 },
-              show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-            }}
-          >
-            {posts.map(post => (
-              <motion.div 
-                key={post.id}
-                variants={{
-                  hidden: { opacity: 0, y: 20 },
-                  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-                }}
-              >
-                <PostCard
-                  post={post}
-                  isOwn={profile?.id === post.user_id}
-                  onLike={() => {}}
-                  onSave={() => {}}
-                  onRepost={() => {}}
-                  onComment={() => {}}
-                  onProfile={() => {}}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+      {/* Main Feed - Now Replaced by Radar */}
+      <main className="flex-1 flex flex-col relative h-[calc(100vh-140px)]">
+        <RadarCanvas />
       </main>
     </div>
   );

@@ -1,20 +1,23 @@
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Mic, Image as ImageIcon, Send, Loader2 } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
+import { VoiceRecorderModal } from './VoiceRecorderModal';
 
 interface CreatePostModalProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onPostCreated?: () => void;
+  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-export function CreatePostModal({ children, onPostCreated }: CreatePostModalProps) {
-  const [open, setOpen] = useState(false);
+export function CreatePostModal({ children, onPostCreated, onClose, onSuccess }: CreatePostModalProps) {
+  const [open, setOpen] = useState(children ? false : true);
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { user } = useAuthStore();
+  const { profile: user } = useAuth();
 
   const handleSubmit = async () => {
     if (!content.trim() || !user) return;
@@ -34,6 +37,7 @@ export function CreatePostModal({ children, onPostCreated }: CreatePostModalProp
       setContent('');
       setOpen(false);
       if (onPostCreated) onPostCreated();
+      if (onSuccess) onSuccess();
     } catch (error: any) {
       toast.error(error.message || "Failed to create post.");
       console.error(error);
@@ -43,10 +47,15 @@ export function CreatePostModal({ children, onPostCreated }: CreatePostModalProp
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={(val) => {
+      setOpen(val);
+      if (!val && onClose) onClose();
+    }}>
+      {children && (
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground font-display">Create Post</DialogTitle>
@@ -57,5 +66,32 @@ export function CreatePostModal({ children, onPostCreated }: CreatePostModalProp
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's happening?"
-            className="w-full bg-background border border-border rounded-xl p-3 text-foreground fo
-<truncated 1271 bytes>
+            className="w-full bg-background border border-border rounded-xl p-3 text-foreground focus:ring-2 focus:ring-primary outline-none min-h-[120px] resize-none"
+          />
+          
+          <div className="flex items-center justify-between">
+            <div className="flex gap-2">
+              <button className="p-2 text-muted-foreground hover:text-primary transition-colors bg-background rounded-full border border-border">
+                <ImageIcon className="w-5 h-5" />
+              </button>
+              <VoiceRecorderModal onPostCreated={() => { setOpen(false); if (onPostCreated) onPostCreated(); }}>
+                <button className="p-2 text-muted-foreground hover:text-primary transition-colors bg-background rounded-full border border-border">
+                  <Mic className="w-5 h-5" />
+                </button>
+              </VoiceRecorderModal>
+            </div>
+            
+            <button 
+              onClick={handleSubmit}
+              disabled={!content.trim() || isSubmitting}
+              className="bg-primary text-primary-foreground px-4 py-2 rounded-full font-semibold flex items-center gap-2 hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Post
+            </button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}

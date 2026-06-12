@@ -53,5 +53,43 @@ export function PostCard({ post }: PostCardProps) {
             </div>
           )}
 
-          <div 
-<truncated 2304 bytes>
+          <div className="flex items-center justify-between mt-4 max-w-md">
+            <button className="group flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
+              <div className="p-1.5 rounded-full group-hover:bg-primary/10 transition-colors">
+                <Heart className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-medium">{post.likes}</span>
+            </button>
+            <button className="group flex items-center gap-1.5 text-muted-foreground hover:text-blue-500 transition-colors">
+              <div className="p-1.5 rounded-full group-hover:bg-blue-500/10 transition-colors">
+                <MessageCircle className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-medium">{post.comments}</span>
+            </button>
+            <button className="group flex items-center gap-1.5 text-muted-foreground hover:text-green-500 transition-colors">
+              <div className="p-1.5 rounded-full group-hover:bg-green-500/10 transition-colors">
+                <Repeat2 className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-medium">{post.reposts}</span>
+            </button>
+            <button className="group flex items-center gap-1.5 text-muted-foreground hover:text-purple-500 transition-colors">
+              <div className="p-1.5 rounded-full group-hover:bg-purple-500/10 transition-colors">
+                <Mic className="w-4 h-4" />
+              </div>
+            </button>
+            <button className="group flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
+              <div className="p-1.5 rounded-full group-hover:bg-primary/10 transition-colors">
+                <Bookmark className="w-4 h-4" />
+              </div>
+            </button>
+            <button className="group flex items-center gap-1.5 text-muted-foreground hover:text-primary transition-colors">
+              <div className="p-1.5 rounded-full group-hover:bg-primary/10 transition-colors">
+                <Send className="w-4 h-4" />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </article>
+  );
+}

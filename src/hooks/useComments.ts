@@ -79,5 +79,66 @@ export function useComments(postId: string) {
               media_url,
               media_type,
               created_at,
-              p
-<truncated 1055 bytes>
+              profiles:author_id (
+                username,
+                full_name,
+                avatar_url
+              )
+            `)
+            .eq('id', payload.new.id)
+            .single();
+
+          if (newComment) {
+            setComments(prev => [...prev, newComment]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [postId]);
+
+  const addComment = async (content: string | null, mediaUrl?: string, mediaType?: 'voice') => {
+    if (!session?.user) throw new Error('Must be logged in to comment');
+
+    try {
+      const { error } = await supabase
+        .from('comments')
+        .insert({
+          post_id: postId,
+          author_id: session.user.id,
+          content,
+          media_url: mediaUrl,
+          media_type: mediaType
+        });
+
+      if (error) throw error;
+
+      // Fetch the post author to send them a notification
+      const { data: postData } = await supabase
+        .from('posts')
+        .select('author_id')
+        .eq('id', postId)
+        .single();
+
+      if (postData && postData.author_id !== session.user.id) {
+        supabase.functions.invoke('send-notification', {
+          body: {
+            userId: postData.author_id,
+            title: `New comment on your post`,
+            body: `${session.user.user_metadata?.full_name || 'Someone'} commented: ${content ? content : '🎤 Voice note'}`,
+            data: { url: `/` } // Route them to feed for now
+          }
+        }).catch(console.error);
+      }
+
+    } catch (err) {
+      console.error('Error adding comment:', err);
+      throw err;
+    }
+  };
+
+  return { comments, isLoading, addComment };
+}
