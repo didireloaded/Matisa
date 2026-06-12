@@ -1,58 +1,92 @@
-import { Search, Plus, Mic } from 'lucide-react';
-
-const mockChats = [
-  {
-    id: '1',
-    user: { name: 'David', avatar: 'https://i.pravatar.cc/150?u=david' },
-    lastMessage: 'Are we still on for the karaoke room later?',
-    time: '2m',
-    unread: 2,
-    isVoice: false,
-  },
-  {
-    id: '2',
-    user: { name: 'Sarah', avatar: 'https://i.pravatar.cc/150?u=sarah' },
-    lastMessage: 'Voice message',
-    time: '1h',
-    unread: 0,
-    isVoice: true,
-  },
-  {
-    id: '3',
-    user: { name: 'The Band 🎸', avatar: 'https://i.pravatar.cc/150?u=band' },
-    lastMessage: 'Emma: Just sent the new mix!',
-    time: '5h',
-    unread: 0,
-    isVoice: false,
-    isGroup: true,
-  }
-];
+import { useState, useEffect } from 'react';
+import { ChevronLeft, MessageCircle, Edit } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
+import { T, Avatar, EmptyState, Skeleton, timeAgo } from '../components/shared';
+import type { Conversation } from '../types';
 
 export function Messages() {
+  const { profile } = useAuth();
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadConversations() {
+      if (!profile) return;
+      const { data } = await supabase
+        .from('conversation_members')
+        .select('conversation_id, conversations(*)')
+        .eq('user_id', profile.id);
+
+      if (data) {
+        // Need to extract the nested conversations and then ideally fetch the other members.
+        // For simple UI display:
+        const convs = data.map(d => d.conversations) as any;
+        setConversations(convs);
+      }
+      setLoading(false);
+    }
+    loadConversations();
+  }, [profile]);
+
   return (
-    <div className="flex flex-col min-h-full pb-20 bg-background">
-      {/* Header */}
-      <div className="sticky top-0 z-30 bg-background/95 backdrop-blur-md px-4 py-3 border-b border-border flex items-center justify-between">
-        <h1 className="text-xl font-bold">Messages</h1>
-        <button className="p-2 bg-secondary/50 rounded-full hover:bg-secondary transition-colors">
-          <Plus className="w-5 h-5" />
-        </button>
-      </div>
-
-      <div className="p-4">
-        {/* Search */}
-        <div className="relative mb-6">
-          <input 
-            type="text" 
-            placeholder="Search messages..." 
-            className="w-full bg-secondary/50 text-foreground placeholder:text-muted-foreground rounded-full py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border/50"
-          />
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+    <div className="pb-24">
+      <header className="sticky top-0 z-40 px-4 py-4 bg-[#0F0D0B]/90 backdrop-blur-md border-b border-[#2E2822] flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Link to="/" className="text-[#8A7F74] hover:text-[#F5F0EA] transition">
+            <ChevronLeft size={24} />
+          </Link>
+          <h1 className="text-xl font-bold text-[#F5F0EA]">Messages</h1>
         </div>
+        <button className="text-[#F5F0EA]">
+          <Edit size={20} />
+        </button>
+      </header>
 
-        {/* Chat List */}
-        <div className="space-y-1">
-          {mockChats.map((chat) => (
-            <div key={chat.id} className="flex items-center gap-4 p-3 rounded-2xl hover:bg-secondary/30 transition-colors cursor-pointer group">
-              <d
-<truncated 1391 bytes>
+      <main>
+        {loading ? (
+          <div className="p-4 space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex gap-3 items-center">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-1/2" />
+                  <Skeleton className="h-3 w-3/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : conversations.length === 0 ? (
+          <EmptyState icon={<MessageCircle />} title="No messages yet" subtitle="Start a conversation with friends." />
+        ) : (
+          <div className="divide-y divide-[#2E2822]">
+            {conversations.map((conv) => (
+              <div key={conv.id} className="flex items-center gap-3 p-4 hover:bg-[#1C1814] transition cursor-pointer">
+                <div className="h-12 w-12 rounded-full bg-[#2E2822] flex items-center justify-center text-[#8A7F74]">
+                  {/* Placeholder for conversation avatar */}
+                  <MessageCircle size={20} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-semibold text-[#F5F0EA] truncate">
+                      {conv.group_name || 'Conversation'}
+                    </p>
+                    {conv.last_message_at && (
+                      <span className="text-xs text-[#8A7F74] flex-shrink-0 ml-2">
+                        {timeAgo(conv.last_message_at)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-[#8A7F74] truncate mt-0.5">
+                    {conv.last_message || 'No messages yet'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

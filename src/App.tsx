@@ -2,12 +2,11 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Providers } from './components/providers';
 import { MainLayout } from './components/layout/MainLayout';
 import { Home } from './pages/Home';
-import { Radar } from './pages/Radar';
-import { Create } from './pages/Create';
-import { Events } from './pages/Events';
+import { Explore } from './pages/Explore';
+import { Music } from './pages/Music';
+import { Activity } from './pages/Activity';
 import { Profile } from './pages/Profile';
-
-import { Communities } from './pages/Communities';
+import { Messages } from './pages/Messages';
 
 function App() {
   return (
@@ -16,11 +15,11 @@ function App() {
         <Routes>
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
-            <Route path="/radar" element={<Radar />} />
-            <Route path="/create" element={<Create />} />
-            <Route path="/events" element={<Events />} />
+            <Route path="/explore" element={<Explore />} />
+            <Route path="/music" element={<Music />} />
+            <Route path="/activity" element={<Activity />} />
             <Route path="/profile" element={<Profile />} />
-            <Route path="/communities" element={<Communities />} />
+            <Route path="/messages" element={<Messages />} />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -1,42 +1,170 @@
-import { Search, TrendingUp, Mic, Hash, Users, Activity as ActivityIcon } from 'lucide-react';
-import { motion } from 'framer-motion';
-
-const trendingTopics = [
-  { id: 1, type: 'hashtag', title: '#WindhoekNights', views: '12.4K' },
-  { id: 2, type: 'voice', title: 'Late Night Thoughts', views: '8.2K' },
-  { id: 3, type: 'community', title: 'Namibian Creatives', views: '5.1K' },
-  { id: 4, type: 'discussion', title: 'Best Coffee in Town?', views: '3.9K' },
-];
+import { useState, useEffect } from 'react';
+import { MapPin, Search, TrendingUp, Users } from 'lucide-react';
+import { T, PostCard, PostSkeleton, Avatar, EmptyState } from '../components/shared';
+import { supabase } from '../lib/supabase';
+import type { Post, RadarUser } from '../types';
+import { useAuth } from '../contexts/AuthContext';
+import { CreateEventModal } from '../components/events/CreateEventModal';
+import { useEvents } from '../hooks/useEvents';
+import { CalendarDays, Plus } from 'lucide-react';
 
 export function Explore() {
+  const { profile } = useAuth();
+  const [view, setView] = useState<'trending' | 'map' | 'events'>('trending');
+  const [trending, setTrending] = useState<Post[]>([]);
+  const [nearby, setNearby] = useState<RadarUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  
+  const { events, isLoading: eventsLoading } = useEvents();
+
+  useEffect(() => {
+    async function loadData() {
+      setLoading(true);
+      if (view === 'trending') {
+        const { data } = await supabase.rpc('get_trending_posts', { p_limit: 20 });
+        if (data) {
+          // Since get_trending_posts returns post records, we need to join profiles.
+          // For simplicity in UI, we fetch profiles in parallel or use a custom query instead.
+          const { data: enriched } = await supabase
+            .from('posts')
+            .select('*, profiles(*)')
+            .in('id', data.map((p: any) => p.id));
+          if (enriched) setTrending(enriched as Post[]);
+        }
+      } else {
+        if (profile?.location) {
+           // We would call get_nearby_users here, assuming we have lat/lng
+        }
+      }
+      setLoading(false);
+    }
+    loadData();
+  }, [view, profile]);
+
   return (
-    <div className="flex flex-col min-h-screen bg-background pb-20">
+    <div className="pb-24">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-background/90 backdrop-blur-md px-4 py-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-          <input 
-            type="text" 
-            placeholder="Search people, music, and voice..." 
-            className="w-full bg-card border-none rounded-full py-2 pl-10 pr-4 text-sm text-foreground focus:ring-2 focus:ring-primary outline-none"
+      <header className="sticky top-0 z-40 px-4 pt-4 pb-2 bg-[#0F0D0B]/90 backdrop-blur-md border-b border-[#2E2822]">
+        <div className="flex h-10 items-center rounded-xl bg-[#1C1814] px-3 border border-[#2E2822]">
+          <Search size={18} className="text-[#8A7F74]" />
+          <input
+            type="text"
+            placeholder="Search Matisa..."
+            className="w-full bg-transparent px-3 text-sm text-[#F5F0EA] outline-none placeholder:text-[#8A7F74]"
           />
         </div>
-      </div>
-
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-8">
         
-        {/* Trending Section */}
-        <section>
-          <div className="flex items-center space-x-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground font-display">Trending Now</h2>
+        {/* Toggle */}
+        <div className="flex gap-4 mt-4">
+          <button
+            onClick={() => setView('trending')}
+            className={`pb-2 text-sm font-semibold transition border-b-2 ${
+              view === 'trending' ? 'text-[#F5F0EA] border-[#C8521A]' : 'text-[#8A7F74] border-transparent'
+            }`}
+          >
+            Trending
+          </button>
+          <button
+            onClick={() => setView('map')}
+            className={`pb-2 text-sm font-semibold transition border-b-2 ${
+              view === 'map' ? 'text-[#F5F0EA] border-[#C8521A]' : 'text-[#8A7F74] border-transparent'
+            }`}
+          >
+            Nearby
+          </button>
+          <button
+            onClick={() => setView('events')}
+            className={`pb-2 text-sm font-semibold transition border-b-2 flex items-center gap-1 ${
+              view === 'events' ? 'text-[#F5F0EA] border-[#C8521A]' : 'text-[#8A7F74] border-transparent'
+            }`}
+          >
+            Events
+          </button>
+        </div>
+      </header>
+
+      {/* Content */}
+      <main>
+        {loading ? (
+          <div className="mt-4">{Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)}</div>
+        ) : view === 'trending' ? (
+          trending.length > 0 ? (
+            trending.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={() => {}}
+                onSave={() => {}}
+                onRepost={() => {}}
+                onComment={() => {}}
+                onProfile={() => {}}
+              />
+            ))
+          ) : (
+            <EmptyState icon={<TrendingUp />} title="No trending posts yet" />
+          )
+        ) : view === 'events' ? (
+          <div className="p-4 space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-bold text-[#F5F0EA]">Upcoming Events</h2>
+            </div>
+            
+            {eventsLoading ? (
+               <div className="flex justify-center p-8"><div className="w-6 h-6 border-2 border-[#C8521A] border-t-transparent rounded-full animate-spin"></div></div>
+            ) : events.length > 0 ? (
+              events.map(event => (
+                <div key={event.id} className="bg-[#1C1814] rounded-xl border border-[#2E2822] overflow-hidden flex flex-col">
+                  {event.cover_url && <img src={event.cover_url} alt={event.title} className="w-full h-32 object-cover" />}
+                  <div className="p-4">
+                    <div className="flex items-center justify-between mb-1">
+                      <h3 className="font-bold text-[#F5F0EA] text-lg">{event.title}</h3>
+                      <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-[#2E2822] text-[#E8A055]">
+                        {event.event_type.replace('_', ' ')}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-[#8A7F74] mb-3">
+                      <CalendarDays size={14} />
+                      <span>{new Date(event.start_time).toLocaleString()}</span>
+                    </div>
+                    {event.description && <p className="text-sm text-[#F5F0EA] mb-3">{event.description}</p>}
+                    <button className="w-full py-2 bg-[#C8521A]/10 text-[#C8521A] font-bold rounded-lg hover:bg-[#C8521A]/20 transition">
+                      View Event
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <EmptyState icon={<CalendarDays />} title="No upcoming events" subtitle="Be the first to host one!" />
+            )}
           </div>
-          
-          <div className="space-y-3">
-            {trendingTopics.map((topic, index) => (
-              <div key={topic.id} className="flex items-center justify-between p-3 bg-card rounded-xl border border-border">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 rounded-full bg-background flex items-center justify-center shrink-0">
-                    {topic.type === 'hashtag' && <Hash className="w-5 h-5 text-secondary" />}
- 
-<truncated 2372 bytes>
+        ) : (
+          <div className="relative h-[calc(100vh-180px)] w-full bg-[#1C1814] overflow-hidden">
+             {/* Map Placeholder */}
+             <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
+               <MapPin size={48} className="text-[#8A7F74] mb-4 opacity-50" />
+               <p className="text-[#F5F0EA] font-medium">Map view is being loaded...</p>
+               <p className="text-sm text-[#8A7F74] mt-2">See who is active near you when location is enabled.</p>
+             </div>
+          </div>
+        )}
+      </main>
+
+      {/* Floating Action Button for Events */}
+      {view === 'events' && (
+        <button 
+          onClick={() => setShowCreateEvent(true)}
+          className="fixed bottom-20 right-4 w-12 h-12 bg-[#C8521A] text-white rounded-full flex items-center justify-center shadow-lg shadow-black/50 hover:bg-[#E8A055] transition z-40"
+        >
+          <Plus size={24} />
+        </button>
+      )}
+
+      {/* Create Event Modal */}
+      <CreateEventModal 
+        open={showCreateEvent} 
+        onOpenChange={setShowCreateEvent} 
+      />
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import { useNavigate } from "@/lib/router-compat";
-import { ArrowLeft, Eye, ShieldCheck, Globe, Radar, MapPin, Star, Zap, LogOut } from "lucide-react";
+import { ArrowLeft, Eye, ShieldCheck, Bell, Music2, Mic, Palette, UserX, HelpCircle, LogOut } from "lucide-react";
 import { getProfile, ME_ID } from "../data/mock";
 
 export function Settings() {
@@ -7,9 +7,9 @@ export function Settings() {
   const me = getProfile(ME_ID);
 
   const sections = [
-    { title: "Account", items: [{ icon: <Eye size={18} />, label: "Privacy Settings" }, { icon: <ShieldCheck size={18} />, label: "Security" }, { icon: <Globe size={18} />, label: "Language" }] },
-    { title: "Radar & Location", items: [{ icon: <Radar size={18} />, label: "Ghost Mode" }, { icon: <MapPin size={18} />, label: "Location Sharing" }] },
-    { title: "Matisa Plus", items: [{ icon: <Star size={18} />, label: "Upgrade to Plus · N$69/month", highlight: true }, { icon: <Zap size={18} />, label: "Profile Boost" }] },
+    { title: "General", items: [{ icon: <Eye size={18} />, label: "Account" }, { icon: <ShieldCheck size={18} />, label: "Privacy" }, { icon: <Bell size={18} />, label: "Notifications" }] },
+    { title: "Experience", items: [{ icon: <Music2 size={18} />, label: "Music" }, { icon: <Mic size={18} />, label: "Voice" }, { icon: <Palette size={18} />, label: "Appearance" }] },
+    { title: "More", items: [{ icon: <UserX size={18} />, label: "Blocked Users" }, { icon: <HelpCircle size={18} />, label: "Help" }] },
     { title: "Account Actions", items: [{ icon: <LogOut size={18} />, label: "Sign Out", danger: true }] },
   ];
 

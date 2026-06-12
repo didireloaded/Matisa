@@ -1,5 +1,5 @@
 import { useNavigate } from "@/lib/router-compat";
-import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Repeat2, CalendarDays, Briefcase, Eye } from "lucide-react";
+import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Repeat2, CalendarDays, Eye } from "lucide-react";
 import { NOTIFICATIONS, getProfile } from "../data/mock";
 
 export function Notifications() {
@@ -12,7 +12,7 @@ export function Notifications() {
       like: <Heart size={13} fill="#C8521A" color="#C8521A" />, comment: <MessageCircle size={13} color="#2D7DD2" />,
       follow: <UserPlus size={13} color="#4CAF7D" />, repost: <Repeat2 size={13} color="#4CAF7D" />,
       rsvp: <CalendarDays size={13} color="#E8A055" />, mention: <MessageCircle size={13} color="#2D7DD2" />,
-      booking: <Briefcase size={13} color="#E8A055" />, view: <Eye size={13} color="#8A7F74" />,
+      view: <Eye size={13} color="#8A7F74" />,
       event_invite: <CalendarDays size={13} color="#2D7DD2" />,
     };
     return c[type] ?? <Bell size={13} />;

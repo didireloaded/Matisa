@@ -1,65 +1,167 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from "@/lib/router-compat";
-import { ArrowLeft, MoreHorizontal, Send, Mic, Image, FileImage } from "lucide-react";
-import { CONVERSATIONS, getProfile } from "../data/mock";
+import { ArrowLeft, Phone, Video, MoreVertical, Plus, Mic, Send, Image, Play, Smile } from "lucide-react";
+import { CONVERSATIONS, MESSAGES, getProfile, ME_ID } from "../data/mock";
+
+const T = { bg: "#0F0D0B", surface: "#1C1814", s2: "#221D18", border: "#2E2822", text: "#F5F0EA", muted: "#8A7F74", primary: "#C8521A", sand: "#E8A055", sky: "#2D7DD2", success: "#4CAF7D" };
 
 export function Chat() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const conv = CONVERSATIONS.find(c => c.id === id);
-  const other = conv && !conv.is_group ? getProfile(conv.member_ids.find(m => m !== "u_ndina")!) : null;
-  const [draft, setDraft] = useState("");
-  const endRef = useRef<HTMLDivElement>(null);
+  const [inputText, setInputText] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, []);
+  const conversation = CONVERSATIONS.find(c => c.id === id);
+  // Default to a profile if conversation not found to prevent crashing
+  const otherParticipantId = conversation?.participants.find(p => p !== ME_ID) || "u2";
+  const otherUser = getProfile(otherParticipantId);
+  const messages = MESSAGES.filter(m => m.conversation_id === id);
 
-  if (!conv) return null;
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const Waveform = () => (
+    <div className="flex items-center gap-1 h-6">
+      {[4, 8, 12, 16, 12, 8, 14, 10, 6, 12, 18, 14, 8, 4].map((height, i) => (
+        <div
+          key={i}
+          className="w-1 bg-current rounded-full"
+          style={{ height: `${height}px`, opacity: 0.7 }}
+        />
+      ))}
+    </div>
+  );
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 60px)" }}>
-      <div className="flex items-center gap-3 border-b border-[#2E2822] px-4 py-3" style={{ background: "rgba(15,13,11,0.95)" }}>
-        <button onClick={() => navigate("/messages")} className="text-[#F5F0EA]"><ArrowLeft size={20} /></button>
-        {conv.is_group ? (
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-[#C8521A] to-[#2D7DD2] text-white">👥</div>
+    <div className="flex flex-col h-screen" style={{ backgroundColor: T.bg }}>
+      {/* HEADER */}
+      <div 
+        className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b"
+        style={{ backgroundColor: T.surface, borderColor: T.border }}
+      >
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="p-1 -ml-1 rounded-full" style={{ color: T.text }}>
+            <ArrowLeft size={24} />
+          </button>
+          
+          <div className="flex items-center gap-3">
+            <img 
+              src={otherUser?.avatar_url} 
+              alt={otherUser?.display_name}
+              className="w-10 h-10 rounded-full object-cover"
+            />
+            <div>
+              <h2 className="font-bold text-[16px] leading-tight" style={{ color: T.text }}>
+                {otherUser?.display_name}
+              </h2>
+              <p className="text-[12px]" style={{ color: T.success }}>
+                online
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4" style={{ color: T.primary }}>
+          <button><Video size={24} /></button>
+          <button><Phone size={24} /></button>
+          <button style={{ color: T.text }}><MoreVertical size={24} /></button>
+        </div>
+      </div>
+
+      {/* MESSAGE LIST */}
+      <div 
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 py-6 space-y-4"
+      >
+        {messages.map(msg => {
+          const isMe = msg.sender_id === ME_ID;
+          
+          return (
+            <div 
+              key={msg.id} 
+              className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[85%] ${isMe ? 'ml-auto' : ''}`}
+            >
+              <div 
+                className={`px-4 py-3 rounded-2xl ${isMe ? 'rounded-tr-sm' : 'rounded-tl-sm'}`}
+                style={{ 
+                  backgroundColor: isMe ? T.primary : T.s2,
+                  color: isMe ? "#FFFFFF" : T.text
+                }}
+              >
+                {msg.kind === "text" && (
+                  <p className="text-[15px] leading-relaxed break-words">{msg.content}</p>
+                )}
+                
+                {msg.kind === "audio" && (
+                  <div className="flex items-center gap-3 min-w-[200px]">
+                    <button className="w-10 h-10 rounded-full flex items-center justify-center bg-white/20">
+                      <Play size={20} fill="currentColor" />
+                    </button>
+                    <div className="flex-1">
+                      <Waveform />
+                    </div>
+                    <span className="text-[12px] opacity-80">0:14</span>
+                  </div>
+                )}
+              </div>
+              <span 
+                className="text-[11px] mt-1 px-1" 
+                style={{ color: T.muted }}
+              >
+                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* INPUT BAR */}
+      <div 
+        className="sticky bottom-0 px-3 py-3 border-t flex items-center gap-3"
+        style={{ backgroundColor: T.surface, borderColor: T.border }}
+      >
+        <button 
+          className="p-2 rounded-full flex-shrink-0" 
+          style={{ color: T.text }}
+        >
+          <Plus size={24} />
+        </button>
+
+        <div 
+          className="flex-1 flex items-center px-4 py-2 rounded-full gap-2"
+          style={{ backgroundColor: T.border }}
+        >
+          <input 
+            type="text" 
+            placeholder="Type a message..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            className="flex-1 bg-transparent border-none outline-none text-[15px]"
+            style={{ color: T.text }}
+          />
+          <button style={{ color: T.muted }}>
+            <Smile size={20} />
+          </button>
+        </div>
+
+        {inputText.trim().length > 0 ? (
+          <button 
+            className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: T.primary, color: "#FFFFFF" }}
+          >
+            <Send size={20} className="ml-1" />
+          </button>
         ) : (
-          <div className="h-10 w-10 rounded-full flex items-center justify-center text-white font-bold" style={{ background: other!.gradient }}>{other!.full_name.charAt(0)}</div>
+          <button 
+            className="w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{ backgroundColor: T.primary, color: "#FFFFFF" }}
+          >
+            <Mic size={22} />
+          </button>
         )}
-        <div className="min-w-0 flex-1">
-          <span className="text-sm font-semibold text-[#F5F0EA] truncate">{conv.is_group ? conv.group_name : other?.full_name}</span>
-          <div className="text-[10px] text-[#4CAF7D]">{conv.is_group ? `${conv.member_ids.length} members` : (other?.online ? "Online" : "Last seen recently")}</div>
-        </div>
-        <button className="text-[#8A7F74]"><MoreHorizontal size={20} /></button>
-      </div>
-      <div className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
-        <div className="flex justify-start gap-2">
-          <div className="max-w-[76%]">
-            <div className="rounded-2xl rounded-bl-md border border-[#2E2822] bg-[#1C1814] px-4 py-2.5 text-sm text-[#F5F0EA]">
-              <p>Hey! How is it going?</p>
-            </div>
-            <div className="mt-0.5 text-[9px] text-[#8A7F74]">2h ago</div>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <div className="max-w-[76%]">
-            <div className="rounded-2xl rounded-br-md px-4 py-2.5 text-sm text-white" style={{ background: "#C8521A" }}>
-              <p>All good! What is up?</p>
-            </div>
-            <div className="mt-0.5 text-[9px] text-[#8A7F74] text-right">1h ago</div>
-          </div>
-        </div>
-        <div ref={endRef} />
-      </div>
-      <div className="border-t border-[#2E2822] px-3 py-2.5" style={{ background: "#0F0D0B" }}>
-        <div className="flex items-end gap-2 rounded-2xl border border-[#2E2822] bg-[#1C1814] px-2 py-1.5">
-          <button className="flex h-9 w-9 items-center justify-center text-[#E8A055]"><Image size={18} /></button>
-          <button className="flex h-9 w-9 items-center justify-center text-[#E8A055]"><FileImage size={18} /></button>
-          <textarea value={draft} onChange={e => setDraft(e.target.value)} placeholder="Message…" rows={1} className="flex-1 resize-none bg-transparent py-2 text-sm text-[#F5F0EA] outline-none placeholder:text-[#8A7F74]" />
-          {draft ? (
-            <button className="flex h-9 w-9 items-center justify-center rounded-full bg-[#C8521A] text-white"><Send size={16} /></button>
-          ) : (
-            <button className="flex h-9 w-9 items-center justify-center text-[#E8A055]"><Mic size={18} /></button>
-          )}
-        </div>
       </div>
     </div>
   );

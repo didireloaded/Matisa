@@ -1,36 +1,49 @@
-import { Play, Mic, Users, Headphones, Disc3 } from 'lucide-react';
-
-const mockKaraokeRooms = [
-  { id: 1, host: 'Sarah Vibes', title: 'Friday Night Karaoke', singers: 3, capacity: 4, listeners: 58, bgImage: 'https://images.unsplash.com/photo-1516280440502-6c38221c54e6?w=400&q=80' },
-  { id: 2, host: 'DJ Kboz', title: 'Amapiano Sessions', singers: 1, capacity: 2, listeners: 142, bgImage: 'https://images.unsplash.com/photo-1470229722913-7c092bce52f3?w=400&q=80' },
-];
-
-const topSongs = [
-  { id: 1, title: 'Water', artist: 'Tyla', cover: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?w=200&q=80' },
-  { id: 2, title: 'Mnike', artist: 'Tyler ICU', cover: 'https://images.unsplash.com/photo-1614613535808-3196b08b5e28?w=200&q=80' },
-  { id: 3, title: 'Soso', artist: 'Omah Lay', cover: 'https://images.unsplash.com/photo-1493225457124-a1a2a5956062?w=200&q=80' },
-];
+import { useState, useEffect } from 'react';
+import { Music2, Play, Search, Disc } from 'lucide-react';
+import { T, SongCard, EmptyState, Skeleton } from '../components/shared';
 
 export function Music() {
-  return (
-    <div className="flex flex-col min-h-screen bg-black pb-20 text-white">
-      {/* Header */}
-      <div className="sticky top-0 z-40 bg-black/90 backdrop-blur-md px-4 py-3">
-        <h1 className="text-2xl font-bold font-display">Music & Karaoke</h1>
-      </div>
+  const [loading, setLoading] = useState(false);
 
-      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-8">
-        
-        {/* Karaoke Rooms (Flagship Feature) */}
+  // Placeholder for music feed
+  const trendingMusic = [
+    { id: 1, title: 'Namibian Sunset', artist: 'Local Sound' },
+    { id: 2, title: 'Windhoek Nights', artist: 'Kwaito Master' },
+    { id: 3, title: 'Desert Vibes', artist: 'DJ Sand' },
+  ];
+
+  return (
+    <div className="pb-24">
+      <header className="sticky top-0 z-40 px-4 pt-4 pb-3 bg-[#0F0D0B]/90 backdrop-blur-md border-b border-[#2E2822]">
+        <h1 className="text-xl font-bold text-[#F5F0EA] flex items-center gap-2">
+          <Music2 size={24} className="text-[#C8521A]" />
+          Music
+        </h1>
+        <div className="mt-3 flex h-10 items-center rounded-xl bg-[#1C1814] px-3 border border-[#2E2822]">
+          <Search size={18} className="text-[#8A7F74]" />
+          <input
+            type="text"
+            placeholder="Search songs or artists..."
+            className="w-full bg-transparent px-3 text-sm text-[#F5F0EA] outline-none placeholder:text-[#8A7F74]"
+          />
+        </div>
+      </header>
+
+      <main className="px-4 py-4 space-y-6">
         <section>
-          <div className="flex items-center space-x-2 mb-4">
-            <Mic className="w-6 h-6 text-primary" />
-            <h2 className="text-xl font-semibold font-display">Live Karaoke Rooms</h2>
+          <h2 className="text-sm font-semibold text-[#8A7F74] mb-3 uppercase tracking-wider">Trending in Namibia</h2>
+          <div className="space-y-3">
+            {trendingMusic.map((song) => (
+              <SongCard key={song.id} title={song.title} artist={song.artist} />
+            ))}
           </div>
-          
-          <div className="space-y-4">
-            {mockKaraokeRooms.map((room) => (
-              <div key={room.id} className="relative rounded-2xl overflow-hidden h-40 group cursor-pointer active:scale-95 transition-transform">
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10" />
-                <img src={room.bgImage} className="absolute inset-0 w-full h-full ob
-<truncated 2985 bytes>
+        </section>
+        
+        <section>
+          <h2 className="text-sm font-semibold text-[#8A7F74] mb-3 uppercase tracking-wider">Your Playlists</h2>
+          <EmptyState icon={<Disc />} title="No playlists yet" subtitle="Create a playlist to save your favorite tracks." />
+        </section>
+      </main>
+    </div>
+  );
+}

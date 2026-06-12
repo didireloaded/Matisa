@@ -12,15 +12,27 @@ html, body, #root {
   font-family: "DM Sans", ui-sans-serif, system-ui;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
+  display: none;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-::-webkit-scrollbar { width: 0; height: 0; }
-.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-.no-scrollbar::-webkit-scrollbar { display: none; }
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
 
-::selection { background: rgba(200,82,26,0.35); color: #F5F0EA; }
+::selection { background-color: #C8521A; color: white; }
 
 @keyframes pulse-ring {
   0%   { transform: scale(1);   opacity: 0.6; }
@@ -131,7 +143,7 @@ html, body, #root {
   --card-foreground: #FFFFFF;
   --popover: #151515;
   --popover-foreground: #FFFFFF;
-  --primary: #E86A1C;
+  --primary: oklch(0.62 0.18 38);
   --primary-foreground: #FFFFFF;
   --secondary: #F4A261;
   --secondary-foreground: #0A0A0A;
@@ -142,8 +154,8 @@ html, body, #root {
   --destructive: #EF4444;
   --border: #242424;
   --input: #242424;
-  --ring: #E86A1C;
-  --chart-1: #E86A1C;
+  --ring: oklch(0.62 0.18 38);
+  --chart-1: oklch(0.62 0.18 38);
   --chart-2: #F4A261;
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
@@ -151,12 +163,12 @@ html, body, #root {
   --radius: 1rem;
   --sidebar: #0A0A0A;
   --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #E86A1C;
+  --sidebar-primary: oklch(0.62 0.18 38);
   --sidebar-primary-foreground: #FFFFFF;
   --sidebar-accent: #151515;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #242424;
-  --sidebar-ring: #E86A1C;
+  --sidebar-ring: oklch(0.62 0.18 38);
 }
 
 @layer base {

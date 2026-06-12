@@ -13,7 +13,7 @@ export type Interest =
 
 export type GhostMode = "hidden" | "approximate" | "exact";
 
-export type PostType = "text" | "voice" | "photo" | "video" | "reel";
+export type PostType = "text" | "voice" | "photo" | "video" | "reel" | "poll" | "location";
 
 export interface Profile {
   id: string;
@@ -37,8 +37,9 @@ export interface Profile {
   bearing?: number;
   song_title?: string;
   song_artist?: string;
-  recent_work?: string;
-  booking_rate?: string;
+  voice_intro_url?: string;
+  voice_intro_duration?: number;
+  joined_date: string;
   ghost_mode: GhostMode;
   online: boolean;
 }
@@ -109,6 +110,18 @@ export interface Community {
   joined?: boolean;
 }
 
+export interface Playlist {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string;
+  track_count: number;
+  followers_count: number;
+  gradient: string;
+  is_public: boolean;
+  votes: number;
+}
+
 export interface ChatMessage {
   id: string;
   conversation_id: string;
@@ -133,25 +146,13 @@ export interface Conversation {
 
 export interface AppNotification {
   id: string;
-  type: "like" | "comment" | "follow" | "repost" | "rsvp" | "mention" | "booking" | "view" | "event_invite";
+  type: "like" | "comment" | "follow" | "repost" | "rsvp" | "mention" | "view" | "event_invite";
   actor_id: string;
   recipient_id: string;
   body: string;
   when: string;
   bucket: "today" | "week" | "earlier";
   read: boolean;
-}
-
-export interface Opportunity {
-  id: string;
-  title: string;
-  location: string;
-  region: Region;
-  date: string;
-  budget?: string;
-  category: CreatorBadge;
-  posted_by: string;
-  applicants: number;
 }
 
 export interface TrendingItem {

@@ -1,13 +1,21 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const url  = import.meta.env.VITE_SUPABASE_URL  as string;
+const key  = import.meta.env.VITE_SUPABASE_ANON_KEY as string;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase URL or Anon Key is missing. Check your .env.local file.');
+if (!url || !key) {
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY in .env');
 }
 
-export const supabase = createClient(
-  supabaseUrl || '',
-  supabaseAnonKey || ''
-);
+export const supabase = createClient(url, key, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession:   true,
+    detectSessionInUrl: true,
+  },
+  realtime: {
+    params: { eventsPerSecond: 10 },
+  },
+});
+
+export type SupabaseClient = typeof supabase;

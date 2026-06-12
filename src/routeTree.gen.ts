@@ -10,23 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StoriesRouteImport } from './routes/stories'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
-import { Route as CommunityIdRouteImport } from './routes/community.$id'
+import { Route as RoomIdRouteImport } from './routes/room.$id'
 import { Route as ChatIdRouteImport } from './routes/chat.$id'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
-import { Route as AppRadarRouteImport } from './routes/_app.radar'
 import { Route as AppNotificationsRouteImport } from './routes/_app.notifications'
+import { Route as AppMusicRouteImport } from './routes/_app.music'
 import { Route as AppMessagesRouteImport } from './routes/_app.messages'
 import { Route as AppExploreRouteImport } from './routes/_app.explore'
 import { Route as AppEventsRouteImport } from './routes/_app.events'
 import { Route as AppCommunitiesRouteImport } from './routes/_app.communities'
 import { Route as AppProfileIndexRouteImport } from './routes/_app.profile.index'
 import { Route as AppProfileIdRouteImport } from './routes/_app.profile.$id'
+import { Route as AppCommunityIdRouteImport } from './routes/_app.community.$id'
 
 const StoriesRoute = StoriesRouteImport.update({
   id: '/stories',
   path: '/stories',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AppRoute = AppRouteImport.update({
@@ -38,9 +45,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const CommunityIdRoute = CommunityIdRouteImport.update({
-  id: '/community/$id',
-  path: '/community/$id',
+const RoomIdRoute = RoomIdRouteImport.update({
+  id: '/room/$id',
+  path: '/room/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChatIdRoute = ChatIdRouteImport.update({
@@ -53,14 +60,14 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
-const AppRadarRoute = AppRadarRouteImport.update({
-  id: '/radar',
-  path: '/radar',
-  getParentRoute: () => AppRoute,
-} as any)
 const AppNotificationsRoute = AppNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMusicRoute = AppMusicRouteImport.update({
+  id: '/music',
+  path: '/music',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMessagesRoute = AppMessagesRouteImport.update({
@@ -93,51 +100,62 @@ const AppProfileIdRoute = AppProfileIdRouteImport.update({
   path: '/profile/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCommunityIdRoute = AppCommunityIdRouteImport.update({
+  id: '/community/$id',
+  path: '/community/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
+  '/login': typeof LoginRoute
   '/stories': typeof StoriesRoute
   '/communities': typeof AppCommunitiesRoute
   '/events': typeof AppEventsRoute
   '/explore': typeof AppExploreRoute
   '/messages': typeof AppMessagesRoute
+  '/music': typeof AppMusicRoute
   '/notifications': typeof AppNotificationsRoute
-  '/radar': typeof AppRadarRoute
   '/settings': typeof AppSettingsRoute
   '/chat/$id': typeof ChatIdRoute
-  '/community/$id': typeof CommunityIdRoute
+  '/room/$id': typeof RoomIdRoute
+  '/community/$id': typeof AppCommunityIdRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/profile/': typeof AppProfileIndexRoute
 }
 export interface FileRoutesByTo {
+  '/login': typeof LoginRoute
   '/stories': typeof StoriesRoute
   '/communities': typeof AppCommunitiesRoute
   '/events': typeof AppEventsRoute
   '/explore': typeof AppExploreRoute
   '/messages': typeof AppMessagesRoute
+  '/music': typeof AppMusicRoute
   '/notifications': typeof AppNotificationsRoute
-  '/radar': typeof AppRadarRoute
   '/settings': typeof AppSettingsRoute
   '/chat/$id': typeof ChatIdRoute
-  '/community/$id': typeof CommunityIdRoute
+  '/room/$id': typeof RoomIdRoute
   '/': typeof AppIndexRoute
+  '/community/$id': typeof AppCommunityIdRoute
   '/profile/$id': typeof AppProfileIdRoute
   '/profile': typeof AppProfileIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
+  '/login': typeof LoginRoute
   '/stories': typeof StoriesRoute
   '/_app/communities': typeof AppCommunitiesRoute
   '/_app/events': typeof AppEventsRoute
   '/_app/explore': typeof AppExploreRoute
   '/_app/messages': typeof AppMessagesRoute
+  '/_app/music': typeof AppMusicRoute
   '/_app/notifications': typeof AppNotificationsRoute
-  '/_app/radar': typeof AppRadarRoute
   '/_app/settings': typeof AppSettingsRoute
   '/chat/$id': typeof ChatIdRoute
-  '/community/$id': typeof CommunityIdRoute
+  '/room/$id': typeof RoomIdRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/community/$id': typeof AppCommunityIdRoute
   '/_app/profile/$id': typeof AppProfileIdRoute
   '/_app/profile/': typeof AppProfileIndexRoute
 }
@@ -145,56 +163,63 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/stories'
     | '/communities'
     | '/events'
     | '/explore'
     | '/messages'
+    | '/music'
     | '/notifications'
-    | '/radar'
     | '/settings'
     | '/chat/$id'
+    | '/room/$id'
     | '/community/$id'
     | '/profile/$id'
     | '/profile/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/login'
     | '/stories'
     | '/communities'
     | '/events'
     | '/explore'
     | '/messages'
+    | '/music'
     | '/notifications'
-    | '/radar'
     | '/settings'
     | '/chat/$id'
-    | '/community/$id'
+    | '/room/$id'
     | '/'
+    | '/community/$id'
     | '/profile/$id'
     | '/profile'
   id:
     | '__root__'
     | '/_app'
+    | '/login'
     | '/stories'
     | '/_app/communities'
     | '/_app/events'
     | '/_app/explore'
     | '/_app/messages'
+    | '/_app/music'
     | '/_app/notifications'
-    | '/_app/radar'
     | '/_app/settings'
     | '/chat/$id'
-    | '/community/$id'
+    | '/room/$id'
     | '/_app/'
+    | '/_app/community/$id'
     | '/_app/profile/$id'
     | '/_app/profile/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   AppRoute: typeof AppRouteWithChildren
+  LoginRoute: typeof LoginRoute
   StoriesRoute: typeof StoriesRoute
   ChatIdRoute: typeof ChatIdRoute
-  CommunityIdRoute: typeof CommunityIdRoute
+  RoomIdRoute: typeof RoomIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -204,6 +229,13 @@ declare module '@tanstack/react-router' {
       path: '/stories'
       fullPath: '/stories'
       preLoaderRoute: typeof StoriesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_app': {
@@ -220,11 +252,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/community/$id': {
-      id: '/community/$id'
-      path: '/community/$id'
-      fullPath: '/community/$id'
-      preLoaderRoute: typeof CommunityIdRouteImport
+    '/room/$id': {
+      id: '/room/$id'
+      path: '/room/$id'
+      fullPath: '/room/$id'
+      preLoaderRoute: typeof RoomIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chat/$id': {
@@ -241,18 +273,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/radar': {
-      id: '/_app/radar'
-      path: '/radar'
-      fullPath: '/radar'
-      preLoaderRoute: typeof AppRadarRouteImport
-      parentRoute: typeof AppRoute
-    }
     '/_app/notifications': {
       id: '/_app/notifications'
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof AppNotificationsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/music': {
+      id: '/_app/music'
+      path: '/music'
+      fullPath: '/music'
+      preLoaderRoute: typeof AppMusicRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/messages': {
@@ -297,6 +329,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppProfileIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/community/$id': {
+      id: '/_app/community/$id'
+      path: '/community/$id'
+      fullPath: '/community/$id'
+      preLoaderRoute: typeof AppCommunityIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -305,10 +344,11 @@ interface AppRouteChildren {
   AppEventsRoute: typeof AppEventsRoute
   AppExploreRoute: typeof AppExploreRoute
   AppMessagesRoute: typeof AppMessagesRoute
+  AppMusicRoute: typeof AppMusicRoute
   AppNotificationsRoute: typeof AppNotificationsRoute
-  AppRadarRoute: typeof AppRadarRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppCommunityIdRoute: typeof AppCommunityIdRoute
   AppProfileIdRoute: typeof AppProfileIdRoute
   AppProfileIndexRoute: typeof AppProfileIndexRoute
 }
@@ -318,10 +358,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppEventsRoute: AppEventsRoute,
   AppExploreRoute: AppExploreRoute,
   AppMessagesRoute: AppMessagesRoute,
+  AppMusicRoute: AppMusicRoute,
   AppNotificationsRoute: AppNotificationsRoute,
-  AppRadarRoute: AppRadarRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppCommunityIdRoute: AppCommunityIdRoute,
   AppProfileIdRoute: AppProfileIdRoute,
   AppProfileIndexRoute: AppProfileIndexRoute,
 }
@@ -330,9 +371,10 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   AppRoute: AppRouteWithChildren,
+  LoginRoute: LoginRoute,
   StoriesRoute: StoriesRoute,
   ChatIdRoute: ChatIdRoute,
-  CommunityIdRoute: CommunityIdRoute,
+  RoomIdRoute: RoomIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

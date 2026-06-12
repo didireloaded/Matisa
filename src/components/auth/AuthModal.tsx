@@ -36,7 +36,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           password,
           options: {
             data: {
-              full_name: email.split('@')[0],
+              full_name: (email || '').split('@')[0],
               avatar_url: `https://i.pravatar.cc/150?u=${email}`
             }
           }

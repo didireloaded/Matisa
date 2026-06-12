@@ -30,7 +30,7 @@ export function StoryBubble({ user, type, hasUnseenStory = true }: StoryBubblePr
         </Avatar>
       </div>
       <span className="text-xs text-foreground font-medium truncate w-16 text-center">
-        {user.name.split(' ')[0]}
+        {(user?.name || '').split(' ')[0]}
       </span>
     </div>
   );
