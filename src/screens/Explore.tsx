@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { usePosts } from "../lib/api/posts";
 import { Search, Flame, Mic, Play, Heart, MessageCircle as CommentIcon, Repeat2, Bookmark, Share2, MoreHorizontal, MapPin } from "lucide-react";
 import type { Post } from "../data/types";

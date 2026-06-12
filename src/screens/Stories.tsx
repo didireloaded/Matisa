@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useSearchParams, useNavigate } from "@/lib/router-compat";
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { X, Send, Music2, Play, Eye } from "lucide-react";
 import { STORIES, getProfile, ME_ID } from "../data/mock";
 

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { Search, Edit, Mic, Image, Users, Check, CheckCheck } from "lucide-react";
 import { CONVERSATIONS, getProfile, fmt, ME_ID } from "../data/mock";
 

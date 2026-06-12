@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { Search, Users, Hash, Plus } from "lucide-react";
 import { COMMUNITIES, fmt } from "../data/mock";
 

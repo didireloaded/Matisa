@@ -1,0 +1,19 @@
+{
+  "name": "Matisa",
+  "short_name": "Matisa",
+  "display": "standalone",
+  "theme_color": "#C8521A",
+  "background_color": "#0F0D0B",
+  "icons": [
+    {
+      "src": "pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

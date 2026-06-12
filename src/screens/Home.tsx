@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { Mic, Plus, UserPlus, MessageCircle, Hand } from "lucide-react";
 import { STORIES, ME_ID, getProfile, PROFILES } from "../data/mock";
 import { RadarCanvas } from "../components/radar/RadarCanvas";

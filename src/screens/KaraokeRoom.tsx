@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "@/lib/router-compat";
+import { useParams, useNavigate } from 'react-router-dom';
 import { X, Mic, MicOff, Settings2, Gift, MessageCircle, Users } from "lucide-react";
 import { LISTENING_SESSIONS, PROFILES, ME_ID } from "../data/mock";
 

@@ -1,4 +1,4 @@
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate } from "react-router-dom";
 
 export function ScreenLoader() {
   return (
@@ -15,7 +15,7 @@ export function ScreenError({
   error: Error;
   reset: () => void;
 }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
       <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#C8521A]/15 text-[#E8A055]">
@@ -30,7 +30,6 @@ export function ScreenError({
       <div className="mt-5 flex gap-2">
         <button
           onClick={() => {
-            router.invalidate();
             reset();
           }}
           className="rounded-full bg-[#C8521A] px-4 py-2 text-sm font-semibold text-white"
@@ -38,7 +37,7 @@ export function ScreenError({
           Try again
         </button>
         <button
-          onClick={() => router.navigate({ to: "/" })}
+          onClick={() => navigate("/")}
           className="rounded-full border border-[#2E2822] bg-[#1C1814] px-4 py-2 text-sm font-semibold text-[#F5F0EA]"
         >
           Go home
@@ -49,13 +48,13 @@ export function ScreenError({
 }
 
 export function ScreenNotFound({ message = "We couldn't find that." }: { message?: string }) {
-  const router = useRouter();
+  const navigate = useNavigate();
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-6 text-center">
       <h2 className="font-display text-lg font-bold text-[#F5F0EA]">Not found</h2>
       <p className="mt-1 max-w-xs text-sm text-[#8A7F74]">{message}</p>
       <button
-        onClick={() => router.navigate({ to: "/" })}
+        onClick={() => navigate("/")}
         className="mt-5 rounded-full bg-[#C8521A] px-4 py-2 text-sm font-semibold text-white"
       >
         Back home

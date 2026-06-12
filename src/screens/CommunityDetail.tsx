@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "@/lib/router-compat";
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MoreHorizontal, Users, MapPin, Hash, MessageCircle, Play, Calendar, Mic, Headphones } from "lucide-react";
 import { COMMUNITIES, POSTS, EVENTS, getProfile, fmt, LISTENING_SESSIONS } from "../data/mock";
 

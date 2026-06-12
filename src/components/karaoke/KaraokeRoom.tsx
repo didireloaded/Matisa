@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from '@/lib/router-compat';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, MicOff, Users, MessageSquare, Share2, Settings, Plus, Loader2, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../../lib/supabase';

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { Play, Music2, Headphones, Mic, Heart, ChevronRight } from "lucide-react";
 import { PLAYLISTS, REGIONAL_CHARTS, NEW_RELEASES, FEATURED_ARTISTS, LISTENING_SESSIONS, getProfile, fmt } from "../data/mock";
 

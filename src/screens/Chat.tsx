@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useParams, useNavigate } from "@/lib/router-compat";
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Video, MoreVertical, Plus, Mic, Send, Image, Play, Smile } from "lucide-react";
 import { CONVERSATIONS, MESSAGES, getProfile, ME_ID } from "../data/mock";
 

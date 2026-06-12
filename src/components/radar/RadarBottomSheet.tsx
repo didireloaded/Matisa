@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MessageSquare, UserPlus, Hand, PlayCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from '@/lib/router-compat';
+import { useNavigate } from 'react-router-dom';
 import type { RadarNodeData } from './RadarAvatar';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../contexts/AuthContext';

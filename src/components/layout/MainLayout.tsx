@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from "@/lib/router-compat";
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {

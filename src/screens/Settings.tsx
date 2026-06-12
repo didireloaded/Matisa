@@ -1,4 +1,4 @@
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Eye, ShieldCheck, Bell, Music2, Mic, Palette, UserX, HelpCircle, LogOut } from "lucide-react";
 import { getProfile, ME_ID } from "../data/mock";
 

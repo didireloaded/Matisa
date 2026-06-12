@@ -1,4 +1,4 @@
-import { useNavigate } from "@/lib/router-compat";
+import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, Heart, MessageCircle, UserPlus, Repeat2, CalendarDays, Eye } from "lucide-react";
 import { NOTIFICATIONS, getProfile } from "../data/mock";
 
