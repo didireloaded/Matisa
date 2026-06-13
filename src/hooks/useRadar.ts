@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { RadarUser } from '../types';
+import { RadarUser } from "@/types";
 
 export function useRadar() {
   const { profile } = useAuth();

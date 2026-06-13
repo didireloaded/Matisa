@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { T, Avatar, EmptyState, Skeleton } from '../components/shared';
-import { timeAgo } from '../types';
-import type { Conversation } from '../types';
+import { timeAgo } from "@/types";
+import type { Conversation } from "@/types";
 
 export function Messages() {
   const { profile } = useAuth();

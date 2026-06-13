@@ -3,8 +3,8 @@ import { Bell } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { T, Avatar, EmptyState, Skeleton } from '../components/shared';
-import { timeAgo } from '../types';
-import type { Notification } from '../types';
+import { timeAgo } from "@/types";
+import type { Notification } from "@/types";
 
 export function Activity() {
   const { profile } = useAuth();

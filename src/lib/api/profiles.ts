@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { PROFILES } from "../../data/mock";
-import type { Profile } from "../../data/types";
+import { PROFILES } from "@/data/mock";
+import type { Profile } from "@/types";
 
 export function useProfiles() {
   return useQuery<Profile[]>({

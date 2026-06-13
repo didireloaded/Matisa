@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { POSTS } from "../../data/mock";
-import type { Post } from "../../data/types";
+import { POSTS } from "@/data/mock";
+import type { Post } from "@/types";
 
 export function usePosts() {
   return useQuery<Post[]>({

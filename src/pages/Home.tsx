@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { T, Avatar } from '../components/shared';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import type { Story } from '../types';
+import type { Story } from "@/types";
 import { RadarCanvas } from '../components/radar/RadarCanvas';
 
 export function Home() {

@@ -1,4 +1,4 @@
-import type { Profile, Post, Story, EventItem, Community, Conversation, AppNotification, TrendingItem, Playlist, Region } from "./types";
+import type { Profile, Post, Story, EventItem, Community, Conversation, AppNotification, TrendingItem, Playlist, Region } from "@/types";
 
 const G = {
   rust: "linear-gradient(135deg,#C8521A,#6B2D1A)",

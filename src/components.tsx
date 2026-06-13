@@ -1,6 +1,6 @@
 import { type ReactNode } from "react";
 import { BadgeCheck, MapPin, Music2, Play, Mic, Image, Video } from "lucide-react";
-import { getProfile, type Profile } from "./data";
+import { getProfile, type Profile } from "@/data";
 
 // ─── Avatar ──────────────────────────────────────────────────────────────────
 export function Avatar({

@@ -6,8 +6,8 @@ import {
   Heart, MessageCircle, Repeat2, Bookmark, Share2,
   MoreHorizontal, Play, Mic, MapPin, Music2, CheckCircle2,
 } from 'lucide-react';
-import type { Post, Profile } from '../types';
-import { fmtCount, timeAgo } from '../types';
+import type { Post, Profile } from "@/types";
+import { fmtCount, timeAgo } from "@/types";
 
 // ────────────────────────────────────────────────────────────
 // DESIGN TOKENS

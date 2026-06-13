@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { EVENTS } from "../../data/mock";
-import type { EventItem } from "../../data/types";
+import { EVENTS } from "@/data/mock";
+import type { EventItem } from "@/types";
 
 export function useEvents() {
   return useQuery<EventItem[]>({

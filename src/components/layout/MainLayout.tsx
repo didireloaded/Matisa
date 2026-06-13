@@ -4,8 +4,8 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   Home, Radar, Plus, CalendarDays, User, Bell, MessageSquare, MapPin, Compass, Music2
 } from "lucide-react";
-import { NOTIFICATIONS, ME_ID } from "../../data/mock";
-import { getProfile } from "../../data/mock";
+import { NOTIFICATIONS, ME_ID } from "@/data/mock";
+import { getProfile } from "@/data/mock";
 
 function TopBar() {
   const navigate = useNavigate();

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Search, TrendingUp, Users, CalendarDays, Plus, PenSquare } from 'lucide-react';
 import { T, PostCard, PostSkeleton, Avatar, EmptyState } from '../components/shared';
 import { supabase } from '../lib/supabase';
-import type { Post, RadarUser } from '../types';
+import type { Post, RadarUser } from "@/types";
 import { useAuth } from '../contexts/AuthContext';
 import { CreateEventModal } from '../components/events/CreateEventModal';
 import { useEvents } from '../hooks/useEvents';
