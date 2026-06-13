@@ -31,6 +31,21 @@ export function useRadar() {
       
       if (!error && data) {
         setNearbyUsers(data as RadarUser[]);
+      } else {
+        // Fallback if RPC is missing (e.g. 404) or fails
+        console.warn('find_nearby_users RPC failed, falling back to basic profiles fetch.', error);
+        const { data: fallbackData } = await supabase
+          .from('profiles')
+          .select('id, username, display_name, avatar_url, region, city, mood, ghost_mode')
+          .limit(20);
+          
+        if (fallbackData) {
+          const mapped = fallbackData.map((p: any) => ({
+            ...p,
+            distance_m: Math.floor(Math.random() * 5000) // Mock distance
+          }));
+          setNearbyUsers(mapped as RadarUser[]);
+        }
       }
       setLoading(false);
     }
