@@ -1,80 +1,119 @@
 import { useState, useEffect } from 'react';
-import { Bell, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom';
-import { T, Avatar } from "@/components/common";
-import { useAuth } from '../contexts/AuthContext';
-import { supabase } from '../lib/supabase';
-import type { Story } from "@/types";
+import { Plus } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabase';
+import { Avatar } from '@/components/common';
+import { CreateStoryModal } from '@/components/feed/CreateStoryModal';
+import type { Story } from '@/types';
 import { RadarCanvas } from '../components/radar/RadarCanvas';
 
-export function Home() {
+function StoriesRow({
+  stories,
+  onAddStory,
+}: {
+  stories: Story[];
+  onAddStory: () => void;
+}) {
   const { profile } = useAuth();
+  const myStory = stories.find(s => s.user_id === profile?.id);
+
+  return (
+    <div
+      className="flex gap-3.5 overflow-x-auto px-4 py-3.5 no-scrollbar border-b"
+      style={{ borderColor: '#2E2822' }}
+    >
+      {/* Add Story tile */}
+      <button
+        onClick={onAddStory}
+        className="flex flex-shrink-0 flex-col items-center gap-1.5 group"
+        aria-label="Add story"
+      >
+        <div className="relative">
+          {myStory ? (
+            <div className="story-ring h-[68px] w-[68px] rounded-full p-[2.5px]">
+              <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0F0D0B]">
+                <Avatar profile={profile!} size={62} />
+              </div>
+            </div>
+          ) : (
+            <div
+              className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-2 border-dashed transition group-hover:border-[#C8521A]"
+              style={{ borderColor: '#2E2822' }}
+            >
+              <Avatar profile={profile!} size={56} />
+            </div>
+          )}
+          <div
+            className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 text-white"
+            style={{ background: '#C8521A', borderColor: '#0F0D0B' }}
+          >
+            <Plus size={12} strokeWidth={3} />
+          </div>
+        </div>
+        <span className="text-[10px] font-medium text-[#8A7F74] truncate max-w-[68px]">
+          Your story
+        </span>
+      </button>
+
+      {/* Other stories */}
+      {stories
+        .filter(s => s.user_id !== profile?.id && s.profiles)
+        .map(story => (
+          <button
+            key={story.id}
+            onClick={() => {}}
+            className="flex flex-shrink-0 flex-col items-center gap-1.5"
+          >
+            <div className="story-ring h-[68px] w-[68px] rounded-full p-[2.5px]">
+              <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0F0D0B]">
+                <Avatar profile={story.profiles!} size={62} />
+              </div>
+            </div>
+            <span
+              className="text-[10px] font-medium text-[#F5F0EA] truncate max-w-[68px]"
+            >
+              {(story.profiles?.display_name || story.profiles?.username || '').split(' ')[0]}
+            </span>
+          </button>
+        ))}
+    </div>
+  );
+}
+
+export function Home() {
   const [stories, setStories] = useState<Story[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [showCreateStory, setShowCreateStory] = useState(false);
 
   useEffect(() => {
-    async function loadFeed() {
-      // Fetch stories
-      const { data: sData } = await supabase
-        .from('stories')
-        .select('*, profiles(*)')
-        .gt('expires_at', new Date().toISOString())
-        .order('created_at', { ascending: false });
-
-      if (sData) setStories(sData as Story[]);
-      setLoading(false);
-    }
-    loadFeed();
+    supabase
+      .from('stories')
+      .select('*, profiles!stories_user_id_fkey(*)')
+      .gt('expires_at', new Date().toISOString())
+      .order('created_at', { ascending: false })
+      .then(({ data }) => {
+        if (data) setStories(data as Story[]);
+      });
   }, []);
 
   return (
-    <div className="pb-24">
-      {/* Sticky Header */}
-      <header
-        className="sticky top-0 z-40 flex h-14 items-center justify-between px-4 border-b"
-        style={{ backgroundColor: `${T.bg}E6`, backdropFilter: 'blur(12px)', borderColor: T.border }}
-      >
-        <h1 className="text-xl font-bold italic" style={{ color: T.text }}>Matisa</h1>
-        <div className="flex items-center gap-4 text-[#F5F0EA]">
-          <Link to="/activity" className="relative">
-            <Bell size={22} strokeWidth={2} />
-            <span className="absolute -top-1 -right-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-[#C8521A] text-[8px] font-bold text-white">
-              2
-            </span>
-          </Link>
-        </div>
-      </header>
+    <div className="flex flex-col h-[calc(100dvh-120px)] overflow-hidden">
+      {/* Stories */}
+      <StoriesRow
+        stories={stories}
+        onAddStory={() => setShowCreateStory(true)}
+      />
 
-      {/* Stories / Activity Bubbles */}
-      <section className="border-b py-4" style={{ borderColor: T.border }}>
-        <div className="flex gap-4 overflow-x-auto px-4 no-scrollbar">
-          {profile && (
-            <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
-              <div className="relative">
-                <Avatar profile={profile!} size={64} />
-                <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#0F0D0B] bg-[#C8521A] text-white">
-                  <Plus size={12} strokeWidth={3} />
-                </div>
-              </div>
-              <span className="text-[11px] font-medium text-[#8A7F74]">Your Story</span>
-            </div>
-          )}
-          {stories.map(story => (
-            <div key={story.id} className="flex flex-col items-center gap-1.5 flex-shrink-0">
-              <Avatar profile={story.profiles} size={64} ring />
-              <span className="text-[11px] font-medium text-[#F5F0EA] truncate max-w-[64px]">
-                {(story.profiles?.full_name || story.profiles?.username || '').split(' ')[0]}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Main Feed - Now Replaced by Radar */}
-      <main className="flex-1 flex flex-col relative h-[calc(100vh-140px)]">
+      {/* Radar Canvas (Fullscreen space) */}
+      <main className="flex-1 flex flex-col relative w-full h-full overflow-hidden bg-[#0F0D0B]">
         <RadarCanvas />
       </main>
+
+      {showCreateStory && (
+        <CreateStoryModal
+          open={showCreateStory}
+          onOpenChange={setShowCreateStory}
+        />
+      )}
     </div>
   );
 }

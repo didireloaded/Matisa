@@ -1,9 +1,11 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
+import { Analytics } from '@vercel/analytics/react';
 import { Providers } from './components/providers';
 import { MainLayout } from './components/layout/MainLayout';
 import { Home } from './pages/Home';
 import { Explore } from './pages/Explore';
+import { Events } from './pages/Events';
 import { Music } from './pages/Music';
 import { Activity } from './pages/Activity';
 import { Profile } from './pages/Profile';
@@ -36,9 +38,11 @@ function App() {
             <Route element={<MainLayout />}>
               <Route path="/" element={<Home />} />
               <Route path="/explore" element={<Explore />} />
+              <Route path="/events" element={<Events />} />
               <Route path="/music" element={<Music />} />
               <Route path="/activity" element={<Activity />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/profile/:id" element={<Profile />} />
               <Route path="/messages" element={<Messages />} />
             </Route>
             <Route path="/auth" element={<Auth />} />
@@ -46,6 +50,7 @@ function App() {
             <Route path="/room/:id" element={<KaraokeRoom />} />
           </Routes>
         </BrowserRouter>
+        <Analytics />
       </Providers>
     </ErrorBoundary>
   );
