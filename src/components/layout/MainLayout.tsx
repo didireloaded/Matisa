@@ -1,4 +1,4 @@
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { NOTIFICATIONS, ME_ID } from "@/data/mock";
 import { getProfile } from "@/data/mock";
+import { useAuth } from '@/contexts/AuthContext';
 
 function TopBar() {
   const navigate = useNavigate();
@@ -60,6 +61,12 @@ function BottomNav({ onCreate }: { onCreate: () => void }) {
 export function MainLayout() {
   const [showCompose, setShowCompose] = useState(false);
   const location = useLocation();
+  const { session, loading } = useAuth();
+  
+  if (!loading && !session) {
+    return <Navigate to="/auth" replace />;
+  }
+  
   const hideNav = ["/chat","/stories","/login"].includes(location.pathname);
   const hideTop = ["/chat","/notifications","/stories","/settings","/bookings","/login"].some(p => location.pathname.startsWith(p)) && location.pathname !== "/notifications";
 

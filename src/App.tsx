@@ -10,6 +10,7 @@ import { Profile } from './pages/Profile';
 import { Messages } from './pages/Messages';
 import { Chat } from './pages/Chat';
 import { KaraokeRoom } from './components/karaoke/KaraokeRoom';
+import { Auth } from './pages/Auth';
 
 function ErrorFallback({ error }: { error: Error }) {
   return (
@@ -40,6 +41,7 @@ function App() {
               <Route path="/profile" element={<Profile />} />
               <Route path="/messages" element={<Messages />} />
             </Route>
+            <Route path="/auth" element={<Auth />} />
             <Route path="/chat/:id" element={<Chat />} />
             <Route path="/room/:id" element={<KaraokeRoom />} />
           </Routes>
