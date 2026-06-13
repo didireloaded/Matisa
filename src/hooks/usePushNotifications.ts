@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import OneSignal from 'react-onesignal';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from "@/stores/authStore";
 
 export function usePushNotifications() {
   const { session } = useAuthStore();

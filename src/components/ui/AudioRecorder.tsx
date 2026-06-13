@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from "@/stores/authStore";
 
 interface AudioRecorderProps {
   onUploadSuccess: (url: string) => void;

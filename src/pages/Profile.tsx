@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { MapPin, Link as LinkIcon, Edit3, Settings } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { T, Avatar, PostCard, PostSkeleton } from '../components/shared';
+import { T, Avatar, PostCard, PostSkeleton } from "@/components/common";
 import type { Post } from "@/types";
 
 export function Profile() {

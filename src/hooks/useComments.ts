@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore } from "@/stores/authStore";
 
 export interface Comment {
   id: string;

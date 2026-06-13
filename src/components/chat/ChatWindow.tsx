@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ArrowLeft, Send, Phone, Video, Info, Mic } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 import { useChat } from '../../hooks/useMessages';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from "@/stores/authStore";
 import { AudioPlayer } from '../ui/AudioPlayer';
 import { AudioRecorder } from '../ui/AudioRecorder';
 

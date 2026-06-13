@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Bell, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { T, Avatar } from '../components/shared';
+import { T, Avatar } from "@/components/common";
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import type { Story } from "@/types";
@@ -52,7 +52,7 @@ export function Home() {
           {profile && (
             <div className="flex flex-col items-center gap-1.5 flex-shrink-0">
               <div className="relative">
-                <Avatar profile={profile} size={64} />
+                <Avatar profile={profile!} size={64} />
                 <div className="absolute bottom-0 right-0 flex h-5 w-5 items-center justify-center rounded-full border-2 border-[#0F0D0B] bg-[#C8521A] text-white">
                   <Plus size={12} strokeWidth={3} />
                 </div>

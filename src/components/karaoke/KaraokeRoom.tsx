@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Mic, MicOff, Users, MessageSquare, Share2, Settings, Plus, Loader2, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { supabase } from '../../lib/supabase';
+import { KaraokeService } from '../../services/karaoke';
 import { useAuth } from '../../contexts/AuthContext';
 import { generateLiveKitToken } from '../../lib/livekitToken';
 import {
@@ -66,36 +66,21 @@ function KaraokeRoomInner({ roomId, navigate }: { roomId: string, navigate: any 
   const [listeners, setListeners] = useState(0);
 
   useEffect(() => {
-    // Setup Supabase Realtime Channel for Reactions
-    const channel = supabase.channel(`room:${roomId}`, {
-      config: {
-        broadcast: { ack: false },
-        presence: { key: user?.id || 'anonymous' },
-      },
-    });
-
-    channel
-      .on('broadcast', { event: 'reaction' }, (payload) => {
-        const newReaction = { id: Date.now(), emoji: payload.payload.emoji, x: Math.random() * 80 + 10 };
+    const channel = KaraokeService.subscribeToRoom(
+      roomId,
+      user?.id || 'anonymous',
+      (emoji) => {
+        const newReaction = { id: Date.now(), emoji, x: Math.random() * 80 + 10 };
         setReactions(prev => [...prev, newReaction]);
         setTimeout(() => {
           setReactions(prev => prev.filter(r => r.id !== newReaction.id));
         }, 2000);
-      })
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const count = Object.keys(state).length;
-        // Total listeners = Presence count + LiveKit participants approximation
-        setListeners(count);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          await channel.track({ user_id: user?.id, online_at: new Date().toISOString() });
-        }
-      });
+      },
+      (count) => setListeners(count)
+    );
 
     return () => {
-      supabase.removeChannel(channel);
+      KaraokeService.unsubscribe(channel);
     };
   }, [roomId, user]);
 
@@ -108,11 +93,7 @@ function KaraokeRoomInner({ roomId, navigate }: { roomId: string, navigate: any 
     }, 2000);
 
     // Broadcast to others
-    await supabase.channel(`room:${roomId}`).send({
-      type: 'broadcast',
-      event: 'reaction',
-      payload: { emoji },
-    });
+    await KaraokeService.broadcastReaction(roomId, emoji);
   };
 
   // Up to 4 singers shown

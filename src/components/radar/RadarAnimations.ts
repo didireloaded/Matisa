@@ -7,7 +7,7 @@ export const generateFloatAnimation = (index: number): Variants => {
   const duration = 3 + (index % 5); // 3s to 8s
 
   return {
-    initial: { y: 0, opacity: 0, scale: 0.8 },
+    initial: { y: 0, opacity: 0, scale: 0 },
     animate: {
       y: [0, -yOffset, 0],
       opacity: 1,
@@ -19,8 +19,8 @@ export const generateFloatAnimation = (index: number): Variants => {
           repeatType: 'mirror',
           ease: 'easeInOut',
         },
-        opacity: { duration: 0.5 },
-        scale: { type: 'spring', duration: 0.6 }
+        opacity: { duration: 0.8, ease: 'easeOut' },
+        scale: { type: 'spring', damping: 15, stiffness: 200, mass: 0.8 }
       },
     },
   };
@@ -29,7 +29,11 @@ export const generateFloatAnimation = (index: number): Variants => {
 export const centerPulseAnimation: Variants = {
   animate: {
     scale: [1, 1.05, 1],
-    opacity: [0.8, 1, 0.8],
+    boxShadow: [
+      '0 0 20px rgba(200, 82, 26, 0.4), inset 0 0 10px rgba(200, 82, 26, 0.2)',
+      '0 0 50px rgba(200, 82, 26, 0.8), inset 0 0 20px rgba(200, 82, 26, 0.5)',
+      '0 0 20px rgba(200, 82, 26, 0.4), inset 0 0 10px rgba(200, 82, 26, 0.2)',
+    ],
     transition: {
       duration: 3,
       repeat: Infinity,

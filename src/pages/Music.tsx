@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Music2, Play, Search, Disc, Heart } from 'lucide-react';
-import { T, EmptyState, Skeleton, Avatar } from '../components/shared';
+import { T, EmptyState, Skeleton, Avatar } from "@/components/common";
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';

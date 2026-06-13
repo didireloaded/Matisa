@@ -26,13 +26,13 @@ export function RadarAvatar({ node, index, onClick }: RadarAvatarProps) {
   const x = Math.cos((node.angle * Math.PI) / 180) * (node.radius * maxRadius);
   const y = Math.sin((node.angle * Math.PI) / 180) * (node.radius * maxRadius);
 
-  const getRingColor = () => {
+  const getRingStyle = () => {
     switch (node.state) {
-      case 'online': return 'border-green-500';
-      case 'story': return 'border-orange-500';
-      case 'voice': return 'border-purple-500';
-      case 'verified': return 'border-yellow-500';
-      default: return 'border-transparent';
+      case 'online': return { background: 'linear-gradient(135deg, #4CAF7D, #1A5C3A)', boxShadow: '0 0 15px rgba(76, 175, 125, 0.4)' };
+      case 'story': return { background: 'linear-gradient(135deg, #C8521A, #E8A055)', boxShadow: '0 0 15px rgba(200, 82, 26, 0.4)' };
+      case 'voice': return { background: 'linear-gradient(135deg, #6B2D7D, #2A1040)', boxShadow: '0 0 15px rgba(107, 45, 125, 0.4)' };
+      case 'verified': return { background: 'linear-gradient(135deg, #2D7DD2, #1A3A60)', boxShadow: '0 0 15px rgba(45, 125, 210, 0.4)' };
+      default: return { background: '#2E2822' };
     }
   };
 
@@ -49,15 +49,20 @@ export function RadarAvatar({ node, index, onClick }: RadarAvatarProps) {
       }}
       onClick={() => onClick(node)}
     >
-      <div className="relative">
-        <div className={`w-12 h-12 rounded-full border-2 ${getRingColor()} overflow-hidden shadow-lg bg-[#1C1814]`}>
-          {node.avatar_url ? (
-            <img src={node.avatar_url} alt={node.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-[#8A7F74] font-bold text-lg">
-              {node.name.charAt(0)}
-            </div>
-          )}
+      <div className="relative group transition-transform duration-300 hover:scale-110 hover:z-20">
+        <div 
+          className="w-[50px] h-[50px] rounded-full p-[2px] transition-all duration-300"
+          style={getRingStyle()}
+        >
+          <div className="w-full h-full rounded-full overflow-hidden bg-[#1C1814] border-2 border-[#0F0D0B]">
+            {node.avatar_url ? (
+              <img src={node.avatar_url} alt={node.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-[#8A7F74] font-bold text-lg" style={{ background: 'linear-gradient(135deg, #2E2822, #1C1814)' }}>
+                {node.name.charAt(0)}
+              </div>
+            )}
+          </div>
         </div>
         
         {/* Pulse Effect for Online */}
@@ -70,8 +75,8 @@ export function RadarAvatar({ node, index, onClick }: RadarAvatarProps) {
       </div>
       
       {/* Name Label */}
-      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-center w-max">
-        <span className="text-[10px] font-medium text-[#F5F0EA] bg-[#0F0D0B]/80 px-1.5 py-0.5 rounded backdrop-blur-sm">
+      <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 text-center w-max pointer-events-none opacity-90 transition-opacity group-hover:opacity-100">
+        <span className="text-[10px] font-semibold tracking-wide text-[#F5F0EA] bg-[#0F0D0B]/60 backdrop-blur-md border border-[#2E2822] shadow-lg px-2 py-0.5 rounded-full">
           {node.name.split(' ')[0]}
         </span>
       </div>

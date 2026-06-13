@@ -6,7 +6,7 @@ import { RadarAvatar, RadarNodeData } from './RadarAvatar';
 import { RadarBottomSheet } from './RadarBottomSheet';
 import { centerPulseAnimation } from './RadarAnimations';
 import { useAuth } from '../../contexts/AuthContext';
-import { Avatar } from '../shared';
+import { Avatar } from '@/components/common';
 
 // Generate some fake users distributed around the radar
 const mockNodes: RadarNodeData[] = [
@@ -49,6 +49,9 @@ export function RadarCanvas() {
 
   return (
     <div className="relative flex-1 w-full bg-[#0F0D0B] overflow-hidden flex items-center justify-center">
+      {/* Ambient background glows */}
+      <div className="absolute top-1/4 -left-1/4 w-[80vh] h-[80vh] bg-[#C8521A] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.07]" />
+      <div className="absolute bottom-1/4 -right-1/4 w-[80vh] h-[80vh] bg-[#2D7DD2] rounded-full mix-blend-screen filter blur-[150px] opacity-[0.05]" />
       
       <RadarFilters activeFilter={activeFilter} onChange={setActiveFilter} />
 
@@ -59,21 +62,22 @@ export function RadarCanvas() {
 
         {/* Center Node (Current User) */}
         <motion.div 
-          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 rounded-full"
           variants={centerPulseAnimation}
           animate="animate"
         >
           <div className="relative">
             {profile ? (
-              <Avatar profile={profile} size={72} ring className="border-[#C8521A] shadow-[0_0_30px_rgba(200,82,26,0.5)]" />
+              <Avatar profile={profile} size={72} ring />
             ) : (
-              <div className="w-[72px] h-[72px] rounded-full border-4 border-[#C8521A] bg-[#1C1814] flex items-center justify-center shadow-[0_0_30px_rgba(200,82,26,0.5)] text-[#E8A055] font-bold text-xl">
+              <div className="w-[72px] h-[72px] rounded-full bg-[#1C1814] flex items-center justify-center text-[#E8A055] font-bold text-xl border-2 border-[#C8521A]">
                 YOU
               </div>
             )}
             
-            {/* Center Pulse Ring */}
-            <span className="absolute inset-0 rounded-full border border-[#C8521A] animate-ping opacity-20" style={{ animationDuration: '3s' }} />
+            {/* Outer rings pulse */}
+            <span className="absolute inset-0 rounded-full border border-[#C8521A] animate-ping opacity-30" style={{ animationDuration: '4s' }} />
+            <span className="absolute inset-0 rounded-full border border-[#C8521A] animate-ping opacity-10" style={{ animationDuration: '4s', animationDelay: '1s' }} />
           </div>
         </motion.div>
 

@@ -3,7 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Video, MoreVertical, Plus, Mic, Send, Image, Play, Smile } from "lucide-react";
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { T } from '../components/shared';
+import { T } from "@/components/common";
+
+import { MessageService } from '../services/messages';
 
 export function Chat() {
   const { id } = useParams();
@@ -17,45 +19,26 @@ export function Chat() {
   useEffect(() => {
     if (!profile || !id) return;
     
-    // Fetch conversation details to get the other user
     async function loadConv() {
-      const { data: participants } = await supabase
-        .from('conversation_participants')
-        .select('user_id, profiles(*)')
-        .eq('conversation_id', id);
-
-      if (participants) {
-        const other = participants.find(p => p.user_id !== profile!.id);
-        if (other) setOtherUser(other.profiles);
-      }
+      const other = await MessageService.getOtherUser(id!, profile!.id);
+      if (other) setOtherUser(other);
     }
 
     async function loadMessages() {
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('conversation_id', id)
-        .order('created_at', { ascending: true });
-      if (data) setMessages(data);
+      const data = await MessageService.getMessages(id!);
+      setMessages(data);
     }
 
     loadConv();
     loadMessages();
 
     // Subscribe to new messages
-    const channel = supabase.channel(`messages:${id}`)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'messages',
-        filter: `conversation_id=eq.${id}`
-      }, (payload) => {
-        setMessages(prev => [...prev, payload.new]);
-      })
-      .subscribe();
+    const channel = MessageService.subscribeToMessages(id, (newMsg) => {
+      setMessages(prev => [...prev, newMsg]);
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      MessageService.unsubscribe(channel);
     };
   }, [id, profile]);
 
@@ -71,12 +54,11 @@ export function Chat() {
     const content = inputText.trim();
     setInputText("");
 
-    await supabase.from('messages').insert({
-      conversation_id: id,
-      sender_id: profile.id,
-      content,
-      kind: 'text'
-    });
+    try {
+      await MessageService.sendTextMessage(id, profile.id, content);
+    } catch (err) {
+      // Handle error visually if necessary
+    }
   };
 
   const Waveform = () => (

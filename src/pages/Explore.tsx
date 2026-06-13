@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { MapPin, Search, TrendingUp, Users, CalendarDays, Plus, PenSquare } from 'lucide-react';
-import { T, PostCard, PostSkeleton, Avatar, EmptyState } from '../components/shared';
-import { supabase } from '../lib/supabase';
+import { T, PostCard, PostSkeleton, Avatar, EmptyState } from "@/components/common";
 import type { Post, RadarUser } from "@/types";
 import { useAuth } from '../contexts/AuthContext';
+import { PostService } from '../services/posts';
 import { CreateEventModal } from '../components/events/CreateEventModal';
 import { useEvents } from '../hooks/useEvents';
 import { CreatePostModal } from '../components/feed/CreatePostModal';
@@ -27,15 +27,8 @@ export function Explore() {
     async function loadData() {
       setLoading(true);
       if (view === 'trending') {
-        const { data } = await supabase.rpc('get_trending_posts', { p_limit: 20 });
-        if (data) {
-          const { data: enriched } = await supabase
-            .from('posts')
-            .select('*, profiles(*)')
-            .in('id', data.map((p: any) => p.id))
-            .order('created_at', { ascending: false });
-          if (enriched) setTrending(enriched as Post[]);
-        }
+        const posts = await PostService.getTrendingPosts(20);
+        setTrending(posts);
       }
       setLoading(false);
     }
@@ -44,10 +37,10 @@ export function Explore() {
 
   const handleLike = async (postId: string, liked: boolean) => {
     if (!profile) return;
-    if (liked) {
-      await supabase.from('likes').insert({ post_id: postId, user_id: profile.id });
-    } else {
-      await supabase.from('likes').delete().match({ post_id: postId, user_id: profile.id });
+    try {
+      await PostService.toggleLike(postId, profile.id, liked);
+    } catch (error) {
+      toast.error('Failed to update like status');
     }
   };
 
@@ -193,7 +186,7 @@ export function Explore() {
       {/* Modals */}
       <CreateEventModal open={showCreateEvent} onOpenChange={setShowCreateEvent} />
       {showCreatePost && <CreatePostModal onClose={() => setShowCreatePost(false)} onSuccess={() => setShowCreatePost(false)} />}
-      {commentPostId && <CommentsModal postId={commentPostId} onClose={() => setCommentPostId(null)} />}
+      {commentPostId && <CommentsModal postId={commentPostId} onClose={() => setCommentPostId(null)}>{null}</CommentsModal>}
     </div>
   );
 }

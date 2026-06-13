@@ -74,9 +74,12 @@ export function RadarBottomSheet({ node, onClose }: RadarBottomSheetProps) {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="absolute bottom-0 left-0 right-0 z-50 bg-[#1C1814] rounded-t-3xl border-t border-[#2E2822] shadow-[0_-10px_40px_rgba(0,0,0,0.5)] overflow-hidden"
+            className="absolute bottom-0 left-0 right-0 z-50 bg-[#1C1814]/85 backdrop-blur-2xl rounded-t-3xl border-t border-[#2E2822]/50 shadow-[0_-20px_60px_rgba(0,0,0,0.8)] overflow-hidden"
           >
-            <div className="p-5 flex flex-col items-center">
+            {/* Vibrant Glow Behind Profile */}
+            <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-64 h-64 bg-[#C8521A] rounded-full mix-blend-screen filter blur-[100px] opacity-20 pointer-events-none" />
+
+            <div className="p-5 flex flex-col items-center relative z-10">
               {/* Drag Handle */}
               <div className="w-12 h-1 bg-[#2E2822] rounded-full mb-6" />
 
@@ -115,28 +118,28 @@ export function RadarBottomSheet({ node, onClose }: RadarBottomSheetProps) {
               {/* Actions Grid */}
               <div className="w-full grid grid-cols-4 gap-3">
                 <button onClick={handleMessage} disabled={loadingAction === 'message'} className="flex flex-col items-center gap-2 text-[#F5F0EA] group">
-                  <div className="w-12 h-12 rounded-full bg-[#C8521A] flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform">
-                    {loadingAction === 'message' ? <Loader2 size={20} className="animate-spin text-white" /> : <MessageSquare size={20} className="text-white" />}
+                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-[#C8521A] to-[#8B3A1F] flex items-center justify-center shadow-[0_0_15px_rgba(200,82,26,0.5)] group-hover:shadow-[0_0_25px_rgba(200,82,26,0.8)] group-hover:scale-105 transition-all duration-300">
+                    {loadingAction === 'message' ? <Loader2 size={22} className="animate-spin text-white" /> : <MessageSquare size={22} className="text-white" />}
                   </div>
-                  <span className="text-[10px] font-bold">Message</span>
+                  <span className="text-[10px] font-bold tracking-wide">Message</span>
                 </button>
                 <button onClick={handleFollow} disabled={loadingAction === 'follow'} className="flex flex-col items-center gap-2 text-[#8A7F74] hover:text-[#F5F0EA] transition-colors group">
-                  <div className="w-12 h-12 rounded-full bg-[#2E2822] flex items-center justify-center group-hover:bg-[#3E3832] transition-colors">
-                    {loadingAction === 'follow' ? <Loader2 size={20} className="animate-spin" /> : <UserPlus size={20} />}
+                  <div className="w-14 h-14 rounded-full bg-[#2E2822]/60 backdrop-blur-md flex items-center justify-center group-hover:bg-[#3E3832] group-hover:scale-105 transition-all duration-300 shadow-inner">
+                    {loadingAction === 'follow' ? <Loader2 size={22} className="animate-spin" /> : <UserPlus size={22} />}
                   </div>
-                  <span className="text-[10px] font-bold">Follow</span>
+                  <span className="text-[10px] font-bold tracking-wide">Follow</span>
                 </button>
                 <button onClick={handleWave} disabled={loadingAction === 'wave'} className="flex flex-col items-center gap-2 text-[#8A7F74] hover:text-[#F5F0EA] transition-colors group">
-                  <div className="w-12 h-12 rounded-full bg-[#2E2822] flex items-center justify-center group-hover:bg-[#3E3832] transition-colors">
-                    {loadingAction === 'wave' ? <Loader2 size={20} className="animate-spin" /> : <Hand size={20} />}
+                  <div className="w-14 h-14 rounded-full bg-[#2E2822]/60 backdrop-blur-md flex items-center justify-center group-hover:bg-[#3E3832] group-hover:scale-105 transition-all duration-300 shadow-inner">
+                    {loadingAction === 'wave' ? <Loader2 size={22} className="animate-spin" /> : <Hand size={22} />}
                   </div>
-                  <span className="text-[10px] font-bold">Wave</span>
+                  <span className="text-[10px] font-bold tracking-wide">Wave</span>
                 </button>
-                <button className="flex flex-col items-center gap-2 text-[#8A7F74] hover:text-[#F5F0EA] transition-colors group">
-                  <div className="w-12 h-12 rounded-full bg-[#2E2822] flex items-center justify-center group-hover:bg-[#3E3832] transition-colors">
-                    <PlayCircle size={20} className="text-purple-400" />
+                <button className="flex flex-col items-center gap-2 text-[#8A7F74] hover:text-purple-400 transition-colors group">
+                  <div className="w-14 h-14 rounded-full bg-[#2E2822]/60 backdrop-blur-md flex items-center justify-center group-hover:bg-[#3E3832] group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(168,85,247,0.4)] transition-all duration-300 shadow-inner">
+                    <PlayCircle size={22} className="text-purple-400 group-hover:text-purple-300 transition-colors" />
                   </div>
-                  <span className="text-[10px] font-bold text-purple-400">Intro</span>
+                  <span className="text-[10px] font-bold tracking-wide text-purple-400">Intro</span>
                 </button>
               </div>
 

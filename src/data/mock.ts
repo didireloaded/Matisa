@@ -76,10 +76,10 @@ export const COMMUNITIES: Community[] = [
 ];
 
 export const PLAYLISTS: Playlist[] = [
-  { id: "pl_1", user_id: ME_ID, title: "Windhoek Nights", description: "Vibes for the capital", gradient: "linear-gradient(135deg,#C8521A,#6B2D1A)", track_count: 24, votes: 1250, created_at: "2024-05-10T10:00:00Z" },
-  { id: "pl_2", user_id: "u_tangeni", title: "Oshakati Heat", description: "Summer anthems", gradient: "linear-gradient(135deg,#E8A055,#8B5A1A)", track_count: 15, votes: 840, created_at: "2024-05-11T14:30:00Z" },
-  { id: "pl_3", user_id: "u_anna", title: "Swakop Chill", description: "Coastal breeze", gradient: "linear-gradient(135deg,#2D7DD2,#1A3A60)", track_count: 32, votes: 2100, created_at: "2024-05-12T09:15:00Z" },
-  { id: "pl_4", user_id: "u_didi", title: "Amapiano Namibia", description: "Log drum heavy", gradient: "linear-gradient(135deg,#4CAF7D,#1A5C3A)", track_count: 45, votes: 3400, created_at: "2024-05-13T16:45:00Z" },
+  { id: "pl_1", user_id: ME_ID, title: "Windhoek Nights", description: "Vibes for the capital", gradient: "linear-gradient(135deg,#C8521A,#6B2D1A)", track_count: 24, votes: 1250, created_at: "2024-05-10T10:00:00Z", is_public: true },
+  { id: "pl_2", user_id: "u_tangeni", title: "Oshakati Heat", description: "Summer anthems", gradient: "linear-gradient(135deg,#E8A055,#8B5A1A)", track_count: 15, votes: 840, created_at: "2024-05-11T14:30:00Z", is_public: true },
+  { id: "pl_3", user_id: "u_anna", title: "Swakop Chill", description: "Coastal breeze", gradient: "linear-gradient(135deg,#2D7DD2,#1A3A60)", track_count: 32, votes: 2100, created_at: "2024-05-12T09:15:00Z", is_public: true },
+  { id: "pl_4", user_id: "u_didi", title: "Amapiano Namibia", description: "Log drum heavy", gradient: "linear-gradient(135deg,#4CAF7D,#1A5C3A)", track_count: 45, votes: 3400, created_at: "2024-05-13T16:45:00Z", is_public: true },
   { id: "pl5", user_id: "u_didi", title: "Film Scoring Mood", description: "Cinematic soundscapes for editing sessions.", track_count: 15, followers_count: 234, gradient: G.purple, is_public: true, votes: 156 },
   { id: "pl6", user_id: "u_ester", title: "Morning Run", description: "High energy tracks for the coastline.", track_count: 28, followers_count: 178, gradient: G.sky, is_public: true, votes: 98 },
   { id: "pl7", user_id: "u_kavetu", title: "Kunene Sunsets", description: "Traditional meets electronic. Himba vibes.", track_count: 12, followers_count: 567, gradient: G.sand, is_public: true, votes: 345 },

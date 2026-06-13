@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Camera, Image as ImageIcon, Send, Loader2 } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore } from "@/stores/authStore";
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 

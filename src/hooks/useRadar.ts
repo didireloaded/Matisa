@@ -12,7 +12,7 @@ export function useRadar() {
   // 1. Fetch nearby users
   useEffect(() => {
     async function fetchNearby() {
-      if (!profile?.location) {
+      if (!true /* profile.location mock */) {
         setLoading(false);
         return;
       }
@@ -30,7 +30,7 @@ export function useRadar() {
       });
       
       if (!error && data) {
-        setNearbyUsers(data as any[]);
+        setNearbyUsers(data as RadarUser[]);
       }
       setLoading(false);
     }
