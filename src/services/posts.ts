@@ -15,7 +15,7 @@ export const PostService = {
 
     const { data: enriched, error: enrichError } = await supabase
       .from('posts')
-      .select('*, profiles(*)')
+      .select('*, profiles!posts_user_id_fkey(*)')
       .in('id', data.map((p: any) => p.id))
       .order('created_at', { ascending: false });
 
