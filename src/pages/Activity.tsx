@@ -21,7 +21,7 @@ export function Activity() {
         .order('created_at', { ascending: false })
         .limit(30);
 
-      if (data) setNotifications(data as Notification[]);
+      if (data) setNotifications(data as AppNotification[]);
       setLoading(false);
     }
     loadNotifs();
@@ -50,22 +50,25 @@ export function Activity() {
           <EmptyState icon={<Bell />} title="No activity yet" subtitle="When someone interacts with your posts, you'll see it here." />
         ) : (
           <div className="divide-y divide-[#2E2822]">
-            {notifications.map((notif) => (
-              <div key={notif.id} className={`flex items-start gap-3 p-4 ${!notif.is_read ? 'bg-[#1C1814]' : ''}`}>
-                <Avatar profile={notif.profiles} size={40} />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-[#F5F0EA]">
-                    <span className="font-semibold">{notif.profiles.display_name}</span>{' '}
-                    {notif.type === 'like' ? 'liked your post.' :
-                     notif.type === 'comment' ? 'commented on your post.' :
-                     notif.type === 'follow' ? 'started following you.' :
-                     notif.type === 'mention' ? 'mentioned you.' :
-                     `interacted with you (${notif.type}).`}
-                  </p>
-                  <p className="text-xs text-[#8A7F74] mt-1">{timeAgo(notif.created_at)}</p>
+            {notifications.map((notif) => {
+              const actor = (Array.isArray(notif.profiles) ? notif.profiles[0] : notif.profiles) || {};
+              return (
+                <div key={notif.id} className={`flex items-start gap-3 p-4 ${!notif.is_read ? 'bg-[#1C1814]' : ''}`}>
+                  <Avatar profile={actor} size={40} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-[#F5F0EA]">
+                      <span className="font-semibold">{actor.display_name}</span>{' '}
+                      {notif.type === 'like' ? 'liked your post.' :
+                       notif.type === 'comment' ? 'commented on your post.' :
+                       notif.type === 'follow' ? 'started following you.' :
+                       notif.type === 'mention' ? 'mentioned you.' :
+                       `interacted with you (${notif.type}).`}
+                    </p>
+                    <p className="text-xs text-[#8A7F74] mt-1">{timeAgo(notif.created_at || new Date().toISOString())}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>

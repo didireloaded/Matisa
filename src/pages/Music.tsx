@@ -4,6 +4,7 @@ import { T, EmptyState, Skeleton, Avatar } from "@/components/common";
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
+import { CreatePlaylistModal } from '@/components/music/CreatePlaylistModal';
 
 export function Music() {
   const { profile } = useAuth();
@@ -11,28 +12,29 @@ export function Music() {
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [myPlaylists, setMyPlaylists] = useState<any[]>([]);
 
-  useEffect(() => {
-    async function fetchMusic() {
-      if (!profile) return;
+  const fetchMusic = async () => {
+    if (!profile) return;
+    
+    // Fetch Trending Playlists (ordered by vote count, we do a join)
+    // Since supabase doesn't have a direct order by count without a view, we fetch all and sort
+    const { data: trending } = await supabase
+      .from('playlists')
+      .select('*, profiles(*), playlist_votes(user_id)');
+    
+    if (trending) {
+      const withVotes = trending.map(p => ({
+        ...p,
+        voteCount: p.playlist_votes?.length || 0,
+        hasVoted: p.playlist_votes?.some((v: any) => v.user_id === profile.id)
+      })).sort((a, b) => b.voteCount - a.voteCount);
       
-      // Fetch Trending Playlists (ordered by vote count, we do a join)
-      // Since supabase doesn't have a direct order by count without a view, we fetch all and sort
-      const { data: trending } = await supabase
-        .from('playlists')
-        .select('*, profiles(*), playlist_votes(user_id)');
-      
-      if (trending) {
-        const withVotes = trending.map(p => ({
-          ...p,
-          voteCount: p.playlist_votes?.length || 0,
-          hasVoted: p.playlist_votes?.some((v: any) => v.user_id === profile.id)
-        })).sort((a, b) => b.voteCount - a.voteCount);
-        
-        setPlaylists(withVotes);
-        setMyPlaylists(withVotes.filter(p => p.author_id === profile.id));
-      }
-      setLoading(false);
+      setPlaylists(withVotes);
+      setMyPlaylists(withVotes.filter(p => p.author_id === profile.id));
     }
+    setLoading(false);
+  };
+
+  useEffect(() => {
     fetchMusic();
   }, [profile]);
 
@@ -119,9 +121,11 @@ export function Music() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-[#8A7F74] uppercase tracking-wider">Your Playlists</h2>
-            <button onClick={() => toast.info('Create playlist coming soon!')} className="text-xs font-bold text-[#C8521A] bg-[#C8521A]/10 px-3 py-1 rounded-full">
-              + New
-            </button>
+            <CreatePlaylistModal onCreated={() => { setLoading(true); fetchMusic(); }}>
+              <button className="text-xs font-bold text-[#C8521A] bg-[#C8521A]/10 px-3 py-1 rounded-full hover:bg-[#C8521A]/20 transition">
+                + New
+              </button>
+            </CreatePlaylistModal>
           </div>
           {loading ? (
              <Skeleton className="h-20 w-full rounded-2xl" />

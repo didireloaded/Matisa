@@ -163,11 +163,69 @@ CREATE TABLE public.notifications (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- RLS POLICIES (Example basics)
+-- RLS POLICIES
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public profiles are viewable by everyone." ON public.profiles FOR SELECT USING (true);
 CREATE POLICY "Users can insert their own profile." ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Users can update own profile." ON public.profiles FOR UPDATE USING (auth.uid() = id);
+
+-- Base RLS for other tables
+ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public follows viewable by everyone." ON public.follows FOR SELECT USING (true);
+CREATE POLICY "Users can manage their follows." ON public.follows FOR ALL USING (auth.uid() = follower_id);
+
+ALTER TABLE public.communities ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public communities viewable by everyone." ON public.communities FOR SELECT USING (true);
+CREATE POLICY "Users can create communities." ON public.communities FOR INSERT WITH CHECK (auth.uid() = created_by);
+CREATE POLICY "Creators can update communities." ON public.communities FOR UPDATE USING (auth.uid() = created_by);
+
+ALTER TABLE public.community_members ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public community members viewable by everyone." ON public.community_members FOR SELECT USING (true);
+CREATE POLICY "Users can join communities." ON public.community_members FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can leave communities." ON public.community_members FOR DELETE USING (auth.uid() = user_id);
+
+ALTER TABLE public.events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public events viewable by everyone." ON public.events FOR SELECT USING (true);
+CREATE POLICY "Users can manage their events." ON public.events FOR ALL USING (auth.uid() = created_by);
+
+ALTER TABLE public.event_attendees ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public attendees viewable by everyone." ON public.event_attendees FOR SELECT USING (true);
+CREATE POLICY "Users can manage their attendance." ON public.event_attendees FOR ALL USING (auth.uid() = user_id);
+
+ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public posts viewable by everyone." ON public.posts FOR SELECT USING (true);
+CREATE POLICY "Users can manage their posts." ON public.posts FOR ALL USING (auth.uid() = user_id OR auth.uid() = author_id);
+
+ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public comments viewable by everyone." ON public.comments FOR SELECT USING (true);
+CREATE POLICY "Users can manage their comments." ON public.comments FOR ALL USING (auth.uid() = author_id);
+
+ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public likes viewable by everyone." ON public.likes FOR SELECT USING (true);
+CREATE POLICY "Users can manage their likes." ON public.likes FOR ALL USING (auth.uid() = user_id);
+
+ALTER TABLE public.stories ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public stories viewable by everyone." ON public.stories FOR SELECT USING (true);
+CREATE POLICY "Users can manage their stories." ON public.stories FOR ALL USING (auth.uid() = author_id);
+
+ALTER TABLE public.story_views ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their story views." ON public.story_views FOR SELECT USING (auth.uid() = viewer_id OR auth.uid() IN (SELECT author_id FROM public.stories WHERE id = story_id));
+CREATE POLICY "Users can record their view." ON public.story_views FOR INSERT WITH CHECK (auth.uid() = viewer_id);
+
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their conversations." ON public.conversations FOR SELECT USING (EXISTS (SELECT 1 FROM public.conversation_participants WHERE conversation_id = id AND user_id = auth.uid()));
+CREATE POLICY "Users can create conversations." ON public.conversations FOR INSERT WITH CHECK (true);
+
+ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their conversation participants." ON public.conversation_participants FOR SELECT USING (EXISTS (SELECT 1 FROM public.conversation_participants WHERE conversation_id = conversation_id AND user_id = auth.uid()));
+CREATE POLICY "Users can join conversations." ON public.conversation_participants FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view their messages." ON public.messages FOR SELECT USING (EXISTS (SELECT 1 FROM public.conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = auth.uid()));
+CREATE POLICY "Users can send messages." ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
+
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can manage their notifications." ON public.notifications FOR ALL USING (auth.uid() = user_id);
 
 -- Function to set updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()

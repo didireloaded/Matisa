@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Phone, Video, MoreVertical, Plus, Mic, Send, Image, Play, Smile } from "lucide-react";
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { T } from "@/components/common";
@@ -109,9 +111,9 @@ export function Chat() {
         </div>
 
         <div className="flex items-center gap-4" style={{ color: T.primary }}>
-          <button><Video size={24} /></button>
-          <button><Phone size={24} /></button>
-          <button style={{ color: T.text }}><MoreVertical size={24} /></button>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => toast.info('Video calling coming soon (Phase 5)')}><Video size={24} /></motion.button>
+          <motion.button whileTap={{ scale: 0.8 }} onClick={() => toast.info('Audio calling coming soon (Phase 5)')}><Phone size={24} /></motion.button>
+          <motion.button whileTap={{ scale: 0.8 }} style={{ color: T.text }}><MoreVertical size={24} /></motion.button>
         </div>
       </div>
 

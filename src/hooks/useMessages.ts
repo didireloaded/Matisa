@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Message {
   id: string;
@@ -18,7 +18,7 @@ export interface Message {
 }
 
 export function useMessages(conversationId?: string) {
-  const { session } = useAuthStore();
+  const { session } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -47,7 +47,7 @@ export function useMessages(conversationId?: string) {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages(data || []);
+      if (data) setMessages(data as any as Message[]);
     } catch (err) {
       console.error('Error fetching messages:', err);
     } finally {
@@ -92,7 +92,7 @@ export function useMessages(conversationId?: string) {
             .single();
 
           if (newMsg) {
-            setMessages(prev => [...prev, newMsg]);
+            setMessages(prev => [...prev, newMsg as any as Message]);
           }
         }
       )

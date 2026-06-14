@@ -1,43 +1,130 @@
 import { useState, useEffect } from 'react';
-import { MapPin, Link as LinkIcon, Edit3, Settings } from 'lucide-react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { MapPin, ArrowLeft, Settings, MessageSquare, Plus } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { T, Avatar, PostCard, PostSkeleton } from "@/components/common";
-import type { Post } from "@/types";
+import { useInView } from 'react-intersection-observer';
+import { Loader2 } from 'lucide-react';
+import type { Post, Profile as ProfileType } from "@/types";
 
 export function Profile() {
-  const { profile, signOut } = useAuth();
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { profile: currentUser, signOut } = useAuth();
+  
+  const [profile, setProfile] = useState<ProfileType | null>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const { ref, inView } = useInView();
+
+  const isOwnProfile = !id || id === currentUser?.id;
+
+  useEffect(() => {
+    async function loadProfile() {
+      if (isOwnProfile) {
+        setProfile(currentUser);
+        setLoadingProfile(false);
+        return;
+      }
+      
+      setLoadingProfile(true);
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (data) setProfile(data as ProfileType);
+      setLoadingProfile(false);
+    }
+    loadProfile();
+  }, [id, currentUser, isOwnProfile]);
 
   useEffect(() => {
     async function loadPosts() {
-      if (!profile) return;
+      const targetId = isOwnProfile ? currentUser?.id : id;
+      if (!targetId) return;
+      
+      setLoading(true);
       const { data } = await supabase
         .from('posts')
         .select('*, profiles(*)')
-        .eq('user_id', profile.id)
-        .order('created_at', { ascending: false });
+        .eq('user_id', targetId)
+        .order('created_at', { ascending: false })
+        .limit(10);
 
-      if (data) setPosts(data as Post[]);
+      if (data) {
+        setPosts(data as Post[]);
+        setHasMore(data.length === 10);
+      }
       setLoading(false);
     }
     loadPosts();
-  }, [profile]);
+  }, [id, currentUser, isOwnProfile]);
 
-  if (!profile) return null;
+  useEffect(() => {
+    if (inView && hasMore && !loading && !loadingMore) {
+      loadMorePosts();
+    }
+  }, [inView, hasMore, loading, loadingMore]);
+
+  const loadMorePosts = async () => {
+    const targetId = isOwnProfile ? currentUser?.id : id;
+    if (!targetId || !posts.length) return;
+
+    setLoadingMore(true);
+    const lastPost = posts[posts.length - 1];
+
+    const { data } = await supabase
+      .from('posts')
+      .select('*, profiles(*)')
+      .eq('user_id', targetId)
+      .lt('created_at', lastPost.created_at)
+      .order('created_at', { ascending: false })
+      .limit(10);
+
+    if (data && data.length > 0) {
+      setPosts(prev => [...prev, ...(data as Post[])]);
+      setHasMore(data.length === 10);
+    } else {
+      setHasMore(false);
+    }
+    setLoadingMore(false);
+  };
+
+  if (loadingProfile) {
+    return <div className="p-8 text-center text-[#8A7F74] text-sm">Loading profile...</div>;
+  }
+
+  if (!profile) {
+    return <div className="p-8 text-center text-[#8A7F74] text-sm">Profile not found.</div>;
+  }
 
   return (
-    <div className="pb-24">
+    <div className="pb-24 bg-[#0F0D0B] min-h-screen">
       {/* Cover */}
       <div className="h-32 w-full bg-[#1C1814] relative">
         {profile.cover_url && (
           <img src={profile.cover_url} alt="Cover" className="h-full w-full object-cover" />
         )}
+        <div className="absolute top-4 left-4 flex gap-2">
+          {!isOwnProfile && (
+            <button onClick={() => navigate(-1)} className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur">
+              <ArrowLeft size={16} />
+            </button>
+          )}
+        </div>
         <div className="absolute top-4 right-4 flex gap-2">
-          <button onClick={signOut} className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur">
-            <Settings size={16} />
-          </button>
+          {isOwnProfile && (
+            <button onClick={signOut} className="flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur" aria-label="Settings">
+              <Settings size={16} />
+            </button>
+          )}
         </div>
       </div>
 
@@ -48,13 +135,24 @@ export function Profile() {
         </div>
         
         <div className="flex justify-end pt-3">
-          <button className="rounded-full border border-[#2E2822] px-4 py-1.5 text-sm font-semibold text-[#F5F0EA] hover:bg-[#1C1814] transition">
-            Edit Profile
-          </button>
+          {isOwnProfile ? (
+            <button className="rounded-full border border-[#2E2822] px-4 py-1.5 text-sm font-semibold text-[#F5F0EA] hover:bg-[#1C1814] transition">
+              Edit Profile
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button onClick={() => navigate(`/chat/${profile.id}`)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#2E2822] text-[#F5F0EA] hover:bg-[#1C1814] transition">
+                <MessageSquare size={14} />
+              </button>
+              <button className="flex items-center gap-1 rounded-full bg-[#C8521A] px-4 py-1.5 text-sm font-semibold text-white hover:bg-[#E8A055] transition">
+                <Plus size={14} /> Follow
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-2">
-          <h1 className="text-xl font-bold text-[#F5F0EA]">{profile.display_name}</h1>
+          <h1 className="text-xl font-bold text-[#F5F0EA]">{profile.display_name || profile.username}</h1>
           <p className="text-sm text-[#8A7F74]">@{profile.username}</p>
         </div>
 
@@ -70,33 +168,46 @@ export function Profile() {
             </div>
           )}
           <div className="flex gap-4">
-            <span className="text-[#F5F0EA]"><strong className="font-semibold">{profile.following_count}</strong> <span className="text-[#8A7F74]">Following</span></span>
-            <span className="text-[#F5F0EA]"><strong className="font-semibold">{profile.follower_count}</strong> <span className="text-[#8A7F74]">Followers</span></span>
+            <span className="text-[#F5F0EA]"><strong className="font-semibold">{profile.following_count || 0}</strong> <span className="text-[#8A7F74]">Following</span></span>
+            <span className="text-[#F5F0EA]"><strong className="font-semibold">{profile.follower_count || 0}</strong> <span className="text-[#8A7F74]">Followers</span></span>
           </div>
         </div>
       </div>
 
       {/* Feed */}
       <main>
-        {loading ? (
+        {loading && posts.length === 0 ? (
           Array.from({ length: 2 }).map((_, i) => <PostSkeleton key={i} />)
         ) : posts.length === 0 ? (
           <div className="py-12 text-center text-[#8A7F74] text-sm">
             No posts yet.
           </div>
         ) : (
-          posts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              isOwn={true}
-              onLike={() => {}}
-              onSave={() => {}}
-              onRepost={() => {}}
-              onComment={() => {}}
-              onProfile={() => {}}
-            />
-          ))
+          <>
+            {posts.map(post => (
+              <PostCard
+                key={post.id}
+                post={post}
+                isOwn={isOwnProfile}
+                onLike={() => {}}
+                onSave={() => {}}
+                onRepost={() => {}}
+                onComment={() => {}}
+                onProfile={() => {}}
+              />
+            ))}
+            
+            {hasMore && (
+              <div ref={ref} className="py-6 flex justify-center">
+                <Loader2 className="animate-spin text-[#C8521A]" />
+              </div>
+            )}
+            {!hasMore && posts.length > 0 && (
+              <div className="py-8 text-center text-xs text-[#8A7F74]">
+                You've reached the end
+              </div>
+            )}
+          </>
         )}
       </main>
     </div>

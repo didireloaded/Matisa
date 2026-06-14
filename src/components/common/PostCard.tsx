@@ -1,5 +1,6 @@
 import { useState, memo } from 'react';
 import { Heart, MessageCircle, Repeat2, Bookmark, Share2, MoreHorizontal, Play } from 'lucide-react';
+import { motion } from 'framer-motion';
 import type { Post } from "@/types";
 import { fmtCount, timeAgo } from "@/types";
 import { T } from './Tokens';
@@ -29,7 +30,7 @@ export const PostCard = memo(function PostCard({
   const handleLike = () => {
     const next = !liked;
     setLiked(next);
-    setLikes(c => next ? c + 1 : Math.max(0, c - 1));
+    setLikes(c => next ? (c ?? 0) + 1 : Math.max(0, (c ?? 0) - 1));
     onLike(next);
   };
 
@@ -40,7 +41,11 @@ export const PostCard = memo(function PostCard({
   };
 
   return (
-    <article className="border-b border-[#2E2822] px-4 py-4">
+    <motion.article 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="border-b border-[#2E2822] px-4 py-4"
+    >
       <div className="flex gap-3">
 
         {/* Avatar */}
@@ -56,7 +61,7 @@ export const PostCard = memo(function PostCard({
                 <span className="text-sm font-semibold text-[#F5F0EA]">{author.display_name}</span>
                 {author.is_verified && <Verified size={13} />}
                 <span className="text-[#8A7F74] text-xs">·</span>
-                <span className="text-[#8A7F74] text-xs">{timeAgo(post.created_at)}</span>
+                <span className="text-xs text-muted-foreground">{post.likes_count ?? 0}</span>
               </div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="text-[11px] text-[#8A7F74]">@{author.username}</span>
@@ -175,51 +180,56 @@ export const PostCard = memo(function PostCard({
 
           {/* Actions */}
           <div className="mt-3 flex items-center justify-between text-[#8A7F74]">
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={handleLike}
-              className={`flex items-center gap-1.5 text-xs font-medium transition active:scale-95 ${
+              className={`flex items-center gap-1.5 text-xs font-medium transition ${
                 liked ? 'text-[#C8521A]' : 'hover:text-[#C8521A]'
               }`}
             >
               <Heart size={17} fill={liked ? '#C8521A' : 'none'} strokeWidth={liked ? 0 : 1.8} />
-              <span>{fmtCount(likes)}</span>
-            </button>
+              <span>{fmtCount(likes ?? 0)}</span>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={onComment}
               className="flex items-center gap-1.5 text-xs font-medium hover:text-[#2D7DD2] transition"
             >
               <MessageCircle size={17} strokeWidth={1.8} />
-              <span>{fmtCount(post.comment_count)}</span>
-            </button>
+              <span>{fmtCount(post.comment_count ?? 0)}</span>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={onRepost}
               className="flex items-center gap-1.5 text-xs font-medium hover:text-[#4CAF7D] transition"
             >
               <Repeat2 size={17} strokeWidth={1.8} />
-              <span>{fmtCount(post.repost_count)}</span>
-            </button>
+              <span>{fmtCount(post.repost_count ?? 0)}</span>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={handleSave}
-              className={`flex items-center gap-1.5 text-xs font-medium transition active:scale-95 ${
+              className={`flex items-center gap-1.5 text-xs font-medium transition ${
                 saved ? 'text-[#E8A055]' : 'hover:text-[#E8A055]'
               }`}
             >
               <Bookmark size={17} fill={saved ? '#E8A055' : 'none'} strokeWidth={saved ? 0 : 1.8} />
-              <span>{fmtCount(post.save_count)}</span>
-            </button>
+              <span>{fmtCount(post.save_count ?? 0)}</span>
+            </motion.button>
 
-            <button
+            <motion.button
+              whileTap={{ scale: 0.85 }}
               onClick={() => navigator.share?.({ url: window.location.origin + '/post/' + post.id })}
               className="hover:text-[#F5F0EA] transition"
             >
               <Share2 size={17} strokeWidth={1.8} />
-            </button>
+            </motion.button>
           </div>
         </div>
       </div>
-    </article>
+    </motion.article>
   );
 });

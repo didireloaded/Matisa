@@ -4,7 +4,7 @@ import { Mic, MicOff, Users, MessageSquare, Share2, Settings, Plus, Loader2, Arr
 import { motion, AnimatePresence } from 'framer-motion';
 import { KaraokeService } from '../../services/karaoke';
 import { useAuth } from '../../contexts/AuthContext';
-import { generateLiveKitToken } from '../../lib/livekitToken';
+import { supabase } from '../../lib/supabase';
 import {
   LiveKitRoom,
   RoomAudioRenderer,
@@ -21,7 +21,7 @@ interface Reaction {
 }
 
 export function KaraokeRoom() {
-  const { profile: user } = useAuth();
+  const { profile, user } = useAuth();
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [token, setToken] = useState('');
@@ -29,8 +29,13 @@ export function KaraokeRoom() {
 
   useEffect(() => {
     if (!user) return;
-    generateLiveKitToken(roomId, user.user_metadata?.full_name || 'Anonymous', user.id)
-      .then(setToken)
+    supabase.functions.invoke('livekit-token', {
+      body: { roomName: roomId, participantName: user?.user_metadata?.full_name || profile?.display_name || 'Anonymous' }
+    })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        if (data?.token) setToken(data.token);
+      })
       .catch(console.error);
   }, [user, roomId]);
 

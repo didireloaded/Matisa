@@ -9,23 +9,32 @@ export function useRadar() {
   const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
 
+  const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+
+  useEffect(() => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition((pos) => {
+        setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      }, (err) => {
+        console.warn('Geolocation error:', err);
+        setLocation({ lat: 0, lng: 0 });
+      });
+    } else {
+      setLocation({ lat: 0, lng: 0 });
+    }
+  }, []);
+
   // 1. Fetch nearby users
   useEffect(() => {
     async function fetchNearby() {
-      if (!true /* profile.location mock */) {
-        setLoading(false);
-        return;
+      if (!location) {
+        return; // wait for location
       }
-      
-      // In a real postgis setup, you'd extract lat/lng from profile.location
-      // Assuming a mock or simple structure for now if postgis isn't perfectly wired
-      const lat = 0; // Replace with actual extraction if needed
-      const lng = 0;
       
       // Using the RPC from schema
       const { data, error } = await supabase.rpc('find_nearby_users', {
-        user_lat: lat,
-        user_lng: lng,
+        user_lat: location.lat,
+        user_lng: location.lng,
         radius_meters: 50000 // 50km
       });
       
@@ -51,7 +60,7 @@ export function useRadar() {
     }
     
     fetchNearby();
-  }, [profile]);
+  }, [profile, location]);
 
   // 2. Realtime Presence for "Online"
   useEffect(() => {

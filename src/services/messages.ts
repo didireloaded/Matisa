@@ -17,7 +17,7 @@ export const MessageService = {
     }
 
     const other = data.find((p: any) => p.user_id !== currentUserId);
-    return other?.profiles as Profile || null;
+    return other?.profiles ? (Array.isArray(other.profiles) ? other.profiles[0] : other.profiles) as any as Profile : null;
   },
 
   /**

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Mic, Square, Trash2, Upload } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface AudioRecorderProps {
   onUploadSuccess: (url: string) => void;
@@ -10,7 +10,7 @@ interface AudioRecorderProps {
 }
 
 export function AudioRecorder({ onUploadSuccess, bucket = 'voice_notes' }: AudioRecorderProps) {
-  const { session } = useAuthStore();
+  const { session } = useAuth();
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);

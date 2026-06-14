@@ -291,7 +291,7 @@ export function Explore() {
         supabase
           .from('profiles')
           .select('*')
-          .or(`username.ilike.%${query}%,display_name.ilike.%${query}%`)
+          .or(`username.ilike.%${query.replace(/[,"%]/g, '')}%,display_name.ilike.%${query.replace(/[,"%]/g, '')}%`)
           .limit(12),
         supabase
           .from('posts')

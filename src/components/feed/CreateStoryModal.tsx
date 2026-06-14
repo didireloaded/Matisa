@@ -1,21 +1,26 @@
 import { useState, useRef } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Camera, Image as ImageIcon, Send, Loader2 } from 'lucide-react';
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 
 interface CreateStoryModalProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onStoryCreated?: () => void;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function CreateStoryModal({ children, onStoryCreated }: CreateStoryModalProps) {
-  const [open, setOpen] = useState(false);
+export function CreateStoryModal({ children, onStoryCreated, onOpenChange }: CreateStoryModalProps) {
+  const [open, setOpenState] = useState(false);
+  const setOpen = (newOpen: boolean) => {
+    setOpenState(newOpen);
+    if (onOpenChange) onOpenChange(newOpen);
+  };
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { user } = useAuthStore();
+  const { user } = useAuth();
   
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -77,9 +82,11 @@ export function CreateStoryModal({ children, onStoryCreated }: CreateStoryModalP
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {children}
-      </DialogTrigger>
+      {children && (
+        <DialogTrigger asChild>
+          {children}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px] bg-card border-border">
         <DialogHeader>
           <DialogTitle className="text-foreground font-display text-center">Add to Story</DialogTitle>

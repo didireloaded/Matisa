@@ -17,13 +17,36 @@ export function Messages() {
       if (!profile) return;
       const { data } = await supabase
         .from('conversation_participants')
-        .select('conversation_id, conversations(*)')
+        .select(`
+          conversation_id, 
+          conversations (
+            *,
+            conversation_participants (
+              user_id,
+              profiles (
+                id,
+                username,
+                display_name,
+                avatar_url
+              )
+            )
+          )
+        `)
         .eq('user_id', profile.id);
 
       if (data) {
-        // Need to extract the nested conversations and then ideally fetch the other members.
-        // For simple UI display:
-        const convs = data.map(d => d.conversations) as any;
+        const convs = data.map(d => {
+          const conv = d.conversations as any;
+          if (!conv) return null;
+          // Find the other participant
+          const otherParticipant = conv.conversation_participants?.find(
+            (p: any) => p.user_id !== profile.id
+          );
+          return {
+            ...conv,
+            otherProfile: otherParticipant?.profiles || null
+          };
+        }).filter(Boolean);
         setConversations(convs);
       }
       setLoading(false);
@@ -64,14 +87,17 @@ export function Messages() {
           <div className="divide-y divide-[#2E2822]">
             {conversations.map((conv) => (
               <Link to={`/chat/${conv.id}`} key={conv.id} className="flex items-center gap-3 p-4 hover:bg-[#1C1814] transition cursor-pointer">
-                <div className="h-12 w-12 rounded-full bg-[#2E2822] flex items-center justify-center text-[#8A7F74]">
-                  {/* Placeholder for conversation avatar */}
-                  <MessageCircle size={20} />
-                </div>
+                {(conv as any).otherProfile ? (
+                  <Avatar profile={(conv as any).otherProfile} size={48} />
+                ) : (
+                  <div className="h-12 w-12 rounded-full bg-[#2E2822] flex items-center justify-center text-[#8A7F74] shrink-0">
+                    <MessageCircle size={20} />
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-[#F5F0EA] truncate">
-                      {conv.group_name || 'Conversation'}
+                      {conv.group_name || (conv as any).otherProfile?.display_name || 'User'}
                     </p>
                     {conv.last_message_at && (
                       <span className="text-xs text-[#8A7F74] flex-shrink-0 ml-2">

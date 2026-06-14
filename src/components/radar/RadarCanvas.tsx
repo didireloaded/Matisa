@@ -31,14 +31,14 @@ export function RadarCanvas() {
   const displayedNodes: RadarNodeData[] = (nearbyUsers || []).map((u, i) => {
     // Generate deterministic angle and radius based on ID so they don't jump around
     const angle = (parseInt(u.id.replace(/-/g, '').substring(0, 8), 16) % 360);
-    const radius = Math.min(0.2 + (u.distance / 50000) * 0.8, 1.0); // scale max 50km
+    const radius = Math.min(0.2 + ((u.distance_m ?? 0) / 50000) * 0.8, 1.0); // scale max 50km
     const isOnline = onlineUserIds.has(u.id);
 
     return {
       id: u.id,
-      name: (u.full_name || u.username || 'User').split(' ')[0],
+      name: (u.display_name || u.username || 'User').split(' ')[0],
       avatar_url: u.avatar_url,
-      distance: u.distance < 1000 ? `${Math.round(u.distance)} m` : `${(u.distance / 1000).toFixed(1)} km`,
+      distance: (u.distance_m ?? 0) < 1000 ? `${Math.round(u.distance_m ?? 0)} m` : `${((u.distance_m ?? 0) / 1000).toFixed(1)} km`,
       status: isOnline ? 'Online' : 'Offline',
       mutuals: 0,
       state: isOnline ? 'online' : 'offline',

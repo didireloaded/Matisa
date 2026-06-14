@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from '../contexts/AuthContext';
 
 export interface Comment {
   id: string;
@@ -18,7 +18,7 @@ export interface Comment {
 }
 
 export function useComments(postId: string) {
-  const { session } = useAuthStore();
+  const { session } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,7 +45,7 @@ export function useComments(postId: string) {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setComments(data || []);
+      if (data) setComments(data as any as Comment[]);
     } catch (err) {
       console.error('Error fetching comments:', err);
     } finally {
@@ -89,7 +89,7 @@ export function useComments(postId: string) {
             .single();
 
           if (newComment) {
-            setComments(prev => [...prev, newComment]);
+            setComments(prev => [...prev, newComment as any as Comment]);
           }
         }
       )

@@ -19,7 +19,7 @@ export function EditProfileModal({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (profile && open) {
-      setFullName(profile.fullName || '');
+      setFullName(profile.full_name || '');
       setUsername(profile.username || '');
       setBio(profile.bio || '');
       setLocation(profile.location || '');
@@ -31,7 +31,7 @@ export function EditProfileModal({ children }: { children: React.ReactNode }) {
     setIsSubmitting(true);
     try {
       await updateProfile({
-        fullName: fullName.trim(),
+        full_name: fullName.trim(),
         username: username.trim(),
         bio: bio.trim(),
         location: location.trim(),
@@ -82,7 +82,7 @@ export function EditProfileModal({ children }: { children: React.ReactNode }) {
           <div className="flex flex-col items-center">
             <div className="relative w-24 h-24 rounded-full overflow-hidden border border-border group">
               <img 
-                src={profile?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.id}`} 
+                src={profile?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${profile?.id}`} 
                 alt="Avatar" 
                 className="w-full h-full object-cover" 
               />
