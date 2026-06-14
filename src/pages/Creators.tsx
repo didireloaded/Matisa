@@ -75,7 +75,7 @@ export function Creators() {
       </div>
 
       {/* Main Grid */}
-      <div className="flex-1 overflow-y-auto px-6 pb-32 no-scrollbar">
+      <div className="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar">
         {loading ? (
           <div className="flex h-full items-center justify-center">
             <Loader2 className="w-8 h-8 animate-spin text-white/50" />

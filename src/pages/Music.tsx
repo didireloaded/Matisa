@@ -67,14 +67,14 @@ export function Music() {
   };
 
   return (
-    <div className="pb-32 bg-background min-h-screen text-foreground relative">
+    <div className="pb-28 min-h-full text-foreground relative">
       {/* Decorative Blur Gradients for Apple Music / Spotify Premium vibe */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-secondary/10 blur-[120px]" />
         <div className="absolute top-[20%] left-[-20%] w-[70vw] h-[70vw] rounded-full bg-accent1/5 blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-40 px-6 pt-14 pb-4 bg-background/80 backdrop-blur-xl border-b border-border">
+      <header className="sticky top-0 z-40 px-6 pt-4 pb-4 bg-background/80 backdrop-blur-xl border-b border-border">
         <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
           <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-secondary to-primary flex items-center justify-center shadow-lg shadow-secondary/20">
             <Music2 size={20} className="text-white" />

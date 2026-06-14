@@ -60,13 +60,13 @@ export function Messages() {
   }, [profile]);
 
   return (
-    <div className="pb-32 bg-[#1A181C] min-h-screen text-white relative">
+    <div className="pb-28 min-h-full text-white relative">
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-20%] right-[-10%] w-[70vw] h-[70vw] rounded-full bg-[#FF416C]/10 blur-[120px]" />
         <div className="absolute bottom-[-10%] left-[-20%] w-[60vw] h-[60vw] rounded-full bg-[#8E2DE2]/10 blur-[120px]" />
       </div>
 
-      <header className="sticky top-0 z-40 px-6 pt-14 pb-4 bg-[#1A181C]/80 backdrop-blur-xl border-b border-white/5 flex flex-col gap-4">
+      <header className="sticky top-0 z-40 px-6 pt-4 pb-4 bg-[#1A181C]/80 backdrop-blur-xl border-b border-white/5 flex flex-col gap-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Link

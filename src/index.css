@@ -33,20 +33,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
 
 ::selection { background-color: #C8521A; color: white; }
 
-@keyframes pulse-ring {
-  0%   { transform: scale(1);   opacity: 0.6; }
-  100% { transform: scale(3.2); opacity: 0; }
-}
-.radar-ring::before,
-.radar-ring::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 9999px;
-  background: rgba(200,82,26,0.45);
-  animation: pulse-ring 2.6s ease-out infinite;
-}
-.radar-ring::after { animation-delay: 1.3s; }
+
 
 @keyframes slide-up {
   from { transform: translateY(24px); opacity: 0; }
@@ -140,17 +127,17 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
 }
 
 :root, .dark {
-  --background: #0B0B0B;
+  --background: #050505;
   --foreground: #FFFFFF;
-  --card: #151515;
+  --card: #121212;
   --card-foreground: #FFFFFF;
-  --popover: #151515;
+  --popover: #121212;
   --popover-foreground: #FFFFFF;
   --primary: #FF9D2E;
   --primary-foreground: #000000;
   --secondary: #A855F7;
   --secondary-foreground: #FFFFFF;
-  --muted: #151515;
+  --muted: #1A1A1A;
   --muted-foreground: #A0A0A0;
   --accent: #222222;
   --accent-foreground: #FFFFFF;
@@ -164,11 +151,11 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   --chart-4: #FFD700;
   --chart-5: #FF6B6B;
   --radius: 1.2rem;
-  --sidebar: #0B0B0B;
+  --sidebar: #050505;
   --sidebar-foreground: #FFFFFF;
   --sidebar-primary: #FF9D2E;
   --sidebar-primary-foreground: #000000;
-  --sidebar-accent: #151515;
+  --sidebar-accent: #1A1A1A;
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #222222;
   --sidebar-ring: #FF9D2E;
@@ -178,17 +165,60 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   --accent2: #FFD700;
   --accent3: #FF6B6B;
   --accent4: #32CD32;
+  
+  /* Glassmorphism Variables */
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+@layer components {
+  .glass-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+  }
+  
+  .glass-card {
+    background: linear-gradient(145deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius);
+  }
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
+    /* Native App Physics: Prevent accidental text selection and long-press callouts */
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
   }
+  
+  /* Allow text selection only in inputs and textareas */
+  input, textarea {
+    user-select: auto;
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Native App Physics: Prevent overscroll bounce (pull-to-refresh reveal) */
+    overscroll-behavior-y: none;
+    overflow-x: hidden;
   }
-  html {
-    @apply font-sans;
+
+  /* Global Scrollbar Hiding (Native apps rarely show permanent scrollbars) */
+  ::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+  }
+  * {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
   }
 }
 
@@ -199,4 +229,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   .pt-safe {
     padding-top: env(safe-area-inset-top);
   }
+}
+
+/* Mobile optimizations */
+html, body, #root {
+  -webkit-tap-highlight-color: transparent;
+}
+.no-scrollbar {
+  -webkit-overflow-scrolling: touch;
 }

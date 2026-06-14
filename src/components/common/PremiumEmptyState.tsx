@@ -5,7 +5,7 @@ interface PremiumEmptyStateProps {
   icon: LucideIcon;
   title: string;
   description: string;
-  action?: ReactNode;
+  action?: ReactNode | { label: string; onClick: () => void };
   glowColor?: string; // e.g. 'primary', 'secondary', 'accent1'
 }
 
@@ -28,6 +28,23 @@ export function PremiumEmptyState({
 
   const hexColor = glowHexMap[glowColor] || glowHexMap.primary;
 
+  const renderAction = () => {
+    if (!action) return null;
+
+    if (typeof action === "object" && "label" in action && "onClick" in action) {
+      return (
+        <button
+          onClick={(action as any).onClick}
+          className="px-6 py-3 rounded-full bg-primary text-black font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(255,157,46,0.3)]"
+        >
+          {(action as any).label}
+        </button>
+      );
+    }
+
+    return action as ReactNode;
+  };
+
   return (
     <div className="flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
       <div className="relative mb-6">
@@ -46,7 +63,7 @@ export function PremiumEmptyState({
         {description}
       </p>
 
-      {action && <div className="mt-2">{action}</div>}
+      {action && <div className="mt-2">{renderAction()}</div>}
     </div>
   );
 }

@@ -16,9 +16,9 @@ export function Settings() {
   };
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-background text-foreground pb-24">
+    <div className="flex flex-col min-h-full bg-background text-foreground pb-28">
       {/* Header */}
-      <header className="sticky top-0 z-40 px-6 pt-12 pb-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center gap-4">
+      <header className="sticky top-0 z-40 px-6 pt-4 pb-4 bg-background/80 backdrop-blur-xl border-b border-border flex items-center gap-4">
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 text-white/70 hover:text-white transition rounded-full hover:bg-white/5"

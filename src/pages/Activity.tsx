@@ -72,9 +72,9 @@ export function Activity() {
   };
 
   return (
-    <div className="pb-32 bg-background min-h-screen text-foreground relative">
-      <header className="sticky top-0 z-40 px-6 pt-14 pb-4 bg-background/80 backdrop-blur-xl border-b border-border">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
+    <div className="pb-28 min-h-full text-foreground relative">
+      <header className="sticky top-0 z-40 px-6 pt-4 pb-4 bg-background/80 backdrop-blur-3xl border-b border-border/50">
+        <h1 className="text-4xl font-display font-extrabold tracking-tight text-foreground flex items-center gap-3">
           Activity
           {notifications.some((n) => !n.is_read) && (
             <span className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />

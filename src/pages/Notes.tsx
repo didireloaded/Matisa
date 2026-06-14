@@ -191,7 +191,7 @@ export function Notes() {
       </div>
 
       {/* Notes Feed - Masonry Layout */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 no-scrollbar pb-24">
+      <div className="flex-1 overflow-y-auto px-4 py-6 no-scrollbar pb-28">
         {loading ? (
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 rounded-full border-2 border-[#FF9D2E] border-t-transparent animate-spin" />

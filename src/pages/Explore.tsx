@@ -261,9 +261,9 @@ export function Explore() {
   };
 
   return (
-    <div className="min-h-full pb-32 bg-background text-foreground">
+    <div className="min-h-full pb-28 bg-background text-foreground">
       {/* Top Search Bar */}
-      <div className="sticky top-0 z-20 px-6 pt-14 pb-4 bg-background/90 backdrop-blur-xl border-b border-border">
+      <div className="sticky top-0 z-20 px-6 pt-4 pb-4 bg-background/90 backdrop-blur-xl border-b border-border">
         <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 border border-white/10 focus-within:border-white/30 transition-colors">
           <Search size={18} className="text-white/50" />
           <input

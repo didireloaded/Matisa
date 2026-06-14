@@ -5,7 +5,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
 import { Avatar } from "@/components/common/Avatar";
 import type { Post } from "@/types";
-
+import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 export function Profile() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -21,7 +21,10 @@ export function Profile() {
 
   useEffect(() => {
     async function loadProfile() {
-      if (!targetId) return;
+      if (!targetId) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
 
       try {
@@ -57,9 +60,9 @@ export function Profile() {
   }, [targetId]);
 
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-background text-foreground pb-24 relative">
+    <div className="flex flex-col min-h-full bg-background text-foreground pb-28 relative">
       {/* Top Header */}
-      <div className="flex items-center justify-between px-6 pt-12 pb-4">
+      <div className="flex items-center justify-between px-6 pt-4 pb-4">
         <button
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 text-white/70 hover:text-white transition"
@@ -84,11 +87,22 @@ export function Profile() {
           <span className="text-white/50 text-sm">Loading profile...</span>
         </div>
       ) : !userProfile ? (
-        <div className="flex flex-col items-center justify-center flex-1 mt-12 text-center px-6">
-          <h2 className="text-xl font-bold mb-2">User not found</h2>
-          <p className="text-white/50 text-sm">
-            This account may have been deleted or does not exist.
-          </p>
+        <div className="flex-1 flex flex-col items-center justify-center px-6 -mt-10">
+          <PremiumEmptyState
+            icon={!targetId ? SettingsIcon : MessageSquare}
+            title={!targetId ? "Sign In Required" : "User Not Found"}
+            description={
+              !targetId
+                ? "Create an account to set up your profile, track your activity, and connect with other creators."
+                : "This account may have been deleted or does not exist."
+            }
+            action={
+              !targetId
+                ? { label: "Sign In / Sign Up", onClick: () => navigate("/auth") }
+                : { label: "Go Home", onClick: () => navigate("/") }
+            }
+            glowColor="primary"
+          />
         </div>
       ) : (
         <>

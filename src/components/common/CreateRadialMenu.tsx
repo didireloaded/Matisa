@@ -1,6 +1,5 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Image, Music, MapPin, AlignLeft, Mic, Video, Users } from "lucide-react";
+import { Plus, Image, AlignLeft, Mic, Users, X } from "lucide-react";
 
 interface CreateRadialMenuProps {
   isOpen: boolean;
@@ -10,26 +9,37 @@ interface CreateRadialMenuProps {
 
 export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenuProps) {
   const menuItems = [
-    { icon: <Image className="w-5 h-5 text-white" />, label: "Story", color: "bg-blue-500" },
-    { icon: <AlignLeft className="w-5 h-5 text-white" />, label: "Note", color: "bg-green-500" },
-    { icon: <Mic className="w-5 h-5 text-white" />, label: "Voice", color: "bg-yellow-500" },
-    { icon: <Users className="w-5 h-5 text-white" />, label: "Room", color: "bg-purple-500" },
+    {
+      icon: <Image className="w-5 h-5 text-white" />,
+      label: "Story",
+      color: "bg-blue-500 shadow-blue-500/50",
+    },
+    {
+      icon: <AlignLeft className="w-5 h-5 text-white" />,
+      label: "Note",
+      color: "bg-green-500 shadow-green-500/50",
+    },
+    {
+      icon: <Mic className="w-5 h-5 text-white" />,
+      label: "Voice",
+      color: "bg-yellow-500 shadow-yellow-500/50",
+    },
+    {
+      icon: <Users className="w-5 h-5 text-white" />,
+      label: "Room",
+      color: "bg-purple-500 shadow-purple-500/50",
+    },
   ];
 
-  // Calculate positions in a semi-circle or full circle
-  // We'll arrange them in an arc above the center button
+  // Calculate positions in an arc above the center button
   const radius = 90; // distance from center
   const getTransform = (index: number, total: number) => {
-    // Spread evenly across a 180-degree arc above the center
     const angleRange = Math.PI; // 180 degrees
     const startAngle = Math.PI; // start from left (180 deg)
 
-    // If there's only 1 item, put it straight up
     if (total === 1) return { x: 0, y: -radius };
 
-    // Calculate angle for this item
     const angle = startAngle - (angleRange / (total - 1)) * index;
-
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
     return { x, y };
@@ -44,8 +54,9 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
             onClick={onClose}
-            className="fixed inset-0 z-40 bg-[#0F0D0B]/80 backdrop-blur-sm"
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xl"
           />
 
           {/* Radial Menu Container - Anchored to bottom center */}
@@ -61,9 +72,9 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
                   exit={{ opacity: 0, scale: 0, x: 0, y: 0 }}
                   transition={{
                     type: "spring",
-                    stiffness: 400,
+                    stiffness: 500,
                     damping: 25,
-                    delay: index * 0.05,
+                    delay: index * 0.04,
                   }}
                   className="absolute left-1/2 bottom-0 -ml-7 pointer-events-auto"
                   onClick={() => {
@@ -71,13 +82,13 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
                     onClose();
                   }}
                 >
-                  <div className="flex flex-col items-center gap-1.5 cursor-pointer group">
+                  <div className="flex flex-col items-center gap-2 cursor-pointer group">
                     <div
-                      className={`w-14 h-14 rounded-full flex items-center justify-center ${item.color} shadow-lg shadow-black/50 transform transition-transform group-hover:scale-110 group-active:scale-95`}
+                      className={`w-14 h-14 rounded-full flex items-center justify-center ${item.color} shadow-2xl transform transition-all duration-200 group-hover:scale-110 group-active:scale-95`}
                     >
                       {item.icon}
                     </div>
-                    <span className="text-[11px] font-bold text-white bg-black/50 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                    <span className="text-[11px] font-bold text-white bg-black/40 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                       {item.label}
                     </span>
                   </div>
@@ -87,13 +98,14 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
 
             {/* Close / Trigger Button overlay */}
             <motion.button
-              initial={{ rotate: 0 }}
-              animate={{ rotate: 45 }}
-              exit={{ rotate: 0 }}
+              initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
+              animate={{ rotate: 0, scale: 1, opacity: 1 }}
+              exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
               onClick={onClose}
-              className="absolute left-1/2 bottom-0 -translate-x-1/2 w-14 h-14 bg-white rounded-full flex items-center justify-center text-black shadow-xl pointer-events-auto z-10 hover:bg-gray-100 transition-colors"
+              className="absolute left-1/2 bottom-0 -translate-x-1/2 w-14 h-14 bg-white rounded-full flex items-center justify-center text-black shadow-[0_0_30px_rgba(255,255,255,0.3)] pointer-events-auto z-10 hover:bg-gray-100 transition-colors active:scale-90"
             >
-              <Plus className="w-7 h-7" />
+              <X className="w-7 h-7" />
             </motion.button>
           </div>
         </>

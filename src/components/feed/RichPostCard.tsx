@@ -75,95 +75,101 @@ export function RichPostCard({
   );
 
   return (
-    <div className="relative w-full rounded-[32px] overflow-hidden bg-gradient-to-tr from-card to-background aspect-[4/5] shadow-2xl mb-6">
-      {/* Background Media Placeholder (If post has media, use it, else generic gradient) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-secondary/40 mix-blend-overlay opacity-60" />
-
-      {/* Content Rendering */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center p-8 pointer-events-none z-0">
-        {post.type === "voice" ? (
-          <div className="w-full flex flex-col items-center gap-6 pointer-events-auto">
-            {post.content && (
-              <p className="text-white text-xl font-medium text-center drop-shadow-md">
-                {post.content}
-              </p>
-            )}
-
-            <div className="w-full bg-black/40 backdrop-blur-xl border border-white/10 rounded-[32px] p-6 shadow-2xl">
-              <div className="flex items-center justify-between mb-4 px-2">
-                <span className="text-sm font-bold text-white/50">Voice Note</span>
-                <span className="text-sm font-bold text-[#FF416C]">
-                  {post.voice_duration
-                    ? `0:${post.voice_duration.toString().padStart(2, "0")}`
-                    : "0:14"}
-                </span>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={toggleAudio}
-                  className="w-14 h-14 shrink-0 rounded-full bg-gradient-to-tr from-[#FF416C] to-[#8E2DE2] flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform"
-                >
-                  {isPlaying ? (
-                    <Pause className="w-6 h-6 fill-current" />
-                  ) : (
-                    <Play className="w-6 h-6 fill-current ml-1" />
-                  )}
-                </button>
-
-                <div className="flex-1 relative h-12 flex items-center">
-                  {/* Fake waveform */}
-                  <Waveform />
-                  {/* Progress overlay */}
-                  <div
-                    className="absolute inset-0 bg-white/20 mix-blend-overlay"
-                    style={{ clipPath: `inset(0 ${100 - progress}% 0 0)` }}
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <p className="text-white text-2xl font-bold text-center leading-relaxed drop-shadow-lg max-w-[90%]">
-            {post.content?.replace(/\[VOICE\]\|.*$/, "")}
-          </p>
-        )}
-      </div>
-
+    <div className="glass-card mb-4 p-5 flex flex-col gap-4">
       {/* Post Header */}
-      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <Avatar profile={post.profiles} size={40} />
+          <Avatar profile={post.profiles} size={44} />
           <div className="flex flex-col">
-            <span className="font-bold text-white shadow-sm text-sm">
+            <span className="font-bold text-white text-[15px]">
               {post.profiles?.display_name || post.profiles?.full_name || "Anonymous"}
             </span>
-            <span className="text-[10px] text-white/70">
-              {new Date(post.created_at).toLocaleDateString()}
+            <span className="text-xs text-white/50">
+              @{post.profiles?.username || "user"} •{" "}
+              {new Date(post.created_at).toLocaleDateString(undefined, {
+                month: "short",
+                day: "numeric",
+              })}
             </span>
           </div>
         </div>
       </div>
 
-      {/* Right Action Bar */}
-      <div className="absolute right-4 bottom-8 flex flex-col items-center gap-6 z-10 bg-white/10 backdrop-blur-md rounded-full py-6 px-3 border border-white/20">
-        <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
-          <Heart
-            className={`w-6 h-6 transition ${liked ? "fill-primary text-primary" : "text-white group-hover:fill-white/50"}`}
-          />
-          <span className="text-[10px] font-medium text-white/90">{likes}</span>
-        </button>
-        <button onClick={onComment} className="flex flex-col items-center gap-1 group">
-          <MessageCircle className="w-6 h-6 text-white group-hover:fill-white/50 transition" />
-          <span className="text-[10px] font-medium text-white/90">{post.comment_count ?? 0}</span>
-        </button>
-        <button className="flex flex-col items-center gap-1 group">
-          <Bookmark className="w-6 h-6 text-white group-hover:fill-white/50 transition" />
-          <span className="text-[10px] font-medium text-white/90">Save</span>
-        </button>
-        <button className="flex flex-col items-center gap-1 group mt-2">
-          <Send className="w-5 h-5 text-white" />
-        </button>
+      {/* Content Rendering */}
+      <div className="pl-[56px]">
+        {post.type === "voice" ? (
+          <div className="w-full flex flex-col gap-3">
+            {post.content && (
+              <p className="text-white/90 text-[15px] leading-relaxed">{post.content}</p>
+            )}
+
+            <div className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center gap-4">
+              <button
+                onClick={toggleAudio}
+                className="w-12 h-12 shrink-0 rounded-full bg-primary flex items-center justify-center text-black active:scale-95 transition-transform"
+              >
+                {isPlaying ? (
+                  <Pause className="w-5 h-5 fill-current" />
+                ) : (
+                  <Play className="w-5 h-5 fill-current ml-1" />
+                )}
+              </button>
+
+              <div className="flex-1 relative h-10 flex items-center">
+                <Waveform />
+                <div
+                  className="absolute inset-0 bg-white/20 mix-blend-overlay"
+                  style={{ clipPath: `inset(0 ${100 - progress}% 0 0)` }}
+                />
+              </div>
+
+              <span className="text-xs font-bold text-white/50 w-8 text-right">
+                {post.voice_duration
+                  ? `0:${post.voice_duration.toString().padStart(2, "0")}`
+                  : "0:14"}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <p className="text-white/90 text-[15px] leading-relaxed whitespace-pre-wrap">
+            {post.content?.replace(/\[VOICE\]\|.*$/, "")}
+          </p>
+        )}
+
+        {/* Action Bar */}
+        <div className="flex items-center gap-6 mt-5 pt-4 border-t border-white/5">
+          <button
+            onClick={handleLike}
+            className="flex items-center gap-2 group active:scale-95 transition-transform"
+          >
+            <Heart
+              className={`w-5 h-5 transition ${liked ? "fill-primary text-primary" : "text-white/50 group-hover:text-white"}`}
+            />
+            <span
+              className={`text-sm font-medium ${liked ? "text-primary" : "text-white/50 group-hover:text-white"}`}
+            >
+              {likes > 0 ? likes : ""}
+            </span>
+          </button>
+
+          <button
+            onClick={onComment}
+            className="flex items-center gap-2 group active:scale-95 transition-transform"
+          >
+            <MessageCircle className="w-5 h-5 text-white/50 group-hover:text-white transition" />
+            <span className="text-sm font-medium text-white/50 group-hover:text-white">
+              {post.comment_count > 0 ? post.comment_count : ""}
+            </span>
+          </button>
+
+          <button className="flex items-center gap-2 group active:scale-95 transition-transform ml-auto">
+            <Bookmark className="w-5 h-5 text-white/50 group-hover:text-white transition" />
+          </button>
+
+          <button className="flex items-center gap-2 group active:scale-95 transition-transform">
+            <Send className="w-5 h-5 text-white/50 group-hover:text-white transition" />
+          </button>
+        </div>
       </div>
     </div>
   );

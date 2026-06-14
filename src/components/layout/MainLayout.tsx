@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Outlet, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, Plus, Heart, Bell, MessageSquare } from "lucide-react";
+import { Search, Plus, Heart, Bell, MessageSquare, Home, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { CreateNoteModal } from "@/components/feed/CreateNoteModal";
@@ -71,16 +71,16 @@ function TopBar() {
   }, [profile]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-transparent">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-background/60 backdrop-blur-3xl border-b border-white/5">
       {/* Logo equivalent from reference image: a simple 4-dot menu icon */}
       <div className="flex items-center gap-2 text-white">
         <div className="grid grid-cols-2 gap-[3px]">
-          <div className="w-2.5 h-2.5 rounded-sm bg-white" />
+          <div className="w-2.5 h-2.5 rounded-sm bg-primary" />
           <div className="w-2.5 h-2.5 rounded-sm bg-white" />
           <div className="w-2.5 h-2.5 rounded-sm bg-white" />
           <div className="w-2.5 h-2.5 rounded-sm bg-white/50" />
         </div>
-        <span className="text-xl font-bold tracking-wide ml-2">Menu</span>
+        <span className="text-xl font-display font-extrabold tracking-tight ml-2">Matisa</span>
       </div>
 
       {/* Right actions */}
@@ -125,49 +125,52 @@ function BottomNav({ onCompose }: { onCompose: () => void }) {
   const path = location.pathname;
 
   return (
-    <div className="fixed bottom-8 left-6 right-6 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] flex items-center justify-between px-2 z-40 shadow-2xl">
+    <div className="fixed bottom-0 left-0 right-0 h-[84px] bg-background/80 backdrop-blur-[40px] border-t border-white/5 flex items-start justify-between px-8 pt-3 pb-[env(safe-area-inset-bottom,20px)] z-40">
       <button
         onClick={() => navigate("/")}
-        className={`flex items-center gap-2 rounded-full px-5 py-2.5 transition-colors ${path === "/" ? "bg-white/20 text-white" : "text-white/70 hover:text-white"}`}
+        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 ${path === "/" ? "text-primary" : "text-white/50 hover:text-white"}`}
       >
-        <div className="w-5 h-5 grid grid-cols-2 gap-0.5">
-          <div className={`rounded-sm ${path === "/" ? "bg-white" : "bg-white/70"}`} />
-          <div className={`rounded-sm ${path === "/" ? "bg-white" : "bg-white/70"}`} />
-          <div className={`rounded-sm ${path === "/" ? "bg-white" : "bg-white/70"}`} />
-          <div className={`rounded-sm ${path === "/" ? "bg-white" : "bg-white/70"}`} />
+        <div className={`p-1.5 rounded-full ${path === "/" ? "bg-primary/10" : ""}`}>
+          <Home size={26} className={path === "/" ? "fill-primary" : ""} />
         </div>
-        {path === "/" && <span className="font-semibold text-sm">Home</span>}
       </button>
 
       <button
         onClick={() => navigate("/explore")}
-        className={`p-3 transition-colors ${path === "/explore" ? "text-white" : "text-white/70 hover:text-white"}`}
+        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 ${path === "/explore" ? "text-primary" : "text-white/50 hover:text-white"}`}
       >
-        <Search className="w-6 h-6" />
+        <div className={`p-1.5 rounded-full ${path === "/explore" ? "bg-primary/10" : ""}`}>
+          <Search size={26} className={path === "/explore" ? "text-primary stroke-[2.5]" : ""} />
+        </div>
       </button>
 
+      {/* Center Create Button */}
       <button
         onClick={onCompose}
-        className="p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+        className="w-[52px] h-[52px] rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-black shadow-[0_4px_20px_rgba(255,157,46,0.4)] transition-all active:scale-90 active:shadow-none -mt-5 border-[4px] border-background"
       >
-        <Plus className="w-6 h-6" />
+        <Plus size={28} />
       </button>
 
       <button
         onClick={() => navigate("/activity")}
-        className={`p-3 transition-colors ${path === "/activity" ? "text-white" : "text-white/70 hover:text-white"}`}
+        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 relative ${path === "/activity" ? "text-primary" : "text-white/50 hover:text-white"}`}
       >
-        <Heart className="w-6 h-6" />
+        <div className={`p-1.5 rounded-full ${path === "/activity" ? "bg-primary/10" : ""}`}>
+          <Heart size={26} className={path === "/activity" ? "fill-primary" : ""} />
+        </div>
       </button>
 
       <button
         onClick={() => navigate("/profile")}
-        className="p-3 text-white/70 hover:text-white transition"
+        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 ${path.startsWith("/profile") ? "text-primary" : "text-white/50 hover:text-white"}`}
       >
-        <img
-          src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex"
-          className={`w-6 h-6 rounded-full object-cover bg-black ${path.startsWith("/profile") ? "ring-2 ring-white ring-offset-2 ring-offset-transparent" : ""}`}
-        />
+        <div className={`p-1.5 rounded-full ${path.startsWith("/profile") ? "bg-primary/10" : ""}`}>
+          <User
+            size={26}
+            className={path.startsWith("/profile") ? "fill-primary text-primary" : ""}
+          />
+        </div>
       </button>
     </div>
   );
@@ -208,17 +211,17 @@ export function MainLayout() {
   const hideNav = HIDE_NAV.some((p) => path.startsWith(p));
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col shadow-2xl shadow-black bg-background text-foreground">
+    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col shadow-2xl shadow-black bg-background text-foreground pt-safe pb-safe">
       {!hideTop && <TopBar />}
 
-      <main className="flex-1 overflow-hidden">
+      <main className="flex-1 overflow-y-auto no-scrollbar">
         <AnimatePresence mode="wait">
           <motion.div
             key={path}
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2, ease: "easeInOut" }}
             className="h-full"
           >
             <Outlet />

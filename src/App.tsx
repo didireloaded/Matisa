@@ -8,7 +8,7 @@ import { MainLayout } from "./components/layout/MainLayout";
 import { Loader2 } from "lucide-react";
 
 // Lazy load pages for code splitting (Performance Phase 4)
-const Discovery = lazy(() => import("./pages/Discovery").then((m) => ({ default: m.Discovery })));
+const Home = lazy(() => import("./pages/Home").then((m) => ({ default: m.Home })));
 const Notes = lazy(() => import("./pages/Notes").then((m) => ({ default: m.Notes })));
 const Explore = lazy(() => import("./pages/Explore").then((m) => ({ default: m.Explore })));
 const Events = lazy(() => import("./pages/Events").then((m) => ({ default: m.Events })));
@@ -63,7 +63,7 @@ function App() {
             <Suspense fallback={<PageLoader />}>
               <Routes>
                 <Route element={<MainLayout />}>
-                  <Route path="/" element={<Discovery />} />
+                  <Route path="/" element={<Home />} />
                   <Route path="/notes" element={<Notes />} />
                   <Route path="/explore" element={<Explore />} />
                   <Route path="/events" element={<Events />} />

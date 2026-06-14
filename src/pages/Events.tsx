@@ -235,7 +235,7 @@ export function Events() {
   };
 
   return (
-    <div className="pb-32 bg-background min-h-screen text-foreground relative">
+    <div className="pb-28 min-h-full text-foreground relative">
       {/* Decorative Background Glow */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
         <div className="absolute top-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/5 blur-[100px]" />

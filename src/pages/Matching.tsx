@@ -143,7 +143,7 @@ export function Matching() {
           )}
 
           {/* Main Card Swiper */}
-          <div className="flex-1 relative px-6 pb-32 w-full h-full">
+          <div className="flex-1 relative px-6 pb-28 w-full h-full">
             {cards.length > 0 ? (
               <motion.div
                 drag="x"
