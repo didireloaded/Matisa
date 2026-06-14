@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Bookmark, Send, Plus, Bell, MessageSquare, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 import { StoriesViewer, Story } from '../components/stories/StoriesViewer';
+import { PeopleCard, Person } from '../components/feed/PeopleCard';
+import { UserQuickViewCard } from '../components/karaoke/UserQuickViewCard';
 
 const MOCK_STORIES: Story[] = [
   {
@@ -17,7 +17,7 @@ const MOCK_STORIES: Story[] = [
   {
     id: 's2',
     userId: 'u2',
-    username: 'Julien Ray',
+    username: 'Julien',
     userAvatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=julien',
     mediaUrl: 'https://images.unsplash.com/photo-1542204165-65bf26472b9b?auto=format&fit=crop&q=80&w=1000',
     mediaType: 'image',
@@ -34,37 +34,93 @@ const MOCK_STORIES: Story[] = [
   }
 ];
 
+const MOCK_PEOPLE: Person[] = [
+  {
+    id: 'p1',
+    name: 'Elsa Jonhson',
+    age: 24,
+    city: 'London, UK',
+    occupation: 'Photographer',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=600',
+    isVerified: true,
+    mutualFriends: 12,
+    interests: ['Photography', 'Travel', 'Art'],
+    badges: ['Creator'],
+    recentActivity: '2h ago'
+  },
+  {
+    id: 'p2',
+    name: 'Hannah Smith',
+    age: 22,
+    city: 'Toronto, Canada',
+    occupation: 'Student',
+    photoUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=600',
+    isVerified: true,
+    mutualFriends: 5,
+    interests: ['Music', 'Gaming'],
+    badges: [],
+    recentActivity: '3h ago'
+  },
+  {
+    id: 'p3',
+    name: 'Dana Williams',
+    age: 26,
+    city: 'New York, US',
+    occupation: 'Professional artist',
+    photoUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=600',
+    isVerified: false,
+    mutualFriends: 2,
+    interests: ['Design', 'Film', 'Fashion'],
+    badges: ['Creator', 'Artist'],
+    recentActivity: 'Online'
+  },
+  {
+    id: 'p4',
+    name: 'Patric Rookwood',
+    age: 28,
+    city: 'Berlin, DE',
+    occupation: 'DJ',
+    photoUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=600',
+    isVerified: false,
+    mutualFriends: 0,
+    interests: ['Music', 'Nightlife'],
+    badges: ['Musician'],
+    recentActivity: 'Online'
+  },
+  {
+    id: 'p5',
+    name: 'Alex Costa',
+    age: 25,
+    city: 'Lisbon, PT',
+    occupation: 'Developer',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=600',
+    isVerified: true,
+    mutualFriends: 8,
+    interests: ['Tech', 'Fitness', 'Coffee'],
+    badges: [],
+    recentActivity: '1d ago'
+  }
+];
+
+const FILTERS = ['All', 'Creators', 'Friends', 'Trending', 'New'];
+
 export function Discovery() {
-  const navigate = useNavigate();
   const [activeStoryIndex, setActiveStoryIndex] = useState<number | null>(null);
+  const [activeFilter, setActiveFilter] = useState('All');
+  
+  // Quick View State
+  const [quickViewUser, setQuickViewUser] = useState<any | null>(null);
 
-  // Bottom Nav Bar handled within this page to perfectly match the floating design from reference
+  // Split people into columns for masonry layout manually to ensure consistent distribution
+  const featuredPerson = MOCK_PEOPLE[0];
+  const col1 = [MOCK_PEOPLE[1], MOCK_PEOPLE[3]];
+  const col2 = [MOCK_PEOPLE[2], MOCK_PEOPLE[4]];
+
   return (
-    <div className="min-h-[100dvh] bg-[#0A0B10] text-white flex flex-col relative pb-28">
-      {/* Top Header */}
-      <div className="flex items-center justify-between px-6 pt-12 pb-4">
-        <div className="flex items-center gap-2">
-          <div className="grid grid-cols-2 gap-[3px]">
-            <div className="w-2.5 h-2.5 rounded-sm bg-white" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-white" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-white" />
-            <div className="w-2.5 h-2.5 rounded-sm bg-white/50" />
-          </div>
-          <span className="text-xl font-bold tracking-wide ml-2">Menu</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button className="p-2 hover:bg-white/10 rounded-full transition">
-            <Bell className="w-5 h-5 text-white/80" />
-          </button>
-          <button 
-            onClick={() => navigate('/messages')}
-            className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:bg-white/90 transition"
-          >
-            <MessageSquare className="w-5 h-5" />
-          </button>
-        </div>
-      </div>
+    <div className="min-h-full pb-32"> {/* Increased padding for bottom nav */}
+      
+      {/* Top Header Placeholder (MainLayout provides the actual header now) */}
+      <div className="pt-2"></div>
 
       {/* Stories Carousel */}
       <div className="flex items-start gap-5 px-6 overflow-x-auto no-scrollbar py-2">
@@ -84,8 +140,8 @@ export function Discovery() {
             onClick={() => setActiveStoryIndex(idx)}
           >
             <div className="w-16 h-16 rounded-full p-[2px] bg-gradient-to-tr from-yellow-400 via-orange-500 to-purple-500">
-              <div className="w-full h-full rounded-full border-[3px] border-[#0A0B10] overflow-hidden group-hover:scale-95 transition-transform">
-                <img src={story.userAvatar} alt={story.username} className="w-full h-full object-cover bg-[#1A1B23]" />
+              <div className="w-full h-full rounded-full border-[3px] border-background overflow-hidden group-hover:scale-95 transition-transform">
+                <img src={story.userAvatar} alt={story.username} className="w-full h-full object-cover bg-card" />
               </div>
             </div>
             <span className="text-xs font-medium text-white/80">{story.username}</span>
@@ -93,112 +149,67 @@ export function Discovery() {
         ))}
       </div>
 
-      {/* Main Feed */}
-      <div className="flex flex-col px-6 mt-8 space-y-8">
-        
-        {/* Post Card 1 */}
-        <div className="relative w-full rounded-[32px] overflow-hidden bg-gradient-to-b from-yellow-500 to-orange-500 aspect-[4/5] shadow-2xl">
-          <img 
-            src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=1000" 
-            alt="Post content" 
-            className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
-          />
-          
-          {/* Post Header */}
-          <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
-            <div className="flex items-center gap-3">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" 
-                alt="Alex Smith" 
-                className="w-10 h-10 rounded-full border-2 border-white/20 object-cover bg-black"
-              />
-              <span className="font-bold text-white shadow-sm">Alex Smith</span>
-            </div>
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 bg-white rounded-full" />
-              <div className="w-4 h-1.5 bg-white/50 rounded-full" />
-            </div>
-          </div>
-
-          {/* Right Action Bar */}
-          <div className="absolute right-4 bottom-24 flex flex-col items-center gap-6 z-10 bg-white/10 backdrop-blur-md rounded-full py-6 px-3 border border-white/20">
-            <button className="flex flex-col items-center gap-1 group">
-              <Heart className="w-6 h-6 text-white group-hover:fill-white transition" />
-              <span className="text-[10px] font-medium text-white/90">1.234k</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group">
-              <MessageCircle className="w-6 h-6 text-white group-hover:fill-white transition" />
-              <span className="text-[10px] font-medium text-white/90">230</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group">
-              <Bookmark className="w-6 h-6 text-white group-hover:fill-white transition" />
-              <span className="text-[10px] font-medium text-white/90">Save</span>
-            </button>
-            <button className="flex flex-col items-center gap-1 group mt-2">
-              <Send className="w-5 h-5 text-white" />
-            </button>
-          </div>
-        </div>
-
-        {/* Post Card 2 */}
-        <div className="relative w-full rounded-[32px] overflow-hidden bg-gradient-to-tr from-cyan-900 to-blue-900 aspect-[4/5] shadow-2xl">
-          <img 
-            src="https://images.unsplash.com/photo-1513364776144-60967b0f800f?auto=format&fit=crop&q=80&w=1000" 
-            alt="Post content" 
-            className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-60"
-          />
-          
-          <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
-            <div className="flex items-center gap-3">
-              <img 
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=hr" 
-                alt="HR Rumen" 
-                className="w-10 h-10 rounded-full border-2 border-white/20 object-cover bg-black"
-              />
-              <span className="font-bold text-white shadow-sm">HR Rumen</span>
-            </div>
-            <div className="flex gap-1">
-              <div className="w-1.5 h-1.5 bg-white rounded-full" />
-              <div className="w-4 h-1.5 bg-white/50 rounded-full" />
-            </div>
-          </div>
-        </div>
-
+      {/* Title */}
+      <div className="px-6 mt-6 mb-4">
+        <h1 className="text-3xl font-bold tracking-tight">Browse your vibe</h1>
       </div>
 
-      {/* Floating Bottom Nav (Replacing default layout nav for this screen) */}
-      <div className="fixed bottom-8 left-6 right-6 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] flex items-center justify-between px-2 z-40 shadow-2xl">
-        <button className="flex items-center gap-2 bg-white/20 rounded-full px-5 py-2.5 text-white">
-          <div className="w-5 h-5 grid grid-cols-2 gap-0.5">
-            <div className="bg-white rounded-sm" />
-            <div className="bg-white rounded-sm" />
-            <div className="bg-white rounded-sm" />
-            <div className="bg-white rounded-sm" />
-          </div>
-          <span className="font-semibold text-sm">Home</span>
-        </button>
-
-        <button className="p-3 text-white/70 hover:text-white transition">
-          <Search className="w-6 h-6" />
-        </button>
-
-        <button className="p-3 text-white/70 hover:text-white transition">
-          <Plus className="w-6 h-6" />
-        </button>
-
-        <button className="p-3 text-white/70 hover:text-white transition">
-          <Heart className="w-6 h-6" />
-        </button>
-
-        <button 
-          onClick={() => navigate('/profile')}
-          className="p-3 text-white/70 hover:text-white transition"
-        >
-          <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" className="w-6 h-6 rounded-full object-cover bg-black" />
-        </button>
+      {/* Floating Segmented Filters */}
+      <div className="px-6 mb-6 overflow-x-auto no-scrollbar pb-2">
+        <div className="flex gap-2">
+          {FILTERS.map(f => (
+            <button
+              key={f}
+              onClick={() => setActiveFilter(f)}
+              className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-colors border ${
+                activeFilter === f 
+                  ? 'bg-white text-black border-white' 
+                  : 'bg-white/5 text-white/70 border-white/10 hover:bg-white/10'
+              }`}
+            >
+              {f}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Story Viewer Overlay */}
+      {/* Discovery Grid (Masonry) */}
+      <div className="px-6 flex flex-col gap-4">
+        {/* Featured Large Card */}
+        <div className="w-full">
+          <PeopleCard 
+            person={featuredPerson} 
+            size="large" 
+            onLongPress={() => setQuickViewUser(featuredPerson)}
+          />
+        </div>
+
+        {/* Masonry Columns for Medium/Small Cards */}
+        <div className="flex gap-4">
+          <div className="flex-1 flex flex-col gap-4">
+            {col1.map((p, i) => (
+              <PeopleCard 
+                key={p.id} 
+                person={p} 
+                size={i % 2 === 0 ? 'medium' : 'small'} 
+                onLongPress={() => setQuickViewUser(p)}
+              />
+            ))}
+          </div>
+          <div className="flex-1 flex flex-col gap-4">
+            {col2.map((p, i) => (
+              <PeopleCard 
+                key={p.id} 
+                person={p} 
+                size={i % 2 !== 0 ? 'medium' : 'small'} 
+                onLongPress={() => setQuickViewUser(p)}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Modals & Overlays */}
       {activeStoryIndex !== null && (
         <StoriesViewer 
           stories={MOCK_STORIES} 
@@ -206,6 +217,26 @@ export function Discovery() {
           onClose={() => setActiveStoryIndex(null)} 
         />
       )}
+
+      {/* Quick View Card (Long Press) */}
+      {quickViewUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm" onClick={() => setQuickViewUser(null)}>
+          <div onClick={e => e.stopPropagation()} className="w-full max-w-sm">
+            <UserQuickViewCard 
+              user={{
+                id: quickViewUser.id,
+                name: quickViewUser.name,
+                username: quickViewUser.name.toLowerCase().replace(' ', ''),
+                avatar: quickViewUser.photoUrl,
+                bio: 'Living my best life and exploring the world.',
+                badges: quickViewUser.badges
+              }} 
+              onClose={() => setQuickViewUser(null)} 
+            />
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

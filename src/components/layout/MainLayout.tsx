@@ -1,17 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
-import {
-  Home, Compass, Plus, CalendarDays, User,
-  MessageSquare, Radio, Bell, Radar
-} from 'lucide-react';
+import { Search, Plus, Heart, Bell, MessageSquare } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { CreatePostModal } from '@/components/feed/CreatePostModal';
 import { CreateNoteModal } from '@/components/feed/CreateNoteModal';
-import { CreateMenuBottomSheet } from './CreateMenuBottomSheet';
 import { CreateVoiceRoomModal } from '@/components/karaoke/CreateVoiceRoomModal';
 import { CreateSongModal } from '@/components/music/CreateSongModal';
+import { CreateRadialMenu } from '@/components/common/CreateRadialMenu';
 import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────
@@ -35,7 +31,7 @@ function TopBar() {
       .eq('is_read', false)
       .then(({ count }) => setUnreadNotifs(count ?? 0));
 
-    // Unread messages (conversations where last_message_at > last_read_at)
+    // Unread messages
     supabase
       .from('conversation_members')
       .select('conversations!inner(last_message_at), last_read_at')
@@ -63,37 +59,29 @@ function TopBar() {
 
   return (
     <header
-      className="sticky top-0 z-30 flex h-14 items-center justify-between px-4 border-b"
-      style={{
-        background: 'rgba(15,13,11,0.92)',
-        backdropFilter: 'blur(16px)',
-        borderColor: '#2E2822',
-      }}
+      className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-transparent"
     >
-      {/* Logo */}
-      <div
-        className="font-display text-[22px] font-bold leading-none tracking-tight select-none"
-        style={{
-          background: 'linear-gradient(90deg, #E8A055 0%, #C8521A 60%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-        }}
-      >
-        matisa
+      {/* Logo equivalent from reference image: a simple 4-dot menu icon */}
+      <div className="flex items-center gap-2 text-white">
+        <div className="grid grid-cols-2 gap-[3px]">
+          <div className="w-2.5 h-2.5 rounded-sm bg-white" />
+          <div className="w-2.5 h-2.5 rounded-sm bg-white" />
+          <div className="w-2.5 h-2.5 rounded-sm bg-white" />
+          <div className="w-2.5 h-2.5 rounded-sm bg-white/50" />
+        </div>
+        <span className="text-xl font-bold tracking-wide ml-2">Menu</span>
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-1">
-
+      <div className="flex items-center gap-4">
         {/* Notifications */}
         <button
           onClick={() => navigate('/activity')}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#8A7F74] hover:text-[#F5F0EA] hover:bg-[#1C1814] transition"
-          aria-label="Notifications"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition"
         >
-          <Bell size={19} strokeWidth={1.8} />
+          <Bell size={20} strokeWidth={2} />
           {unreadNotifs > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C8521A] px-1 text-[9px] font-bold text-white leading-none">
+            <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C8521A] px-1 text-[9px] font-bold text-white leading-none shadow-md">
               {unreadNotifs > 9 ? '9+' : unreadNotifs}
             </span>
           )}
@@ -102,12 +90,11 @@ function TopBar() {
         {/* Messages */}
         <button
           onClick={() => navigate('/messages')}
-          className="relative flex h-9 w-9 items-center justify-center rounded-full text-[#8A7F74] hover:text-[#F5F0EA] hover:bg-[#1C1814] transition"
-          aria-label="Messages"
+          className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:bg-white/90 transition shadow-lg"
         >
-          <MessageSquare size={19} strokeWidth={1.8} />
+          <MessageSquare size={18} strokeWidth={2.5} fill="currentColor" />
           {unreadMsgs > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#2D7DD2] px-1 text-[9px] font-bold text-white leading-none">
+            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C8521A] px-1 text-[9px] font-bold text-white leading-none shadow-md">
               {unreadMsgs > 9 ? '9+' : unreadMsgs}
             </span>
           )}
@@ -118,16 +105,8 @@ function TopBar() {
 }
 
 // ─────────────────────────────────────────────
-// BOTTOM NAV
+// FLOATING BOTTOM NAV
 // ─────────────────────────────────────────────
-
-const NAV = [
-  { path: '/',        icon: Compass,      label: 'Discovery' },
-  { path: '/notes',   icon: MessageSquare,label: 'Notes'    },
-  { path: null,       icon: Plus,         label: ''        }, // compose trigger
-  { path: '/explore', icon: Radio,        label: 'Explore' },
-  { path: '/profile', icon: User,         label: 'Profile' },
-];
 
 function BottomNav({ onCompose }: { onCompose: () => void }) {
   const location = useLocation();
@@ -135,68 +114,51 @@ function BottomNav({ onCompose }: { onCompose: () => void }) {
   const path      = location.pathname;
 
   return (
-    <nav
-      className="sticky bottom-0 z-30 border-t"
-      style={{
-        background: 'rgba(15,13,11,0.96)',
-        backdropFilter: 'blur(16px)',
-        borderColor: '#2E2822',
-      }}
-    >
-      <div className="mx-auto flex max-w-md items-end justify-around px-2 pb-safe">
-        {NAV.map((item, i) => {
-          /* ── Compose button (center) ── */
-          if (item.path === null) {
-            return (
-              <button
-                key="compose"
-                onClick={onCompose}
-                className="relative flex flex-col items-center -translate-y-3"
-                aria-label="Create post"
-              >
-                <div
-                  className="flex h-[52px] w-[52px] items-center justify-center rounded-full shadow-lg transition active:scale-95"
-                  style={{
-                    background: 'linear-gradient(135deg, #E8A055 0%, #C8521A 100%)',
-                    boxShadow: '0 4px 20px rgba(200,82,26,0.45)',
-                  }}
-                >
-                  <Plus size={24} color="white" strokeWidth={2.5} />
-                </div>
-              </button>
-            );
-          }
+    <div className="fixed bottom-8 left-6 right-6 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-[2rem] flex items-center justify-between px-2 z-40 shadow-2xl">
+      <button 
+        onClick={() => navigate('/')}
+        className={`flex items-center gap-2 rounded-full px-5 py-2.5 transition-colors ${path === '/' ? 'bg-white/20 text-white' : 'text-white/70 hover:text-white'}`}
+      >
+        <div className="w-5 h-5 grid grid-cols-2 gap-0.5">
+          <div className={`rounded-sm ${path === '/' ? 'bg-white' : 'bg-white/70'}`} />
+          <div className={`rounded-sm ${path === '/' ? 'bg-white' : 'bg-white/70'}`} />
+          <div className={`rounded-sm ${path === '/' ? 'bg-white' : 'bg-white/70'}`} />
+          <div className={`rounded-sm ${path === '/' ? 'bg-white' : 'bg-white/70'}`} />
+        </div>
+        {path === '/' && <span className="font-semibold text-sm">Home</span>}
+      </button>
 
-          const active = path === item.path
-            || (item.path === '/profile' && path.startsWith('/profile'))
-            || (item.path === '/events'  && path.startsWith('/events'));
-          const Icon   = item.icon;
+      <button 
+        onClick={() => navigate('/explore')}
+        className={`p-3 transition-colors ${path === '/explore' ? 'text-white' : 'text-white/70 hover:text-white'}`}
+      >
+        <Search className="w-6 h-6" />
+      </button>
 
-          return (
-            <button
-              key={item.path}
-              onClick={() => navigate(item.path!)}
-              className="flex flex-1 flex-col items-center gap-0.5 py-2.5 transition"
-              aria-label={item.label}
-              style={{ color: active ? '#E8A055' : '#8A7F74' }}
-            >
-              <Icon size={21} strokeWidth={active ? 2.2 : 1.7} />
-              <span className="text-[9px] font-medium tracking-wide">
-                {item.label}
-              </span>
-              {active && (
-                <motion.span
-                  layoutId="nav-dot"
-                  className="h-1 w-1 rounded-full"
-                  style={{ background: '#C8521A' }}
-                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                />
-              )}
-            </button>
-          );
-        })}
-      </div>
-    </nav>
+      <button 
+        onClick={onCompose}
+        className="p-3 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+      >
+        <Plus className="w-6 h-6" />
+      </button>
+
+      <button 
+        onClick={() => navigate('/activity')}
+        className={`p-3 transition-colors ${path === '/activity' ? 'text-white' : 'text-white/70 hover:text-white'}`}
+      >
+        <Heart className="w-6 h-6" />
+      </button>
+
+      <button 
+        onClick={() => navigate('/profile')}
+        className="p-3 text-white/70 hover:text-white transition"
+      >
+        <img 
+          src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" 
+          className={`w-6 h-6 rounded-full object-cover bg-black ${path.startsWith('/profile') ? 'ring-2 ring-white ring-offset-2 ring-offset-transparent' : ''}`}
+        />
+      </button>
+    </div>
   );
 }
 
@@ -220,10 +182,9 @@ export function MainLayout() {
   if (!loading && !session && !isGuest) return <Navigate to="/auth" replace />;
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center" style={{ background: '#0F0D0B' }}>
+      <div className="flex h-screen items-center justify-center bg-background">
         <div
-          className="h-8 w-8 animate-spin rounded-full border-2 border-[#C8521A]"
-          style={{ borderTopColor: 'transparent' }}
+          className="h-8 w-8 animate-spin rounded-full border-2 border-white/50 border-t-white"
         />
       </div>
     );
@@ -233,20 +194,18 @@ export function MainLayout() {
   const hideNav = HIDE_NAV.some(p => path.startsWith(p));
 
   return (
-    <div
-      className="mx-auto flex min-h-screen max-w-md flex-col shadow-2xl shadow-black"
-      style={{ background: '#0F0D0B' }}
-    >
+    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col shadow-2xl shadow-black bg-background text-foreground">
       {!hideTop && <TopBar />}
 
       <main className="flex-1 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
             key={path}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="h-full"
           >
             <Outlet />
           </motion.div>
@@ -256,27 +215,9 @@ export function MainLayout() {
       {!hideNav && <BottomNav onCompose={() => setShowCompose(true)} />}
 
       {/* Compose Menu */}
-      <CreateMenuBottomSheet 
-        open={showCompose} 
+      <CreateRadialMenu 
+        isOpen={showCompose} 
         onClose={() => setShowCompose(false)} 
-        onSelect={(action) => {
-          setShowCompose(false);
-          if (action === 'note') {
-            setTimeout(() => {
-               setShowCreateNote(true);
-            }, 300);
-          } else if (action === 'room') {
-            setTimeout(() => {
-               setShowCreateRoom(true);
-            }, 300);
-          } else if (action === 'song') {
-            setTimeout(() => {
-               setShowCreateSong(true);
-            }, 300);
-          } else {
-            toast.info(`Opening ${action} creation flow...`);
-          }
-        }} 
       />
 
       {/* Actual Create Modals */}

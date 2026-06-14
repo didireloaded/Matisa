@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MoreVertical } from 'lucide-react';
+import { ArrowLeft, MoreVertical, MessageSquare } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 const MOCK_PHOTOS = [
@@ -14,10 +14,10 @@ const MOCK_PHOTOS = [
 
 export function Profile() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'Photos' | 'Video' | 'Tagged'>('Photos');
+  const [activeTab, setActiveTab] = useState<'Photos' | 'Video' | 'Tagged' | 'notes'>('Photos');
 
   return (
-    <div className="min-h-[100dvh] bg-[#12131A] text-white flex flex-col pb-24">
+    <div className="flex flex-col min-h-[100dvh] bg-background text-foreground pb-24 relative">
       {/* Top Header */}
       <div className="flex items-center justify-between px-6 pt-12 pb-4">
         <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-white/70 hover:text-white transition">
@@ -32,8 +32,8 @@ export function Profile() {
       <div className="px-6 flex flex-col mt-4">
         <div className="flex items-center gap-5">
           {/* Avatar with Gradient Ring */}
-          <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 to-orange-500 flex-shrink-0">
-            <div className="w-full h-full rounded-full border-4 border-[#12131A] overflow-hidden">
+          <div className="w-24 h-24 rounded-full p-[3px] bg-gradient-to-tr from-yellow-400 to-orange-500 flex-shrink-0 relative">
+            <div className="absolute inset-0 rounded-full bg-background border-4 border-background flex items-center justify-center overflow-hidden">
               <img 
                 src="https://api.dicebear.com/7.x/avataaars/svg?seed=alex" 
                 alt="Alex Smith" 
@@ -59,7 +59,7 @@ export function Profile() {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-between mt-8 px-2 border-b border-white/5 pb-8">
+        <div className="flex items-center gap-6 mt-6 bg-card p-4 rounded-3xl border border-border">
           <div className="flex flex-col items-center">
             <span className="text-lg font-bold">264</span>
             <span className="text-[11px] text-white/50">Posts</span>
@@ -76,16 +76,26 @@ export function Profile() {
       </div>
 
       {/* Tabs */}
-      <div className="flex items-center justify-between px-8 py-6">
-        {['Photos', 'Video', 'Tagged'].map(tab => (
-          <button 
-            key={tab}
-            onClick={() => setActiveTab(tab as any)}
-            className={`text-base font-bold transition-colors ${activeTab === tab ? 'text-white' : 'text-white/40'}`}
-          >
-            {tab}
-          </button>
-        ))}
+      <div className="mt-6 flex border-b border-card">
+        <button 
+          onClick={() => setActiveTab('notes')}
+          className={`flex-1 py-4 text-sm font-bold text-center transition-colors relative ${activeTab === 'notes' ? 'text-white' : 'text-muted-foreground'}`}
+        >
+          Notes
+          {activeTab === 'notes' && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
+          )}
+        </button>
+      </div>
+
+      {/* Tab Content */}
+      <div className="flex-1 bg-background p-4">
+        <div className="flex flex-col items-center justify-center h-48 text-center text-muted-foreground space-y-2">
+          <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center mb-2">
+            <MessageSquare className="w-5 h-5 opacity-50" />
+          </div>
+          <p>No notes yet</p>
+        </div>
       </div>
 
       {/* Masonry Grid Content */}
@@ -94,14 +104,14 @@ export function Profile() {
           {MOCK_PHOTOS.map((photo) => (
             <div 
               key={photo.id} 
-              className={`relative rounded-[24px] overflow-hidden break-inside-avoid ${photo.height} bg-[#1A1B23] group cursor-pointer`}
+              className={`relative rounded-[24px] overflow-hidden break-inside-avoid ${photo.height} bg-card group cursor-pointer`}
             >
               <img 
                 src={photo.url} 
                 alt="Post" 
                 className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80 group-hover:opacity-100 transition-opacity"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-background via-background/40 to-transparent pointer-events-none" />
               <div className="absolute bottom-3 left-4">
                 <span className="text-[10px] font-bold text-white/90 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
                   {photo.views}

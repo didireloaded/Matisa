@@ -79,7 +79,7 @@ function NoteCard({ note }: { note: Note }) {
   };
 
   return (
-    <div className="bg-[#151515] rounded-3xl p-5 border border-[#222222] break-inside-avoid mb-4 relative overflow-hidden group">
+    <div className="bg-card rounded-3xl p-5 border border-border break-inside-avoid mb-4 relative overflow-hidden group">
       {/* Subtle Background Glow if verified */}
       {note.profiles?.verified && (
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] opacity-50" />
@@ -109,7 +109,7 @@ function NoteCard({ note }: { note: Note }) {
         <button 
           onClick={() => handleReact('heart')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            reacted === 'heart' ? 'bg-[#FF6B6B]/20 text-[#FF6B6B] border border-[#FF6B6B]/30' : 'bg-[#0B0B0B] text-[#A0A0A0] hover:text-white border border-transparent'
+            reacted === 'heart' ? 'bg-secondary/20 text-secondary border border-secondary/30' : 'bg-background text-muted-foreground hover:text-white border border-transparent'
           }`}
         >
           <Heart size={14} className={reacted === 'heart' ? 'fill-current' : ''} />
@@ -118,7 +118,7 @@ function NoteCard({ note }: { note: Note }) {
         <button 
           onClick={() => handleReact('fire')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            reacted === 'fire' ? 'bg-[#FF9D2E]/20 text-[#FF9D2E] border border-[#FF9D2E]/30' : 'bg-[#0B0B0B] text-[#A0A0A0] hover:text-white border border-transparent'
+            reacted === 'fire' ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-background text-muted-foreground hover:text-white border border-transparent'
           }`}
         >
           <Flame size={14} className={reacted === 'fire' ? 'fill-current' : ''} />
@@ -127,7 +127,7 @@ function NoteCard({ note }: { note: Note }) {
         <button 
           onClick={() => handleReact('laugh')}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            reacted === 'laugh' ? 'bg-[#2D7DD2]/20 text-[#2D7DD2] border border-[#2D7DD2]/30' : 'bg-[#0B0B0B] text-[#A0A0A0] hover:text-white border border-transparent'
+            reacted === 'laugh' ? 'bg-chart-3/20 text-chart-3 border border-chart-3/30' : 'bg-background text-muted-foreground hover:text-white border border-transparent'
           }`}
         >
           <Smile size={14} className={reacted === 'laugh' ? 'fill-current' : ''} />
@@ -169,9 +169,9 @@ export function Notes() {
   }, []);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-54px-60px)] bg-[#0B0B0B]">
+    <div className="flex flex-col h-[calc(100dvh-54px-60px)] bg-background">
       {/* Header */}
-      <div className="px-4 py-4 flex items-center justify-between border-b border-[#151515] bg-[#0B0B0B]/80 backdrop-blur-md sticky top-0 z-10">
+      <div className="px-4 py-4 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-10">
         <h1 className="text-xl font-bold text-white tracking-tight">Notes</h1>
         <div className="text-[10px] uppercase tracking-wider font-bold text-[#FF9D2E] bg-[#FF9D2E]/10 px-2.5 py-1 rounded-full">
           Disappears in 24h

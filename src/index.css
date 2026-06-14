@@ -126,6 +126,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   --color-card: var(--card);
   --color-foreground: var(--foreground);
   --color-background: var(--background);
+  --color-accent1: var(--accent1);
+  --color-accent2: var(--accent2);
+  --color-accent3: var(--accent3);
+  --color-accent4: var(--accent4);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -144,7 +148,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   --popover-foreground: #FFFFFF;
   --primary: #FF9D2E;
   --primary-foreground: #000000;
-  --secondary: #FF6B6B;
+  --secondary: #A855F7;
   --secondary-foreground: #FFFFFF;
   --muted: #151515;
   --muted-foreground: #A0A0A0;
@@ -155,10 +159,10 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   --input: #222222;
   --ring: #FF9D2E;
   --chart-1: #FF9D2E;
-  --chart-2: #FF6B6B;
-  --chart-3: #2D7DD2;
-  --chart-4: #4CAF7D;
-  --chart-5: #6B2D7D;
+  --chart-2: #A855F7;
+  --chart-3: #00E5FF;
+  --chart-4: #FFD700;
+  --chart-5: #FF6B6B;
   --radius: 1.2rem;
   --sidebar: #0B0B0B;
   --sidebar-foreground: #FFFFFF;
@@ -168,6 +172,12 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   --sidebar-accent-foreground: #FFFFFF;
   --sidebar-border: #222222;
   --sidebar-ring: #FF9D2E;
+
+  /* Global Design System Neon Accents */
+  --accent1: #00E5FF;
+  --accent2: #FFD700;
+  --accent3: #FF6B6B;
+  --accent4: #32CD32;
 }
 
 @layer base {

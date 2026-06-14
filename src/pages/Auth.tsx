@@ -60,7 +60,7 @@ export function Auth() {
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-[#0B0B0B] text-white overflow-hidden flex flex-col font-sans">
+    <div className="relative min-h-screen w-full bg-background text-foreground overflow-hidden flex flex-col font-sans">
       
       {/* Decorative Wavy Lines / Background */}
       <div className="absolute top-0 left-0 w-full h-64 pointer-events-none overflow-hidden">
@@ -134,7 +134,7 @@ export function Auth() {
             >
               {/* Gradient border effect using pseudo element on hover */}
               <div className="absolute inset-0 bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="absolute inset-[1px] bg-[#0B0B0B] rounded-full flex items-center justify-center">
+              <div className="absolute inset-[1px] bg-background rounded-full flex items-center justify-center">
                 <span className="bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] bg-clip-text text-transparent font-bold">
                   {loading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
                 </span>
@@ -157,7 +157,7 @@ export function Auth() {
             {['G', 'Ig', 'X', 'Tt'].map((provider) => (
               <button 
                 key={provider}
-                className="w-12 h-12 rounded-full bg-[#151515] hover:bg-[#222222] border border-[#222222] flex items-center justify-center transition-colors text-sm font-bold text-[#A0A0A0] hover:text-white"
+                className="w-12 h-12 rounded-full bg-card hover:bg-accent border border-border flex items-center justify-center transition-colors text-sm font-bold text-muted-foreground hover:text-white"
               >
                 {provider}
               </button>

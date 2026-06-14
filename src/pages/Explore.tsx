@@ -1,15 +1,82 @@
 import { useState, useEffect } from 'react';
-import { Search, X, TrendingUp, Users, CalendarDays, MapPin, ArrowRight, Mic } from 'lucide-react';
+import { Search, X, TrendingUp, CalendarDays, MapPin, Heart, MessageCircle, Bookmark, Send, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
-import { T, Avatar, PostCard, PostSkeleton, EmptyState } from '@/components/common';
+import { Avatar, PostSkeleton, EmptyState } from '@/components/common';
 import { CommentsModal } from '@/components/feed/CommentsModal';
 import { toast } from 'sonner';
-import { fmtCount, timeAgo } from '@/types';
 import type { Post, Profile } from '@/types';
 import { useEvents, type Event } from '@/hooks/useEvents';
+
+// ─────────────────────────────────────────────
+// RICH POST CARD (From Phase 10 Initial Request)
+// ─────────────────────────────────────────────
+
+function RichPostCard({ post, onLike, onComment }: { 
+  post: Post & { profiles?: any }; 
+  onLike: (liked: boolean) => void;
+  onComment: () => void;
+}) {
+  const [liked, setLiked] = useState(post.liked ?? false);
+  const [likes, setLikes] = useState(post.like_count ?? 0);
+
+  const handleLike = () => {
+    const newLiked = !liked;
+    setLiked(newLiked);
+    setLikes(prev => newLiked ? prev + 1 : prev - 1);
+    onLike(newLiked);
+  };
+
+  return (
+    <div className="relative w-full rounded-[32px] overflow-hidden bg-gradient-to-tr from-card to-background aspect-[4/5] shadow-2xl mb-6">
+      {/* Background Media Placeholder (If post has media, use it, else generic gradient) */}
+      <div className="absolute inset-0 bg-gradient-to-b from-primary/20 to-secondary/40 mix-blend-overlay opacity-60" />
+      
+      {/* Content Text (Centered/Stylized for text-only posts, or caption for media) */}
+      <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none z-0">
+        <p className="text-white text-xl font-medium text-center leading-relaxed drop-shadow-md">
+          {post.content}
+        </p>
+      </div>
+      
+      {/* Post Header */}
+      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-10">
+        <div className="flex items-center gap-3">
+          <Avatar profile={post.profiles} size={40} />
+          <div className="flex flex-col">
+            <span className="font-bold text-white shadow-sm text-sm">
+              {post.profiles?.display_name || post.profiles?.full_name || 'Anonymous'}
+            </span>
+            <span className="text-[10px] text-white/70">
+              {new Date(post.created_at).toLocaleDateString()}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Action Bar */}
+      <div className="absolute right-4 bottom-8 flex flex-col items-center gap-6 z-10 bg-white/10 backdrop-blur-md rounded-full py-6 px-3 border border-white/20">
+        <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
+          <Heart className={`w-6 h-6 transition ${liked ? 'fill-primary text-primary' : 'text-white group-hover:fill-white/50'}`} />
+          <span className="text-[10px] font-medium text-white/90">{likes}</span>
+        </button>
+        <button onClick={onComment} className="flex flex-col items-center gap-1 group">
+          <MessageCircle className="w-6 h-6 text-white group-hover:fill-white/50 transition" />
+          <span className="text-[10px] font-medium text-white/90">{post.comment_count ?? 0}</span>
+        </button>
+        <button className="flex flex-col items-center gap-1 group">
+          <Bookmark className="w-6 h-6 text-white group-hover:fill-white/50 transition" />
+          <span className="text-[10px] font-medium text-white/90">Save</span>
+        </button>
+        <button className="flex flex-col items-center gap-1 group mt-2">
+          <Send className="w-5 h-5 text-white" />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 // ─────────────────────────────────────────────
 // SEARCH RESULTS
@@ -33,10 +100,10 @@ function SearchResults({
       <div className="p-4 space-y-3">
         {[0,1,2].map(i => (
           <div key={i} className="flex gap-3 items-center">
-            <div className="h-10 w-10 rounded-full skeleton flex-shrink-0" />
+            <div className="h-10 w-10 rounded-full bg-white/5 animate-pulse flex-shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-3 w-32 rounded skeleton" />
-              <div className="h-2 w-20 rounded skeleton" />
+              <div className="h-3 w-32 rounded bg-white/5 animate-pulse" />
+              <div className="h-2 w-20 rounded bg-white/5 animate-pulse" />
             </div>
           </div>
         ))}
@@ -47,8 +114,8 @@ function SearchResults({
   if (!profiles.length && !posts.length) {
     return (
       <div className="flex flex-col items-center py-16 text-center px-8">
-        <Search size={32} color="#8A7F74" className="mb-3 opacity-50" />
-        <p className="text-sm text-[#8A7F74]">No results for "{query}"</p>
+        <Search size={32} className="mb-3 text-white/30" />
+        <p className="text-sm text-white/50">No results for "{query}"</p>
       </div>
     );
   }
@@ -56,45 +123,39 @@ function SearchResults({
   return (
     <div className="pb-8">
       {profiles.length > 0 && (
-        <div>
-          <h3 className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#8A7F74]">
+        <div className="mb-6">
+          <h3 className="px-6 py-3 text-[11px] font-semibold uppercase tracking-wider text-white/50">
             People
           </h3>
           {profiles.map(p => (
             <button
               key={p.id}
               onClick={() => onProfile(p.id)}
-              className="flex w-full items-center gap-3 px-4 py-3 hover:bg-[#1C1814] transition"
+              className="flex w-full items-center gap-3 px-6 py-3 hover:bg-white/5 transition"
             >
               <Avatar profile={p} size={44} />
               <div className="min-w-0 flex-1 text-left">
-                <div className="text-sm font-semibold text-[#F5F0EA]">
+                <div className="text-sm font-semibold text-white">
                   {p.display_name || p.full_name}
                 </div>
-                <div className="text-xs text-[#8A7F74]">@{p.username}</div>
+                <div className="text-xs text-white/50">@{p.username}</div>
               </div>
-              {p.region && (
-                <span className="text-[10px] text-[#8A7F74]">{p.region}</span>
-              )}
             </button>
           ))}
         </div>
       )}
 
       {posts.length > 0 && (
-        <div>
-          <h3 className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-[#8A7F74] border-t" style={{ borderColor: '#2E2822' }}>
+        <div className="px-6">
+          <h3 className="py-3 text-[11px] font-semibold uppercase tracking-wider text-white/50 mb-2">
             Posts
           </h3>
           {posts.map(post => (
-            <PostCard
+            <RichPostCard
               key={post.id}
               post={post}
               onLike={() => {}}
-              onSave={() => {}}
-              onRepost={() => {}}
               onComment={() => {}}
-              onProfile={onProfile}
             />
           ))}
         </div>
@@ -104,136 +165,21 @@ function SearchResults({
 }
 
 // ─────────────────────────────────────────────
-// PEOPLE CARD
+// EXPLORE PAGE
 // ─────────────────────────────────────────────
 
-function PeopleCard({ profile, onFollow, onProfile }: {
-  profile: Profile & { is_following?: boolean };
-  onFollow: (id: string) => void;
-  onProfile: (id: string) => void;
-}) {
-  const [following, setFollowing] = useState(!!profile.is_following);
-
-  const handleFollow = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    setFollowing(f => !f);
-    onFollow(profile.id);
-  };
-
-  return (
-    <div
-      className="w-44 flex-shrink-0 overflow-hidden rounded-2xl border"
-      style={{ background: '#1C1814', borderColor: '#2E2822' }}
-    >
-      {/* Cover gradient */}
-      <div
-        className="h-14 relative"
-        style={{ background: profile.gradient ?? 'linear-gradient(135deg,#C8521A,#6B2D1A)' }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-t from-[#1C1814] to-transparent" />
-      </div>
-
-      {/* Content */}
-      <div className="px-3 pb-3 -mt-7">
-        <button onClick={() => onProfile(profile.id)} className="block">
-          <Avatar profile={profile} size={48} />
-        </button>
-        <div className="mt-2 min-w-0">
-          <button
-            onClick={() => onProfile(profile.id)}
-            className="text-sm font-semibold text-[#F5F0EA] truncate block"
-          >
-            {profile.display_name || profile.full_name}
-          </button>
-          <span className="text-[10px] text-[#8A7F74] truncate block">
-            @{profile.username}
-          </span>
-          <p className="mt-1 text-[10px] text-[#8A7F74]">
-            {profile.region} · {fmtCount((profile.follower_count ?? profile.followers_count) ?? 0)} followers
-          </p>
-        </div>
-        <button
-          onClick={handleFollow}
-          className="mt-3 w-full rounded-full py-1.5 text-[11px] font-semibold transition active:scale-95"
-          style={{
-            background: following ? 'transparent' : '#C8521A',
-            color: following ? '#8A7F74' : 'white',
-            border: following ? '1px solid #2E2822' : 'none',
-          }}
-        >
-          {following ? 'Following' : 'Follow'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// EVENT CARD (compact)
-// ─────────────────────────────────────────────
-
-function EventRow({ event, onNavigate }: { event: Event; onNavigate: () => void }) {
-  const badge =
-    event.event_type === 'karaoke'   ? '🎤 Karaoke'
-    : event.event_type === 'virtual' ? '🌐 Virtual'
-    : '📍 In Person';
-
-  return (
-    <button
-      onClick={onNavigate}
-      className="flex w-full items-center gap-3 rounded-2xl border p-3 text-left transition hover:border-[#C8521A]/30"
-      style={{ background: '#1C1814', borderColor: '#2E2822' }}
-    >
-      {/* Cover or gradient */}
-      <div
-        className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden rounded-xl"
-        style={{ background: 'linear-gradient(135deg,#C8521A,#6B2D1A)' }}
-      >
-        {event.cover_url ? (
-          <img src={event.cover_url} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <CalendarDays size={22} color="white" opacity={0.8} />
-        )}
-      </div>
-
-      <div className="min-w-0 flex-1">
-        <div className="text-sm font-semibold text-[#F5F0EA] truncate">{event.title}</div>
-        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-[#8A7F74]">
-          <CalendarDays size={11} />
-          <span>{new Date(event.start_time).toLocaleDateString('en-NA', { weekday:'short', month:'short', day:'numeric' })}</span>
-        </div>
-        {event.location_name && (
-          <div className="mt-0.5 flex items-center gap-1 text-[11px] text-[#8A7F74]">
-            <MapPin size={10} />
-            <span className="truncate">{event.location_name}</span>
-          </div>
-        )}
-      </div>
-
-      <span
-        className="flex-shrink-0 rounded-full px-2 py-0.5 text-[9px] font-semibold"
-        style={{ background: '#C8521A18', color: '#E8A055' }}
-      >
-        {badge}
-      </span>
-    </button>
-  );
-}
-
-// ─────────────────────────────────────────────
-// EXPLORE
-// ─────────────────────────────────────────────
+const EXPLORE_TABS = ['For You', 'Notes', 'Music', 'Events', 'Groups'];
 
 export function Explore() {
   const { profile } = useAuth();
   const navigate    = useNavigate();
 
   const [query,    setQuery]    = useState('');
-  const [active,   setActive]   = useState(false);
+  const [activeSearch, setActiveSearch] = useState(false);
+  const [activeTab, setActiveTab] = useState('For You');
 
   // Discovery data
   const [trending, setTrending]     = useState<Post[]>([]);
-  const [people,   setPeople]       = useState<Profile[]>([]);
   const [loadingDisc, setLoadingDisc] = useState(true);
 
   // Search data
@@ -242,11 +188,9 @@ export function Explore() {
   const [searchLoading,  setSearchLoading]  = useState(false);
 
   const [commentPostId, setCommentPostId] = useState<string | null>(null);
-
   const { events, isLoading: eventsLoading } = useEvents();
 
   // ── Load discovery ──────────────────────────
-
   useEffect(() => {
     if (!profile) {
       setLoadingDisc(false);
@@ -254,33 +198,19 @@ export function Explore() {
     }
     setLoadingDisc(true);
 
-    Promise.all([
-      // Trending posts
-      supabase
-        .from('posts')
-        .select('*, profiles!posts_user_id_fkey(*)')
-        .gt('created_at', new Date(Date.now() - 48 * 3600 * 1000).toISOString())
-        .order('like_count', { ascending: false })
-        .limit(10),
-
-      // Suggested people (not already following)
-      supabase
-        .from('profiles')
-        .select('*')
-        .neq('id', profile.id)
-        .order('follower_count', { ascending: false })
-        .limit(8),
-    ]).then(([postsRes, peopleRes]) => {
-      if (postsRes.data) setTrending(postsRes.data as Post[]);
-      if (peopleRes.data) {
-        // Filter out people already followed (best-effort — we don't fetch follows here to keep it fast)
-        setPeople(peopleRes.data as Profile[]);
-      }
-    }).finally(() => setLoadingDisc(false));
+    supabase
+      .from('posts')
+      .select('*, profiles!posts_user_id_fkey(*)')
+      .gt('created_at', new Date(Date.now() - 72 * 3600 * 1000).toISOString())
+      .order('like_count', { ascending: false })
+      .limit(10)
+      .then((res) => {
+        if (res.data) setTrending(res.data as Post[]);
+        setLoadingDisc(false);
+      });
   }, [profile]);
 
   // ── Search ─────────────────────────────────
-
   useEffect(() => {
     if (!query.trim() || query.trim().length < 2) {
       setSearchProfiles([]);
@@ -295,13 +225,13 @@ export function Explore() {
           .from('profiles')
           .select('*')
           .or(`username.ilike.%${query.replace(/[,"%]/g, '')}%,display_name.ilike.%${query.replace(/[,"%]/g, '')}%`)
-          .limit(12),
+          .limit(5),
         supabase
           .from('posts')
           .select('*, profiles!posts_user_id_fkey(*)')
           .ilike('content', `%${query}%`)
           .order('created_at', { ascending: false })
-          .limit(12),
+          .limit(10),
       ]);
       setSearchProfiles((pRes.data ?? []) as Profile[]);
       setSearchPosts((postRes.data ?? []) as Post[]);
@@ -310,18 +240,6 @@ export function Explore() {
 
     return () => clearTimeout(timer);
   }, [query]);
-
-  // ── Follow ──────────────────────────────────
-
-  const handleFollow = async (targetId: string) => {
-    if (!profile) return;
-    const { error } = await supabase.rpc('follow_user', {
-      p_follower: profile.id,
-      p_following: targetId,
-    });
-    if (error) toast.error('Could not follow user');
-    else toast.success('Following!');
-  };
 
   const handleLike = async (postId: string, liked: boolean) => {
     if (!profile) return;
@@ -337,49 +255,37 @@ export function Explore() {
     }
   };
 
-  // ── Render ──────────────────────────────────
-
   return (
-    <div className="pb-24">
-
-      {/* Sticky search bar */}
-      <div
-        className="sticky top-14 z-20 px-4 py-3 border-b"
-        style={{
-          background: 'rgba(15,13,11,0.95)',
-          backdropFilter: 'blur(16px)',
-          borderColor: '#2E2822',
-        }}
-      >
-        <div
-          className="flex items-center gap-2 rounded-2xl border px-3.5 py-2.5"
-          style={{ background: '#1C1814', borderColor: active ? '#C8521A' : '#2E2822' }}
-        >
-          <Search size={16} color="#8A7F74" />
+    <div className="min-h-full pb-32 bg-background text-foreground">
+      
+      {/* Top Search Bar */}
+      <div className="sticky top-0 z-20 px-6 pt-14 pb-4 bg-background/90 backdrop-blur-xl border-b border-border">
+        <div className="flex items-center gap-3 rounded-2xl bg-white/10 px-4 py-3 border border-white/10 focus-within:border-white/30 transition-colors">
+          <Search size={18} className="text-white/50" />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            onFocus={() => setActive(true)}
-            onBlur={() => setActive(false)}
-            placeholder="Search people, posts, topics…"
-            className="flex-1 bg-transparent text-sm text-[#F5F0EA] outline-none placeholder:text-[#8A7F74]"
+            onFocus={() => setActiveSearch(true)}
+            onBlur={() => setActiveSearch(false)}
+            placeholder="Explore content, hashtags, places..."
+            className="flex-1 bg-transparent text-sm font-medium text-white outline-none placeholder:text-white/40"
           />
           {query && (
             <button onClick={() => setQuery('')}>
-              <X size={15} color="#8A7F74" />
+              <X size={16} className="text-white/50 hover:text-white" />
             </button>
           )}
         </div>
       </div>
 
-      {/* Search results */}
-      <AnimatePresence>
-        {query.trim().length >= 2 && (
+      {/* Content Area */}
+      <AnimatePresence mode="wait">
+        {query.trim().length >= 2 ? (
           <motion.div
+            key="search"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
           >
             <SearchResults
               query={query}
@@ -389,175 +295,74 @@ export function Explore() {
               onProfile={id => navigate(`/profile/${id}`)}
             />
           </motion.div>
+        ) : (
+          <motion.div
+            key="explore"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {/* Explore Tabs */}
+            <div className="px-6 py-4 overflow-x-auto no-scrollbar">
+              <div className="flex gap-4">
+                {EXPLORE_TABS.map(tab => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`whitespace-nowrap text-lg font-bold transition-colors ${
+                      activeTab === tab ? 'text-white' : 'text-white/30 hover:text-white/60'
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Karaoke Rooms Banner */}
+            <div className="px-6 mb-8 mt-2">
+              <div className="w-full rounded-[24px] bg-gradient-to-r from-secondary to-primary p-5 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity"
+                   onClick={() => navigate('/room/lobby')}>
+                <div>
+                  <h3 className="font-bold text-lg mb-1 flex items-center gap-2">
+                    Live Karaoke <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-sm uppercase tracking-wider animate-pulse">Live</span>
+                  </h3>
+                  <p className="text-xs text-white/80">3 rooms active right now</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center">
+                  <Mic className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* Main Content Feed */}
+            <div className="px-6 flex flex-col">
+              {loadingDisc ? (
+                <div className="space-y-6">
+                  <div className="w-full aspect-[4/5] bg-white/5 rounded-[32px] animate-pulse" />
+                  <div className="w-full aspect-[4/5] bg-white/5 rounded-[32px] animate-pulse" />
+                </div>
+              ) : trending.length === 0 ? (
+                <div className="py-16 text-center">
+                  <TrendingUp size={32} className="mx-auto mb-4 text-white/20" />
+                  <h3 className="text-lg font-bold mb-2">Nothing trending yet</h3>
+                  <p className="text-sm text-white/50">Be the first to create amazing content.</p>
+                </div>
+              ) : (
+                trending.map(post => (
+                  <RichPostCard
+                    key={post.id}
+                    post={post}
+                    onLike={liked => handleLike(post.id, liked)}
+                    onComment={() => setCommentPostId(post.id)}
+                  />
+                ))
+              )}
+            </div>
+
+          </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Discovery sections (hidden when searching) */}
-      {query.trim().length < 2 && (
-        <div>
-
-          {/* ── Live Karaoke Rooms ── */}
-          <section className="pt-5 pb-4 border-b" style={{ borderColor: '#2E2822' }}>
-            <div className="mb-3 flex items-center justify-between px-4">
-              <div>
-                <h2 className="font-display text-[15px] font-bold text-[#F5F0EA]">Live Karaoke Rooms</h2>
-                <p className="mt-0.5 text-[11px] text-[#8A7F74]">Join a room and sing with friends</p>
-              </div>
-              <span className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-[#C8521A] text-white animate-pulse shadow-[0_0_10px_rgba(200,82,26,0.5)]">
-                <Mic size={10} />
-                LIVE
-              </span>
-            </div>
-            <div className="flex gap-4 overflow-x-auto px-4 no-scrollbar pb-2">
-              {[
-                { id: '1', title: 'Windhoek Karaoke Night', count: 28, users: [0, 1, 2] },
-                { id: '2', title: 'Afrobeats & Vibes', count: 15, users: [3, 4, 5] },
-                { id: '3', title: 'R&B Classics Only', count: 42, users: [6, 7, 8] }
-              ].map(room => (
-                <div 
-                  key={room.id}
-                  onClick={() => navigate(`/room/${room.id}?title=${encodeURIComponent(room.title)}`)}
-                  className="w-64 flex-shrink-0 bg-[#1C1814] border border-[#2E2822] rounded-2xl p-4 cursor-pointer hover:border-[#C8521A]/50 transition-colors"
-                >
-                  <h3 className="font-bold text-[#F5F0EA] truncate text-sm mb-1">{room.title}</h3>
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="flex items-center gap-1 text-[10px] text-[#8A7F74]">
-                      <Users size={12} /> {room.count} listening
-                    </span>
-                  </div>
-                  <div className="flex -space-x-3">
-                    {room.users.map((u, i) => (
-                      <img 
-                        key={i} 
-                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${u}`} 
-                        alt="Avatar" 
-                        className="w-8 h-8 rounded-full border-2 border-[#1C1814] bg-black"
-                      />
-                    ))}
-                    <div className="w-8 h-8 rounded-full border-2 border-[#1C1814] bg-[#2E2822] flex items-center justify-center text-[10px] font-bold text-[#8A7F74]">
-                      +{room.count - 3}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* ── Trending ── */}
-          <section className="pt-5 pb-4">
-            <div className="mb-3 flex items-center justify-between px-4">
-              <div>
-                <h2 className="font-display text-[15px] font-bold text-[#F5F0EA]">Trending</h2>
-                <p className="mt-0.5 text-[11px] text-[#8A7F74]">Most engaged in the last 48h</p>
-              </div>
-              <span
-                className="flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-semibold"
-                style={{ background: '#C8521A18', borderColor: '#C8521A30', color: '#E8A055' }}
-              >
-                <TrendingUp size={10} />
-                Live
-              </span>
-            </div>
-
-            {loadingDisc ? (
-              Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)
-            ) : trending.length === 0 ? (
-              <div className="py-12 px-4 text-center border rounded-2xl mx-4" style={{ background: '#1C1814', borderColor: '#2E2822' }}>
-                <TrendingUp size={28} color="#8A7F74" className="mx-auto mb-3 opacity-50" />
-                <h3 className="text-[15px] font-bold text-[#F5F0EA] mb-1">No trending content yet</h3>
-                <p className="text-[12px] text-[#8A7F74] mb-4">Be the first to post something amazing.</p>
-                <button
-                  onClick={() => navigate('/')}
-                  className="rounded-full px-5 py-2 text-xs font-bold text-white transition hover:bg-[#E8A055]"
-                  style={{ background: '#C8521A' }}
-                >
-                  Create a Post
-                </button>
-              </div>
-            ) : (
-              trending.slice(0, 6).map(post => (
-                <PostCard
-                  key={post.id}
-                  post={post}
-                  onLike={liked => handleLike(post.id, liked)}
-                  onSave={() => {}}
-                  onRepost={() => {}}
-                  onComment={() => setCommentPostId(post.id)}
-                  onProfile={id => navigate(`/profile/${id}`)}
-                />
-              ))
-            )}
-          </section>
-
-          {/* ── People to follow ── */}
-          {people.length > 0 && (
-            <section className="border-t py-5" style={{ borderColor: '#2E2822' }}>
-              <div className="mb-3 flex items-center justify-between px-4">
-                <div>
-                  <h2 className="font-display text-[15px] font-bold text-[#F5F0EA]">Suggested</h2>
-                  <p className="mt-0.5 text-[11px] text-[#8A7F74]">Namibians to discover</p>
-                </div>
-                <button
-                  onClick={() => navigate('/explore/people')}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-[#C8521A]"
-                >
-                  See all <ArrowRight size={12} />
-                </button>
-              </div>
-              <div className="flex gap-3 overflow-x-auto px-4 no-scrollbar pb-1">
-                {people.map(p => (
-                  <PeopleCard
-                    key={p.id}
-                    profile={p}
-                    onFollow={handleFollow}
-                    onProfile={id => navigate(`/profile/${id}`)}
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/* ── Upcoming events preview ── */}
-          <section className="border-t py-5" style={{ borderColor: '#2E2822' }}>
-            <div className="mb-3 flex items-center justify-between px-4">
-              <div>
-                <h2 className="font-display text-[15px] font-bold text-[#F5F0EA]">Events</h2>
-                <p className="mt-0.5 text-[11px] text-[#8A7F74]">Happening soon in Namibia</p>
-              </div>
-              <button
-                onClick={() => navigate('/events')}
-                className="flex items-center gap-1 text-[11px] font-semibold text-[#C8521A]"
-              >
-                See all <ArrowRight size={12} />
-              </button>
-            </div>
-
-            {eventsLoading ? (
-              <div className="space-y-3 px-4">
-                {[0,1,2].map(i => (
-                  <div key={i} className="h-[72px] rounded-2xl skeleton" />
-                ))}
-              </div>
-            ) : events.length === 0 ? (
-              <EmptyState
-                icon={<CalendarDays size={22} color="#8A7F74" />}
-                title="No upcoming events"
-              />
-            ) : (
-              <div className="space-y-3 px-4">
-                {events.slice(0, 3).map(event => (
-                  <EventRow
-                    key={event.id}
-                    event={event}
-                    onNavigate={() => navigate('/events')}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-
-        </div>
-      )}
 
       {/* Comments modal */}
       {commentPostId && (
