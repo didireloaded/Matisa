@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Send } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { Avatar } from '@/components/common/Avatar';
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Send } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
+import { Avatar } from "@/components/common/Avatar";
 
 interface CreateNoteModalProps {
   open: boolean;
@@ -14,35 +14,37 @@ interface CreateNoteModalProps {
 
 export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalProps) {
   const { profile } = useAuth();
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
 
   const charLimit = 50;
   const charsLeft = charLimit - content.length;
   const isOverLimit = charsLeft < 0;
 
+  if (!profile) return null;
+
   const handleSubmit = async () => {
     if (!content.trim() || isOverLimit || !profile) return;
-    
+
     setLoading(true);
     try {
       const expiresAt = new Date();
       expiresAt.setHours(expiresAt.getHours() + 24);
 
-      const { error } = await supabase.from('notes').insert({
+      const { error } = await supabase.from("notes").insert({
         user_id: profile.id,
         content: content.trim(),
         expires_at: expiresAt.toISOString(),
       });
 
       if (error) throw error;
-      
+
       toast.success("Note dropped! It'll disappear in 24h.");
-      setContent('');
+      setContent("");
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to post note.');
+      toast.error(err.message || "Failed to post note.");
     } finally {
       setLoading(false);
     }
@@ -52,21 +54,21 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
     <AnimatePresence>
       {open && (
         <>
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm"
           />
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm px-4"
           >
             <div className="bg-[#151515] rounded-3xl p-6 border border-[#222222] shadow-2xl relative">
-              <button 
+              <button
                 onClick={onClose}
                 className="absolute top-4 right-4 p-2 bg-[#0B0B0B] rounded-full text-[#A0A0A0] hover:text-white transition"
               >
@@ -77,7 +79,9 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
                 <Avatar profile={profile} size={48} />
                 <div>
                   <h3 className="font-bold text-white text-lg">Drop a Note</h3>
-                  <p className="text-[#FF9D2E] text-xs font-bold uppercase tracking-wider">Disappears in 24h</p>
+                  <p className="text-[#FF9D2E] text-xs font-bold uppercase tracking-wider">
+                    Disappears in 24h
+                  </p>
                 </div>
               </div>
 
@@ -90,7 +94,9 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
                   rows={4}
                   autoFocus
                 />
-                <div className={`absolute bottom-3 right-3 text-sm font-bold ${isOverLimit ? 'text-[#FF6B6B]' : 'text-[#A0A0A0]'}`}>
+                <div
+                  className={`absolute bottom-3 right-3 text-sm font-bold ${isOverLimit ? "text-[#FF6B6B]" : "text-[#A0A0A0]"}`}
+                >
                   {charsLeft}
                 </div>
               </div>

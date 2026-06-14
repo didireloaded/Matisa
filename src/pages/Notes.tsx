@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Avatar } from '@/components/common/Avatar';
-import { Heart, Flame, Smile, CheckCircle2 } from 'lucide-react';
-import type { Profile } from '@/types';
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { Avatar } from "@/components/common/Avatar";
+import { Heart, Flame, Smile, CheckCircle2 } from "lucide-react";
+import type { Profile } from "@/types";
 
 interface Note {
   id: string;
@@ -19,8 +19,8 @@ interface Note {
 // Mock data since we might not have notes in DB yet
 const MOCK_NOTES: Note[] = [
   {
-    id: '1',
-    user_id: '123',
+    id: "1",
+    user_id: "123",
     content: "Windhoek is freezing today! 🥶",
     created_at: new Date().toISOString(),
     expires_at: new Date(Date.now() + 86400000).toISOString(),
@@ -28,16 +28,15 @@ const MOCK_NOTES: Note[] = [
     fire_count: 3,
     laugh_count: 5,
     profiles: {
-      id: '123',
-      username: 'hanna_dowie',
-      display_name: 'Hanna D.',
-      avatar_url: 'https://i.pravatar.cc/150?u=123',
-      verified: true
-    } as any
+      id: "123",
+      username: "hanna_dowie",
+      display_name: "Hanna D.",
+      avatar_url: "https://i.pravatar.cc/150?u=123",
+    } as any,
   },
   {
-    id: '2',
-    user_id: '456',
+    id: "2",
+    user_id: "456",
     content: "Just dropped a new track on Soundcloud 🔥",
     created_at: new Date(Date.now() - 3600000).toISOString(),
     expires_at: new Date(Date.now() + 82800000).toISOString(),
@@ -45,16 +44,15 @@ const MOCK_NOTES: Note[] = [
     fire_count: 20,
     laugh_count: 0,
     profiles: {
-      id: '456',
-      username: 'dj_kboz',
-      display_name: 'DJ Kboz',
-      avatar_url: 'https://i.pravatar.cc/150?u=456',
-      verified: true
-    } as any
+      id: "456",
+      username: "dj_kboz",
+      display_name: "DJ Kboz",
+      avatar_url: "https://i.pravatar.cc/150?u=456",
+    } as any,
   },
   {
-    id: '3',
-    user_id: '789',
+    id: "3",
+    user_id: "789",
     content: "Need coffee ASAP. ☕",
     created_at: new Date(Date.now() - 7200000).toISOString(),
     expires_at: new Date(Date.now() + 79200000).toISOString(),
@@ -62,13 +60,12 @@ const MOCK_NOTES: Note[] = [
     fire_count: 1,
     laugh_count: 12,
     profiles: {
-      id: '789',
-      username: 'michelle_v',
-      display_name: 'Michelle',
-      avatar_url: 'https://i.pravatar.cc/150?u=789',
-      verified: false
-    } as any
-  }
+      id: "789",
+      username: "michelle_v",
+      display_name: "Michelle",
+      avatar_url: "https://i.pravatar.cc/150?u=789",
+    } as any,
+  },
 ];
 
 function NoteCard({ note }: { note: Note }) {
@@ -80,21 +77,30 @@ function NoteCard({ note }: { note: Note }) {
 
   return (
     <div className="bg-card rounded-3xl p-5 border border-border break-inside-avoid mb-4 relative overflow-hidden group">
-      {/* Subtle Background Glow if verified */}
-      {note.profiles?.verified && (
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] opacity-50" />
-      )}
+      {/* Subtle Background Glow */}
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] opacity-50" />
 
       {/* Header */}
       <div className="flex items-center gap-3 mb-3">
-        <Avatar src={note.profiles?.avatar_url} size={40} fallback={note.profiles?.username.substring(0, 2)} />
+        <Avatar
+          profile={{
+            id: note.profiles?.id || "unknown",
+            display_name: note.profiles?.display_name || note.profiles?.username || "User",
+            avatar_url: note.profiles?.avatar_url || "",
+          }}
+          size={40}
+        />
         <div className="flex flex-col">
           <div className="flex items-center gap-1">
-            <span className="font-bold text-white text-sm leading-tight">{note.profiles?.display_name || note.profiles?.username}</span>
-            {note.profiles?.verified && <CheckCircle2 size={12} className="text-[#FF9D2E] fill-[#FF9D2E]/20" />}
+            <span className="font-bold text-white text-sm leading-tight">
+              {note.profiles?.display_name || note.profiles?.username}
+            </span>
           </div>
           <span className="text-[#A0A0A0] text-[10px]">
-            {new Date(note.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            {new Date(note.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </span>
         </div>
       </div>
@@ -106,32 +112,38 @@ function NoteCard({ note }: { note: Note }) {
 
       {/* Reactions Bar */}
       <div className="flex items-center gap-2">
-        <button 
-          onClick={() => handleReact('heart')}
+        <button
+          onClick={() => handleReact("heart")}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            reacted === 'heart' ? 'bg-secondary/20 text-secondary border border-secondary/30' : 'bg-background text-muted-foreground hover:text-white border border-transparent'
+            reacted === "heart"
+              ? "bg-secondary/20 text-secondary border border-secondary/30"
+              : "bg-background text-muted-foreground hover:text-white border border-transparent"
           }`}
         >
-          <Heart size={14} className={reacted === 'heart' ? 'fill-current' : ''} />
-          <span>{note.likes_count + (reacted === 'heart' ? 1 : 0)}</span>
+          <Heart size={14} className={reacted === "heart" ? "fill-current" : ""} />
+          <span>{note.likes_count + (reacted === "heart" ? 1 : 0)}</span>
         </button>
-        <button 
-          onClick={() => handleReact('fire')}
+        <button
+          onClick={() => handleReact("fire")}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            reacted === 'fire' ? 'bg-primary/20 text-primary border border-primary/30' : 'bg-background text-muted-foreground hover:text-white border border-transparent'
+            reacted === "fire"
+              ? "bg-primary/20 text-primary border border-primary/30"
+              : "bg-background text-muted-foreground hover:text-white border border-transparent"
           }`}
         >
-          <Flame size={14} className={reacted === 'fire' ? 'fill-current' : ''} />
-          <span>{note.fire_count + (reacted === 'fire' ? 1 : 0)}</span>
+          <Flame size={14} className={reacted === "fire" ? "fill-current" : ""} />
+          <span>{note.fire_count + (reacted === "fire" ? 1 : 0)}</span>
         </button>
-        <button 
-          onClick={() => handleReact('laugh')}
+        <button
+          onClick={() => handleReact("laugh")}
           className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-            reacted === 'laugh' ? 'bg-chart-3/20 text-chart-3 border border-chart-3/30' : 'bg-background text-muted-foreground hover:text-white border border-transparent'
+            reacted === "laugh"
+              ? "bg-chart-3/20 text-chart-3 border border-chart-3/30"
+              : "bg-background text-muted-foreground hover:text-white border border-transparent"
           }`}
         >
-          <Smile size={14} className={reacted === 'laugh' ? 'fill-current' : ''} />
-          <span>{note.laugh_count + (reacted === 'laugh' ? 1 : 0)}</span>
+          <Smile size={14} className={reacted === "laugh" ? "fill-current" : ""} />
+          <span>{note.laugh_count + (reacted === "laugh" ? 1 : 0)}</span>
         </button>
       </div>
     </div>
@@ -146,13 +158,13 @@ export function Notes() {
     async function fetchNotes() {
       try {
         const { data, error } = await supabase
-          .from('notes')
-          .select('*, profiles(*)')
-          .gt('expires_at', new Date().toISOString())
-          .order('created_at', { ascending: false });
+          .from("notes")
+          .select("*, profiles(*)")
+          .gt("expires_at", new Date().toISOString())
+          .order("created_at", { ascending: false });
 
         if (error) throw error;
-        
+
         if (data && data.length > 0) {
           setNotes(data as any[]);
         } else {
@@ -186,7 +198,7 @@ export function Notes() {
           </div>
         ) : (
           <div className="columns-1 sm:columns-2 gap-4">
-            {notes.map(note => (
+            {notes.map((note) => (
               <NoteCard key={note.id} note={note} />
             ))}
           </div>

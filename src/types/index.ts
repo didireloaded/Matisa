@@ -1,29 +1,79 @@
 export type Region =
-  | 'Khomas' | 'Erongo' | 'Hardap' | '//Karas' | 'Kavango East' | 'Kavango West'
-  | 'Kunene' | 'Ohangwena' | 'Omaheke' | 'Omusati' | 'Oshana' | 'Oshikoto'
-  | 'Otjozondjupa' | 'Zambezi';
+  | "Khomas"
+  | "Erongo"
+  | "Hardap"
+  | "//Karas"
+  | "Kavango East"
+  | "Kavango West"
+  | "Kunene"
+  | "Ohangwena"
+  | "Omaheke"
+  | "Omusati"
+  | "Oshana"
+  | "Oshikoto"
+  | "Otjozondjupa"
+  | "Zambezi";
 
 export const REGIONS: Region[] = [
-  'Khomas','Erongo','Hardap','//Karas','Kavango East','Kavango West',
-  'Kunene','Ohangwena','Omaheke','Omusati','Oshana','Oshikoto','Otjozondjupa','Zambezi',
+  "Khomas",
+  "Erongo",
+  "Hardap",
+  "//Karas",
+  "Kavango East",
+  "Kavango West",
+  "Kunene",
+  "Ohangwena",
+  "Omaheke",
+  "Omusati",
+  "Oshana",
+  "Oshikoto",
+  "Otjozondjupa",
+  "Zambezi",
 ];
 
 export type Interest =
-  | 'Photography' | 'Film' | 'Music' | 'Cars' | 'Sports'
-  | 'Fashion' | 'Business' | 'Gaming' | 'Tech' | 'Travel' | 'Art' | 'Food';
+  | "Photography"
+  | "Film"
+  | "Music"
+  | "Cars"
+  | "Sports"
+  | "Fashion"
+  | "Business"
+  | "Gaming"
+  | "Tech"
+  | "Travel"
+  | "Art"
+  | "Food";
 
 export const INTERESTS: Interest[] = [
-  'Photography','Film','Music','Cars','Sports','Fashion',
-  'Business','Gaming','Tech','Travel','Art','Food',
+  "Photography",
+  "Film",
+  "Music",
+  "Cars",
+  "Sports",
+  "Fashion",
+  "Business",
+  "Gaming",
+  "Tech",
+  "Travel",
+  "Art",
+  "Food",
 ];
 
-export type GhostMode = 'hidden' | 'approximate' | 'exact';
-export type PostType = 'text' | 'photo' | 'video' | 'voice' | 'reel' | 'poll' | 'location';
-export type MediaType = 'image' | 'video' | 'audio' | 'gif';
+export type GhostMode = "hidden" | "approximate" | "exact";
+export type PostType = "text" | "photo" | "video" | "voice" | "reel" | "poll" | "location";
+export type MediaType = "image" | "video" | "audio" | "gif";
 
 export type CreatorBadge =
-  | "Photographer" | "Videographer" | "Model" | "DJ" | "Musician"
-  | "Event Planner" | "Makeup Artist" | "Filmmaker" | "Designer";
+  | "Photographer"
+  | "Videographer"
+  | "Model"
+  | "DJ"
+  | "Musician"
+  | "Event Planner"
+  | "Makeup Artist"
+  | "Filmmaker"
+  | "Designer";
 
 export interface Profile {
   id: string;
@@ -58,6 +108,8 @@ export interface Profile {
   distance?: number;
   bearing?: number; // mock
   is_following?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface Post {
@@ -113,7 +165,8 @@ export interface Story {
   viewed?: boolean;
 }
 
-export interface EventItem { // Merged Event & EventItem
+export interface EventItem {
+  // Merged Event & EventItem
   id: string;
   created_by: string;
   title: string;
@@ -174,7 +227,8 @@ export interface Conversation {
   unread_count?: number; // supabase
 }
 
-export interface ChatMessage { // Merged Message & ChatMessage
+export interface ChatMessage {
+  // Merged Message & ChatMessage
   id: string;
   conversation_id: string;
   sender_id: string;
@@ -193,11 +247,23 @@ export interface ChatMessage { // Merged Message & ChatMessage
   profiles?: Profile; // supabase
 }
 
-export interface AppNotification { // Merged Notification & AppNotification
+export interface AppNotification {
+  // Merged Notification & AppNotification
   id: string;
   recipient_id: string;
   actor_id: string;
-  type: 'like' | 'comment' | 'follow' | 'repost' | 'mention' | 'message' | 'event_rsvp' | 'community_post' | 'rsvp' | 'view' | 'event_invite';
+  type:
+    | "like"
+    | "comment"
+    | "follow"
+    | "repost"
+    | "mention"
+    | "message"
+    | "event_rsvp"
+    | "community_post"
+    | "rsvp"
+    | "view"
+    | "event_invite";
   entity_id?: string | null; // supabase
   entity_type?: string | null; // supabase
   body: string | null;
@@ -231,34 +297,22 @@ export interface TrendingItem {
   engagement: number;
 }
 
-export interface RadarUser {
-  id: string;
-  username: string;
-  display_name: string;
-  avatar_url: string | null;
-  region: string | null;
-  city: string | null;
-  mood: string | null;
-  ghost_mode: GhostMode;
-  distance_m: number;
-}
-
 export interface SearchResults {
   profiles: Profile[];
   posts: Post[];
 }
 
 export function fmtCount(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
-  if (n >= 1_000)     return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
   return String(n);
 }
 
 export function timeAgo(ts: string): string {
   const d = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-  if (d < 60)       return `${d}s`;
-  if (d < 3600)     return `${Math.floor(d / 60)}m`;
-  if (d < 86400)    return `${Math.floor(d / 3600)}h`;
-  if (d < 604800)   return `${Math.floor(d / 86400)}d`;
+  if (d < 60) return `${d}s`;
+  if (d < 3600) return `${Math.floor(d / 60)}m`;
+  if (d < 86400) return `${Math.floor(d / 3600)}h`;
+  if (d < 604800) return `${Math.floor(d / 86400)}d`;
   return `${Math.floor(d / 604800)}w`;
 }

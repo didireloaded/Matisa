@@ -1,9 +1,25 @@
-import { useState } from 'react';
+import { useState } from "react";
 import type { Profile } from "@/types";
-import { pickGradient } from "./Tokens";
+
+const GRADIENTS = [
+  "linear-gradient(135deg, var(--primary), var(--accent3))",
+  "linear-gradient(135deg, var(--secondary), var(--accent3))",
+  "linear-gradient(135deg, var(--accent1), var(--secondary))",
+  "linear-gradient(135deg, var(--accent4), var(--accent1))",
+  "linear-gradient(135deg, var(--accent2), var(--primary))",
+  "linear-gradient(135deg, var(--accent3), var(--secondary))",
+  "linear-gradient(135deg, var(--primary), var(--background))",
+  "linear-gradient(135deg, var(--secondary), var(--background))",
+];
+
+export function pickGradient(seed: string) {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return GRADIENTS[h % GRADIENTS.length];
+}
 
 interface AvatarProps {
-  profile: Pick<Profile, 'id' | 'display_name' | 'avatar_url'>;
+  profile: Pick<Profile, "id" | "display_name" | "avatar_url">;
   size?: number;
   ring?: boolean;
   showOnline?: boolean;
@@ -12,24 +28,25 @@ interface AvatarProps {
 export function Avatar({ profile, size = 40, ring = false, showOnline = false }: AvatarProps) {
   const [imgError, setImgError] = useState(false);
   const grad = pickGradient(profile.id);
-  const letter = (profile.display_name || '?')[0].toUpperCase();
+  const letter = (profile.display_name || "?")[0].toUpperCase();
   const fontSize = Math.floor(size * 0.38);
 
-  const inner = profile.avatar_url && !imgError ? (
-    <img
-      src={profile.avatar_url}
-      alt={profile.display_name}
-      className="h-full w-full object-cover"
-      onError={() => setImgError(true)}
-    />
-  ) : (
-    <div
-      className="flex h-full w-full items-center justify-center font-semibold text-white select-none"
-      style={{ background: grad, fontSize }}
-    >
-      {letter}
-    </div>
-  );
+  const inner =
+    profile.avatar_url && !imgError ? (
+      <img
+        src={profile.avatar_url}
+        alt={profile.display_name}
+        className="h-full w-full object-cover"
+        onError={() => setImgError(true)}
+      />
+    ) : (
+      <div
+        className="flex h-full w-full items-center justify-center font-semibold text-white select-none"
+        style={{ background: grad, fontSize }}
+      >
+        {letter}
+      </div>
+    );
 
   const wrapSize = ring ? size + 6 : size;
 
@@ -40,13 +57,16 @@ export function Avatar({ profile, size = 40, ring = false, showOnline = false }:
           <div className="rounded-full overflow-hidden h-full w-full">{inner}</div>
         </div>
       ) : (
-        <div className="rounded-full overflow-hidden ring-1 ring-black/20" style={{ width: size, height: size }}>
+        <div
+          className="rounded-full overflow-hidden ring-1 ring-black/20"
+          style={{ width: size, height: size }}
+        >
           {inner}
         </div>
       )}
       {showOnline && (
         <span
-          className="absolute rounded-full border-2 border-[#0B0B0B] bg-[#4CAF7D]"
+          className="absolute rounded-full border-2 border-background bg-green-500"
           style={{ width: 10, height: 10, bottom: ring ? 2 : 0, right: ring ? 2 : 0 }}
         />
       )}

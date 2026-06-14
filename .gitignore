@@ -31,3 +31,8 @@ dist-ssr
 *.sln
 *.sw?
 node_modules
+
+# Environment variables
+.env
+.env.*
+supabase/.env
