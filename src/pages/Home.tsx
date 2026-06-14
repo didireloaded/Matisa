@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Avatar } from '@/components/common';
@@ -23,37 +24,39 @@ function StoriesRow({
       style={{ borderColor: '#2E2822' }}
     >
       {/* Add Story tile */}
-      <button
-        onClick={onAddStory}
-        className="flex flex-shrink-0 flex-col items-center gap-1.5 group"
-        aria-label="Add story"
-      >
-        <div className="relative">
-          {myStory ? (
-            <div className="story-ring h-[68px] w-[68px] rounded-full p-[2.5px]">
-              <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0F0D0B]">
-                <Avatar profile={profile!} size={62} />
+      {profile && (
+        <button
+          onClick={onAddStory}
+          className="flex flex-shrink-0 flex-col items-center gap-1.5 group"
+          aria-label="Add story"
+        >
+          <div className="relative">
+            {myStory ? (
+              <div className="story-ring h-[68px] w-[68px] rounded-full p-[2.5px]">
+                <div className="h-full w-full overflow-hidden rounded-full border-2 border-[#0F0D0B]">
+                  <Avatar profile={profile} size={62} />
+                </div>
               </div>
-            </div>
-          ) : (
+            ) : (
+              <div
+                className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-2 border-dashed transition group-hover:border-[#C8521A]"
+                style={{ borderColor: '#2E2822' }}
+              >
+                <Avatar profile={profile} size={56} />
+              </div>
+            )}
             <div
-              className="flex h-[68px] w-[68px] items-center justify-center rounded-full border-2 border-dashed transition group-hover:border-[#C8521A]"
-              style={{ borderColor: '#2E2822' }}
+              className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 text-white"
+              style={{ background: '#C8521A', borderColor: '#0F0D0B' }}
             >
-              <Avatar profile={profile!} size={56} />
+              <Plus size={12} strokeWidth={3} />
             </div>
-          )}
-          <div
-            className="absolute -bottom-0.5 -right-0.5 flex h-[22px] w-[22px] items-center justify-center rounded-full border-2 text-white"
-            style={{ background: '#C8521A', borderColor: '#0F0D0B' }}
-          >
-            <Plus size={12} strokeWidth={3} />
           </div>
-        </div>
-        <span className="text-[10px] font-medium text-[#8A7F74] truncate max-w-[68px]">
-          Your story
-        </span>
-      </button>
+          <span className="text-[10px] font-medium text-[#8A7F74] truncate max-w-[68px]">
+            Your story
+          </span>
+        </button>
+      )}
 
       {/* Other stories */}
       {stories
@@ -97,6 +100,11 @@ export function Home() {
 
   return (
     <div className="flex flex-col h-[calc(100dvh-120px)] overflow-hidden">
+      <Helmet>
+        <title>Matisa - The Social Hub for Namibia</title>
+        <meta name="description" content="Discover stories, events, and connect with people near you on Matisa." />
+      </Helmet>
+      
       {/* Stories */}
       <StoriesRow
         stories={stories}
@@ -110,7 +118,6 @@ export function Home() {
 
       {showCreateStory && (
         <CreateStoryModal
-          open={showCreateStory}
           onOpenChange={setShowCreateStory}
         />
       )}

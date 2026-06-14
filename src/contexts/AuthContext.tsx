@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('profiles')
       .select('*, profile_interests(interest)')
       .eq('id', userId)
-      .single();
+      .maybeSingle();
 
     if (data) {
       const interests = (data.profile_interests as { interest: string }[] ?? []).map(r => r.interest);
