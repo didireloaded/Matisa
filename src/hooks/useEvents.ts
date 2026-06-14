@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { useAuthStore } from "@/stores/authStore";
+import { useAuth } from "@/contexts/AuthContext";
 
 export interface Event {
   id: string;
@@ -25,7 +25,7 @@ export interface Event {
 }
 
 export function useEvents(communityId?: string) {
-  const { session } = useAuthStore();
+  const { session } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -36,8 +36,7 @@ export function useEvents(communityId?: string) {
         .from('events')
         .select(`
           *,
-          profiles!events_created_by_fkey (username, full_name, avatar_url),
-          communities (name)
+          profiles!events_created_by_fkey (username, full_name, avatar_url)
         `)
         .gte('start_time', new Date().toISOString()) // Only upcoming
         .order('start_time', { ascending: true });
