@@ -83,7 +83,8 @@ function StoriesRow({
   );
 }
 
-export function Home() {
+export function RadarPage() {
+  const { profile } = useAuth();
   const [stories, setStories] = useState<Story[]>([]);
   const [showCreateStory, setShowCreateStory] = useState(false);
 
