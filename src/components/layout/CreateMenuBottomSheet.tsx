@@ -27,31 +27,24 @@ export function CreateMenuBottomSheet({ open, onClose, onSelect }: CreateMenuBot
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t p-6 pb-safe"
-            style={{
-              background: 'rgba(28,24,20,0.95)',
-              backdropFilter: 'blur(20px)',
-              borderColor: '#2E2822',
-              boxShadow: '0 -10px 40px rgba(0,0,0,0.5)'
-            }}
+            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-3xl border-t border-[#222222] p-6 pb-safe bg-[#151515] shadow-[0_-10px_40px_rgba(0,0,0,0.8)]"
           >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-[#F5F0EA]">Create</h2>
+            <div className="mb-8 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-white tracking-tight">Create</h2>
               <button
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0F0D0B] text-[#8A7F74] transition hover:text-[#F5F0EA]"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#0B0B0B] text-[#A0A0A0] transition hover:text-white"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <div className="grid grid-cols-3 gap-y-6 gap-x-4">
-              <MenuAction icon={<PenSquare size={24} />} label="Post" color="#E8A055" onClick={() => onSelect('post')} />
-              <MenuAction icon={<Image size={24} />} label="Story" color="#C8521A" onClick={() => onSelect('story')} />
-              <MenuAction icon={<CalendarDays size={24} />} label="Event" color="#4CAF7D" onClick={() => onSelect('event')} />
-              <MenuAction icon={<Music size={24} />} label="Song" color="#2D7DD2" onClick={() => onSelect('song')} />
-              <MenuAction icon={<PenSquare size={24} />} label="Note" color="#9C27B0" onClick={() => onSelect('note')} />
-              <MenuAction icon={<Mic2 size={24} />} label="Voice Room" color="#F44336" onClick={() => onSelect('room')} />
+            <div className="grid grid-cols-3 gap-y-8 gap-x-4">
+              <MenuAction icon={<PenSquare size={24} />} label="Note" color="#FF9D2E" onClick={() => onSelect('note')} />
+              <MenuAction icon={<Image size={24} />} label="Story" color="#FF6B6B" onClick={() => onSelect('story')} />
+              <MenuAction icon={<Mic2 size={24} />} label="Voice Room" color="#2D7DD2" onClick={() => onSelect('room')} />
+              <MenuAction icon={<Music size={24} />} label="Song" color="#4CAF7D" onClick={() => onSelect('song')} />
+              <MenuAction icon={<CalendarDays size={24} />} label="Event" color="#A0A0A0" onClick={() => onSelect('event')} />
             </div>
           </motion.div>
         </>
@@ -69,7 +62,7 @@ function MenuAction({ icon, label, color, onClick }: { icon: React.ReactNode, la
       >
         {icon}
       </div>
-      <span className="text-xs font-semibold text-[#8A7F74] transition group-hover:text-[#F5F0EA]">{label}</span>
+      <span className="text-xs font-bold text-[#A0A0A0] transition group-hover:text-white">{label}</span>
     </button>
   );
 }

@@ -8,6 +8,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { CreatePostModal } from '@/components/feed/CreatePostModal';
+import { CreateNoteModal } from '@/components/feed/CreateNoteModal';
 import { CreateMenuBottomSheet } from './CreateMenuBottomSheet';
 import { CreateVoiceRoomModal } from '@/components/karaoke/CreateVoiceRoomModal';
 import { CreateSongModal } from '@/components/music/CreateSongModal';
@@ -208,7 +209,7 @@ const HIDE_NAV = ['/chat', '/room', '/auth'];
 
 export function MainLayout() {
   const [showCompose, setShowCompose] = useState(false);
-  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateNote, setShowCreateNote] = useState(false);
   const [showCreateRoom, setShowCreateRoom] = useState(false);
   const [showCreateSong, setShowCreateSong] = useState(false);
   const location = useLocation();
@@ -260,9 +261,9 @@ export function MainLayout() {
         onClose={() => setShowCompose(false)} 
         onSelect={(action) => {
           setShowCompose(false);
-          if (action === 'post') {
+          if (action === 'note') {
             setTimeout(() => {
-               setShowCreatePost(true);
+               setShowCreateNote(true);
             }, 300);
           } else if (action === 'room') {
             setTimeout(() => {
@@ -279,12 +280,11 @@ export function MainLayout() {
       />
 
       {/* Actual Create Modals */}
-      {showCreatePost && (
-        <CreatePostModal
-          onClose={() => setShowCreatePost(false)}
-          onSuccess={() => setShowCreatePost(false)}
-        />
-      )}
+      <CreateNoteModal
+        open={showCreateNote}
+        onClose={() => setShowCreateNote(false)}
+        onSuccess={() => setShowCreateNote(false)}
+      />
       <CreateVoiceRoomModal open={showCreateRoom} onClose={() => setShowCreateRoom(false)} />
       <CreateSongModal open={showCreateSong} onClose={() => setShowCreateSong(false)} onSuccess={() => setShowCreateSong(false)} />
     </div>

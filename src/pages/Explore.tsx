@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, X, TrendingUp, Users, CalendarDays, MapPin, ArrowRight } from 'lucide-react';
+import { Search, X, TrendingUp, Users, CalendarDays, MapPin, ArrowRight, Mic } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/contexts/AuthContext';
@@ -395,6 +395,53 @@ export function Explore() {
       {/* Discovery sections (hidden when searching) */}
       {query.trim().length < 2 && (
         <div>
+
+          {/* ── Live Karaoke Rooms ── */}
+          <section className="pt-5 pb-4 border-b" style={{ borderColor: '#2E2822' }}>
+            <div className="mb-3 flex items-center justify-between px-4">
+              <div>
+                <h2 className="font-display text-[15px] font-bold text-[#F5F0EA]">Live Karaoke Rooms</h2>
+                <p className="mt-0.5 text-[11px] text-[#8A7F74]">Join a room and sing with friends</p>
+              </div>
+              <span className="flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-semibold bg-[#C8521A] text-white animate-pulse shadow-[0_0_10px_rgba(200,82,26,0.5)]">
+                <Mic size={10} />
+                LIVE
+              </span>
+            </div>
+            <div className="flex gap-4 overflow-x-auto px-4 no-scrollbar pb-2">
+              {[
+                { id: '1', title: 'Windhoek Karaoke Night', count: 28, users: [0, 1, 2] },
+                { id: '2', title: 'Afrobeats & Vibes', count: 15, users: [3, 4, 5] },
+                { id: '3', title: 'R&B Classics Only', count: 42, users: [6, 7, 8] }
+              ].map(room => (
+                <div 
+                  key={room.id}
+                  onClick={() => navigate(`/room/${room.id}?title=${encodeURIComponent(room.title)}`)}
+                  className="w-64 flex-shrink-0 bg-[#1C1814] border border-[#2E2822] rounded-2xl p-4 cursor-pointer hover:border-[#C8521A]/50 transition-colors"
+                >
+                  <h3 className="font-bold text-[#F5F0EA] truncate text-sm mb-1">{room.title}</h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="flex items-center gap-1 text-[10px] text-[#8A7F74]">
+                      <Users size={12} /> {room.count} listening
+                    </span>
+                  </div>
+                  <div className="flex -space-x-3">
+                    {room.users.map((u, i) => (
+                      <img 
+                        key={i} 
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${u}`} 
+                        alt="Avatar" 
+                        className="w-8 h-8 rounded-full border-2 border-[#1C1814] bg-black"
+                      />
+                    ))}
+                    <div className="w-8 h-8 rounded-full border-2 border-[#1C1814] bg-[#2E2822] flex items-center justify-center text-[10px] font-bold text-[#8A7F74]">
+                      +{room.count - 3}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
           {/* ── Trending ── */}
           <section className="pt-5 pb-4">
