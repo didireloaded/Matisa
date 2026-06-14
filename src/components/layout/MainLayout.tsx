@@ -226,12 +226,12 @@ export function MainLayout() {
         </AnimatePresence>
       </main>
 
-      {!hideNav && <BottomNav onCompose={() => setShowCompose(true)} />}
+      {!hideNav && <BottomNav onCompose={() => setShowCreateMenu(true)} />}
 
       {/* Compose Menu */}
       <CreateRadialMenu
-        isOpen={showCompose}
-        onClose={() => setShowCompose(false)}
+        isOpen={showCreateMenu}
+        onClose={() => setShowCreateMenu(false)}
         onSelect={(action) => {
           if (action === "note") setTimeout(() => setShowCreateNote(true), 300);
           else if (action === "room") setTimeout(() => setShowCreateRoom(true), 300);
