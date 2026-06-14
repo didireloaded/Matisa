@@ -36,7 +36,8 @@ export function useEvents(communityId?: string) {
         .from('events')
         .select(`
           *,
-          profiles!events_created_by_fkey (username, full_name, avatar_url)
+          profiles!events_created_by_fkey (username, full_name, avatar_url),
+          communities (name)
         `)
         .gte('start_time', new Date().toISOString()) // Only upcoming
         .order('start_time', { ascending: true });
