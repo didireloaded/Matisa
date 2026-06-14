@@ -125,7 +125,7 @@ const NAV = [
   { path: '/',        icon: Compass,      label: 'Discovery' },
   { path: '/notes',   icon: MessageSquare,label: 'Notes'    },
   { path: null,       icon: Plus,         label: ''        }, // compose trigger
-  { path: '/radar',   icon: Radar,        label: 'Radar'  },
+  { path: '/explore', icon: Radio,        label: 'Explore' },
   { path: '/profile', icon: User,         label: 'Profile' },
 ];
 
