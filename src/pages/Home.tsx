@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { Avatar } from '@/components/common';
 import { CreateStoryModal } from '@/components/feed/CreateStoryModal';
 import type { Story } from '@/types';
-import { RadarCanvas } from '../components/radar/RadarCanvas';
+import { Radar } from '../components/radar/Radar';
 
 function StoriesRow({
   stories,
@@ -16,7 +16,7 @@ function StoriesRow({
   onAddStory: () => void;
 }) {
   const { profile } = useAuth();
-  const myStory = stories.find(s => s.user_id === profile?.id);
+  const myStory = stories.find(s => (s.user_id || (s as any).author_id) === profile?.id);
 
   return (
     <div
@@ -60,7 +60,7 @@ function StoriesRow({
 
       {/* Other stories */}
       {stories
-        .filter(s => s.user_id !== profile?.id && s.profiles)
+        .filter(s => (s.user_id || (s as any).author_id) !== profile?.id && s.profiles)
         .map(story => (
           <button
             key={story.id}
@@ -90,9 +90,10 @@ export function Home() {
   useEffect(() => {
     supabase
       .from('stories')
-      .select('*, profiles!stories_user_id_fkey(*)')
+      .select('*, profiles!stories_author_id_fkey(*)')
       .gt('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })
+      .limit(20)
       .then(({ data }) => {
         if (data) setStories(data as Story[]);
       });
@@ -113,7 +114,7 @@ export function Home() {
 
       {/* Radar Canvas (Fullscreen space) */}
       <main className="flex-1 flex flex-col relative w-full h-full overflow-hidden bg-[#0F0D0B]">
-        <RadarCanvas />
+        <Radar />
       </main>
 
       {showCreateStory && (

@@ -1,0 +1,64 @@
+{
+  "$schema": "../../../schemas/extension.schema.json",
+  "name": "aif-ext-hello",
+  "version": "1.0.0",
+  "description": "Example extension: command, injection, custom skills, skill replacement, MCP server, custom runtime, and runtime-aware agent files",
+  "commands": [
+    {
+      "name": "hello",
+      "description": "Say hello from extension",
+      "module": "./commands/hello.js"
+    }
+  ],
+  "agents": [
+    {
+      "id": "test-agent",
+      "displayName": "Test Agent",
+      "configDir": ".test-agent",
+      "skillsDir": ".test-agent/skills",
+      "agentsDir": ".test-agent/agents",
+      "agentFileExtension": ".toml",
+      "settingsFile": null,
+      "supportsMcp": false,
+      "skillsCliAgent": null
+    }
+  ],
+  "agentFiles": [
+    {
+      "runtime": "claude",
+      "source": "agent-files/claude/hello-reviewer.md",
+      "target": "hello-reviewer.md"
+    },
+    {
+      "runtime": "codex",
+      "source": "agent-files/codex/hello_reviewer.toml",
+      "target": "hello_reviewer.toml"
+    },
+    {
+      "runtime": "test-agent",
+      "source": "agent-files/test-agent/hello_helper.toml",
+      "target": "hello_helper.toml"
+    }
+  ],
+  "injections": [
+    {
+      "target": "aif-implement",
+      "position": "append",
+      "file": "./injections/implement-extra.md"
+    }
+  ],
+  "skills": [
+    "skills/aif-hello-world",
+    "skills/hello-commit"
+  ],
+  "replaces": {
+    "skills/hello-commit": "aif-commit"
+  },
+  "mcpServers": [
+    {
+      "key": "hello-mcp",
+      "template": "./mcp/hello-mcp.json",
+      "instruction": "Hello MCP: Set HELLO_API_KEY environment variable"
+    }
+  ]
+}

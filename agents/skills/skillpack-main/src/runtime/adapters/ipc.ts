@@ -1,0 +1,508 @@
+import fs from "node:fs";
+import path from "node:path";
+import { configManager, type DataConfig } from "../config.js";
+import { resolveCommand } from "../commands/index.js";
+import type { ScheduledJobConfig } from "../../job-config.js";
+import {
+  ConversationService,
+  DEFAULT_WEB_CHANNEL_ID,
+} from "../services/conversation.js";
+import type { SchedulerAdapter } from "./scheduler.js";
+import type {
+  AdapterContext,
+  AgentEvent,
+  BotCommand,
+  ChannelAttachment,
+  IPackAgent,
+  IpcBroadcaster,
+  PlatformAdapter,
+  RuntimePlatform,
+} from "./types.js";
+import { detectPlatformFromChannelId, isMessageSender } from "./types.js";
+
+type IpcRequest =
+  | { id: string; type: "get_conversations" }
+  | { id: string; type: "create_conversation" }
+  | { id: string; type: "get_messages"; channelId: string; limit?: number }
+  | {
+      id: string;
+      type: "send_message";
+      channelId: string;
+      text: string;
+      attachments?: ChannelAttachment[];
+    }
+  | { id: string; type: "command"; command: BotCommand; channelId: string }
+  | { id: string; type: "get_config" }
+  | { id: string; type: "update_config"; updates: Partial<DataConfig> }
+  | { id: string; type: "update_runtime_auth"; provider: string; token: string }
+  | { id: string; type: "get_status" }
+  | { id: string; type: "get_scheduled_jobs" }
+  | { id: string; type: "add_scheduled_job"; job: ScheduledJobConfig }
+  | {
+      id: string;
+      type: "update_scheduled_job";
+      jobId: string;
+      updates: Omit<ScheduledJobConfig, "id" | "name">;
+    }
+  | {
+      id: string;
+      type: "set_scheduled_job_enabled";
+      jobId: string;
+      enabled: boolean;
+    }
+  | { id: string; type: "trigger_scheduled_job"; jobId: string }
+  | { id: string; type: "remove_scheduled_job"; jobId: string };
+
+const IPC_REQUEST_TYPES = new Set<IpcRequest["type"]>([
+  "get_conversations",
+  "create_conversation",
+  "get_messages",
+  "send_message",
+  "command",
+  "get_config",
+  "update_config",
+  "update_runtime_auth",
+  "get_status",
+  "get_scheduled_jobs",
+  "add_scheduled_job",
+  "update_scheduled_job",
+  "set_scheduled_job_enabled",
+  "trigger_scheduled_job",
+  "remove_scheduled_job",
+]);
+
+export class IpcAdapter implements PlatformAdapter, IpcBroadcaster {
+  readonly name = "ipc";
+
+  private agent: IPackAgent | null = null;
+  private rootDir = "";
+  private adapterMap: Map<string, PlatformAdapter> | null = null;
+  private conversationService: ConversationService | null = null;
+  private readonly createdChannels = new Set<string>();
+  private messageListener?: (message: unknown) => void;
+  private started = false;
+
+  async start(ctx: AdapterContext): Promise<void> {
+    // IPC channel only exists when spawned via child_process.fork/spawn with stdio "ipc".
+    if (typeof process.send !== "function") {
+      return;
+    }
+
+    this.agent = ctx.agent;
+    this.rootDir = ctx.rootDir;
+    this.adapterMap = ctx.adapterMap ?? null;
+    this.conversationService = new ConversationService(ctx.rootDir);
+
+    this.messageListener = (message: unknown) => {
+      if (!this.isIpcRequest(message)) return;
+      void this.handleRequest(message);
+    };
+    process.on("message", this.messageListener);
+
+    this.started = true;
+    console.log("[IpcAdapter] Started");
+  }
+
+  async stop(): Promise<void> {
+    if (this.messageListener) {
+      process.off("message", this.messageListener);
+      this.messageListener = undefined;
+    }
+
+    if (this.started) {
+      console.log("[IpcAdapter] Stopped");
+    }
+    this.started = false;
+  }
+
+  notifyReady(port: number): void {
+    this.sendIpc({
+      type: "ready",
+      port,
+    });
+  }
+
+  broadcastInbound(
+    channelId: string,
+    platform: string,
+    sender: { id: string; username: string },
+    text: string,
+  ): void {
+    this.sendIpc({
+      type: "inbound_message",
+      channelId,
+      platform,
+      sender,
+      text,
+      timestamp: Date.now(),
+    });
+  }
+
+  broadcastAgentEvent(channelId: string, event: AgentEvent): void {
+    this.sendIpc({
+      type: "agent_event",
+      channelId,
+      event,
+    });
+  }
+
+  private isIpcRequest(message: unknown): message is IpcRequest {
+    if (!message || typeof message !== "object") return false;
+    const maybe = message as Record<string, unknown>;
+    return (
+      typeof maybe.id === "string" &&
+      typeof maybe.type === "string" &&
+      IPC_REQUEST_TYPES.has(maybe.type as IpcRequest["type"])
+    );
+  }
+
+  private async handleRequest(request: IpcRequest): Promise<void> {
+    if (!this.agent || !this.conversationService) {
+      this.replyError(request.id, "IPC adapter is not ready yet");
+      return;
+    }
+
+    try {
+      switch (request.type) {
+        case "get_conversations": {
+          const activeChannels = new Set(this.agent.getActiveChannelIds());
+          for (const channelId of this.createdChannels) {
+            activeChannels.add(channelId);
+          }
+          const conversations = this.conversationService.listConversations(
+            activeChannels,
+            {
+              includeDefaultWeb: true,
+              includeLegacyWeb: false,
+            },
+          );
+          this.reply(request.id, conversations);
+          return;
+        }
+
+        case "create_conversation": {
+          const channelId = DEFAULT_WEB_CHANNEL_ID;
+          this.createdChannels.add(channelId);
+          this.reply(request.id, { channelId });
+          return;
+        }
+
+        case "get_messages": {
+          if (!request.channelId || typeof request.channelId !== "string") {
+            this.replyError(request.id, "channelId is required");
+            return;
+          }
+          const messages = this.conversationService.getMessages(
+            request.channelId,
+            request.limit ?? 100,
+          );
+          this.reply(request.id, messages);
+          return;
+        }
+
+        case "send_message": {
+          if (!request.channelId || typeof request.channelId !== "string") {
+            this.replyError(request.id, "channelId is required");
+            return;
+          }
+          if (typeof request.text !== "string") {
+            this.replyError(request.id, "text is required");
+            return;
+          }
+
+          const platform = this.detectPlatform(request.channelId);
+          const attachments = this.normalizeAttachments(request.attachments);
+          this.createdChannels.add(request.channelId);
+
+          const command = resolveCommand(request.text);
+          if (command) {
+            const result = await this.agent.handleCommand(
+              command,
+              request.channelId,
+            );
+            const message = result.message ?? "";
+
+            const response: {
+              stopReason: string;
+              text: string;
+              errorMessage?: string;
+            } = {
+              stopReason: "command",
+              text: message,
+            };
+            if (!result.success) {
+              response.errorMessage = message;
+            }
+
+            this.reply(request.id, response);
+            return;
+          }
+
+          let fullText = "";
+
+          const result = await this.agent.handleMessage(
+            platform,
+            request.channelId,
+            request.text,
+            (event) => {
+              if (event.type === "text_delta") {
+                fullText += event.delta;
+              }
+              this.broadcastAgentEvent(request.channelId, event);
+            },
+            attachments,
+          );
+
+          if (
+            fullText.trim() &&
+            platform !== "web" &&
+            platform !== "scheduler"
+          ) {
+            const adapter = this.adapterMap?.get(platform);
+            if (adapter && isMessageSender(adapter)) {
+              await adapter.sendMessage(request.channelId, fullText);
+            }
+          }
+
+          this.reply(request.id, {
+            ...result,
+            text: fullText,
+          });
+          return;
+        }
+
+        case "command": {
+          if (!request.channelId || typeof request.channelId !== "string") {
+            this.replyError(request.id, "channelId is required");
+            return;
+          }
+          const result = await this.agent.handleCommand(
+            request.command,
+            request.channelId,
+          );
+          this.reply(request.id, result);
+          return;
+        }
+
+        case "get_config": {
+          this.reply(request.id, configManager.getConfig());
+          return;
+        }
+
+        case "update_config": {
+          configManager.save(this.rootDir, request.updates || {});
+          const updated = configManager.getConfig();
+          const provider = updated.provider || "openai";
+          this.agent.updateAuth(provider, updated.apiKey);
+          this.reply(request.id, updated);
+          return;
+        }
+
+        case "update_runtime_auth": {
+          if (typeof request.provider !== "string" || !request.provider.trim()) {
+            this.replyError(request.id, "provider is required");
+            return;
+          }
+          if (typeof request.token !== "string") {
+            this.replyError(request.id, "token is required");
+            return;
+          }
+          const provider = request.provider.trim();
+          process.env.FREVANA_TOKEN = request.token;
+          process.env.SKILLPACK_API_KEY = request.token;
+          process.env.SKILLPACK_PROVIDER = provider;
+          this.agent.updateAuth(provider, request.token);
+          this.reply(request.id, { success: true });
+          return;
+        }
+
+        case "get_status": {
+          this.reply(request.id, {
+            status: "running",
+            pid: process.pid,
+          });
+          return;
+        }
+
+        case "get_scheduled_jobs": {
+          const scheduler = this.getSchedulerAdapter();
+          this.reply(request.id, scheduler ? scheduler.listJobs() : []);
+          return;
+        }
+
+        case "add_scheduled_job": {
+          const scheduler = this.getSchedulerAdapter();
+          if (!scheduler) {
+            this.replyError(request.id, "Scheduler adapter is not available");
+            return;
+          }
+          const result = scheduler.addJob(request.job);
+          if (!result.success) {
+            this.replyError(request.id, result.message);
+            return;
+          }
+          this.reply(request.id, result);
+          return;
+        }
+
+        case "update_scheduled_job": {
+          const scheduler = this.getSchedulerAdapter();
+          if (!scheduler) {
+            this.replyError(request.id, "Scheduler adapter is not available");
+            return;
+          }
+          const result = scheduler.updateJob(request.jobId, request.updates);
+          if (!result.success) {
+            this.replyError(request.id, result.message);
+            return;
+          }
+          this.reply(request.id, result);
+          return;
+        }
+
+        case "set_scheduled_job_enabled": {
+          const scheduler = this.getSchedulerAdapter();
+          if (!scheduler) {
+            this.replyError(request.id, "Scheduler adapter is not available");
+            return;
+          }
+          const result = scheduler.setEnabled(request.jobId, request.enabled);
+          if (!result.success) {
+            this.replyError(request.id, result.message);
+            return;
+          }
+          this.reply(request.id, result);
+          return;
+        }
+
+        case "trigger_scheduled_job": {
+          const scheduler = this.getSchedulerAdapter();
+          if (!scheduler) {
+            this.replyError(request.id, "Scheduler adapter is not available");
+            return;
+          }
+          const result = await scheduler.triggerJob(request.jobId);
+          if (!result.success) {
+            this.replyError(request.id, result.message);
+            return;
+          }
+          this.reply(request.id, result);
+          return;
+        }
+
+        case "remove_scheduled_job": {
+          const scheduler = this.getSchedulerAdapter();
+          if (!scheduler) {
+            this.replyError(request.id, "Scheduler adapter is not available");
+            return;
+          }
+          const result = scheduler.removeJob(request.jobId);
+          if (!result.success) {
+            this.replyError(request.id, result.message);
+            return;
+          }
+          this.reply(request.id, result);
+          return;
+        }
+      }
+    } catch (err) {
+      this.replyError(
+        request.id,
+        err instanceof Error ? err.message : String(err),
+      );
+    }
+  }
+
+  private getSchedulerAdapter(): SchedulerAdapter | null {
+    const adapter = this.adapterMap?.get("scheduler");
+    if (!adapter) return null;
+    return adapter as SchedulerAdapter;
+  }
+
+  private normalizeAttachments(
+    attachments: unknown,
+  ): ChannelAttachment[] | undefined {
+    if (attachments === undefined) {
+      return undefined;
+    }
+
+    if (!Array.isArray(attachments)) {
+      throw new Error("attachments must be an array");
+    }
+
+    const root = path.resolve(this.rootDir);
+    return attachments.map((attachment, index) => {
+      if (!attachment || typeof attachment !== "object") {
+        throw new Error(`attachment ${index + 1} must be an object`);
+      }
+
+      const maybeAttachment = attachment as Record<string, unknown>;
+      const filename =
+        typeof maybeAttachment.filename === "string"
+          ? maybeAttachment.filename.trim()
+          : "";
+      const localPath =
+        typeof maybeAttachment.localPath === "string"
+          ? maybeAttachment.localPath.trim()
+          : "";
+      const mimeType =
+        typeof maybeAttachment.mimeType === "string"
+          ? maybeAttachment.mimeType.trim()
+          : undefined;
+      const size =
+        typeof maybeAttachment.size === "number" &&
+        Number.isFinite(maybeAttachment.size)
+          ? maybeAttachment.size
+          : undefined;
+
+      if (!filename) {
+        throw new Error(`attachment ${index + 1} filename is required`);
+      }
+      if (!localPath) {
+        throw new Error(`attachment ${index + 1} localPath is required`);
+      }
+
+      const resolvedPath = path.resolve(localPath);
+      const relativePath = path.relative(root, resolvedPath);
+      if (
+        relativePath === ".." ||
+        relativePath.startsWith(`..${path.sep}`) ||
+        path.isAbsolute(relativePath)
+      ) {
+        throw new Error(
+          `attachment ${index + 1} is outside the skillpack root`,
+        );
+      }
+
+      const stats = fs.statSync(resolvedPath);
+      if (!stats.isFile()) {
+        throw new Error(`attachment ${index + 1} must point to a file`);
+      }
+
+      return {
+        filename,
+        localPath: resolvedPath,
+        ...(mimeType ? { mimeType } : {}),
+        size: size ?? stats.size,
+      };
+    });
+  }
+
+  private detectPlatform(channelId: string): RuntimePlatform {
+    return detectPlatformFromChannelId(channelId);
+  }
+
+  private sendIpc(payload: unknown): void {
+    if (typeof process.send === "function") {
+      process.send(payload as any);
+    }
+  }
+
+  private reply(id: string, data: unknown): void {
+    this.sendIpc({ id, type: "result", data });
+  }
+
+  private replyError(id: string, message: string): void {
+    this.sendIpc({ id, type: "error", message });
+  }
+}
