@@ -38,8 +38,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Needs onboarding if username isn't set yet
       setNeedsOnboarding(!data.username);
     } else {
-      setProfile(null);
-      setNeedsOnboarding(true);
+      console.log('[AuthContext] Profile missing. Attempting to create default profile for:', userId);
+      // Create a default profile to prevent the app from hanging
+      const defaultUsername = `user_${userId.substring(0, 8)}`;
+      const { data: newProfile, error: insertError } = await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          username: defaultUsername,
+          display_name: 'New User',
+          ghost_mode: 'hidden'
+        })
+        .select()
+        .maybeSingle();
+      
+      if (insertError) {
+        console.error('[AuthContext] Failed to create default profile:', insertError.message);
+      }
+
+      if (newProfile) {
+        setProfile(newProfile as Profile);
+        setNeedsOnboarding(true); // Must still go through onboarding to pick a real username
+      } else {
+        // Fallback if insert fails (shouldn't happen unless schema error)
+        setProfile(null);
+        setNeedsOnboarding(true);
+      }
     }
   };
 

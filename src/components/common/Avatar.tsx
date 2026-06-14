@@ -46,7 +46,7 @@ export function Avatar({ profile, size = 40, ring = false, showOnline = false }:
       )}
       {showOnline && (
         <span
-          className="absolute rounded-full border-2 border-[#0F0D0B] bg-[#4CAF7D]"
+          className="absolute rounded-full border-2 border-[#0B0B0B] bg-[#4CAF7D]"
           style={{ width: 10, height: 10, bottom: ring ? 2 : 0, right: ring ? 2 : 0 }}
         />
       )}

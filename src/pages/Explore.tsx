@@ -248,7 +248,10 @@ export function Explore() {
   // ── Load discovery ──────────────────────────
 
   useEffect(() => {
-    if (!profile) return;
+    if (!profile) {
+      setLoadingDisc(false);
+      return;
+    }
     setLoadingDisc(true);
 
     Promise.all([
@@ -412,11 +415,18 @@ export function Explore() {
             {loadingDisc ? (
               Array.from({ length: 3 }).map((_, i) => <PostSkeleton key={i} />)
             ) : trending.length === 0 ? (
-              <EmptyState
-                icon={<TrendingUp size={22} color="#8A7F74" />}
-                title="Nothing trending yet"
-                subtitle="Post something to get it going."
-              />
+              <div className="py-12 px-4 text-center border rounded-2xl mx-4" style={{ background: '#1C1814', borderColor: '#2E2822' }}>
+                <TrendingUp size={28} color="#8A7F74" className="mx-auto mb-3 opacity-50" />
+                <h3 className="text-[15px] font-bold text-[#F5F0EA] mb-1">No trending content yet</h3>
+                <p className="text-[12px] text-[#8A7F74] mb-4">Be the first to post something amazing.</p>
+                <button
+                  onClick={() => navigate('/')}
+                  className="rounded-full px-5 py-2 text-xs font-bold text-white transition hover:bg-[#E8A055]"
+                  style={{ background: '#C8521A' }}
+                >
+                  Create a Post
+                </button>
+              </div>
             ) : (
               trending.slice(0, 6).map(post => (
                 <PostCard

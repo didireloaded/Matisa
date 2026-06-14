@@ -3,11 +3,15 @@ import { Outlet, useLocation, useNavigate, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   Home, Compass, Plus, CalendarDays, User,
-  MessageSquare, Radio, Bell,
+  MessageSquare, Radio, Bell, Radar
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { CreatePostModal } from '@/components/feed/CreatePostModal';
+import { CreateMenuBottomSheet } from './CreateMenuBottomSheet';
+import { CreateVoiceRoomModal } from '@/components/karaoke/CreateVoiceRoomModal';
+import { CreateSongModal } from '@/components/music/CreateSongModal';
+import { toast } from 'sonner';
 
 // ─────────────────────────────────────────────
 // TOP BAR
@@ -117,10 +121,10 @@ function TopBar() {
 // ─────────────────────────────────────────────
 
 const NAV = [
-  { path: '/',        icon: Home,         label: 'Home'    },
-  { path: '/explore', icon: Compass,      label: 'Explore' },
+  { path: '/',        icon: Compass,      label: 'Discovery' },
+  { path: '/notes',   icon: MessageSquare,label: 'Notes'    },
   { path: null,       icon: Plus,         label: ''        }, // compose trigger
-  { path: '/events',  icon: CalendarDays, label: 'Events'  },
+  { path: '/radar',   icon: Radar,        label: 'Radar'  },
   { path: '/profile', icon: User,         label: 'Profile' },
 ];
 
@@ -204,11 +208,15 @@ const HIDE_NAV = ['/chat', '/room', '/auth'];
 
 export function MainLayout() {
   const [showCompose, setShowCompose] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showCreateRoom, setShowCreateRoom] = useState(false);
+  const [showCreateSong, setShowCreateSong] = useState(false);
   const location = useLocation();
   const { session, loading } = useAuth();
   const path = location.pathname;
 
-  if (!loading && !session) return <Navigate to="/auth" replace />;
+  const isGuest = localStorage.getItem('guestMode') === 'true';
+  if (!loading && !session && !isGuest) return <Navigate to="/auth" replace />;
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center" style={{ background: '#0F0D0B' }}>
@@ -246,13 +254,39 @@ export function MainLayout() {
 
       {!hideNav && <BottomNav onCompose={() => setShowCompose(true)} />}
 
-      {/* Compose modal */}
-      {showCompose && (
+      {/* Compose Menu */}
+      <CreateMenuBottomSheet 
+        open={showCompose} 
+        onClose={() => setShowCompose(false)} 
+        onSelect={(action) => {
+          setShowCompose(false);
+          if (action === 'post') {
+            setTimeout(() => {
+               setShowCreatePost(true);
+            }, 300);
+          } else if (action === 'room') {
+            setTimeout(() => {
+               setShowCreateRoom(true);
+            }, 300);
+          } else if (action === 'song') {
+            setTimeout(() => {
+               setShowCreateSong(true);
+            }, 300);
+          } else {
+            toast.info(`Opening ${action} creation flow...`);
+          }
+        }} 
+      />
+
+      {/* Actual Create Modals */}
+      {showCreatePost && (
         <CreatePostModal
-          onClose={() => setShowCompose(false)}
-          onSuccess={() => setShowCompose(false)}
+          onClose={() => setShowCreatePost(false)}
+          onSuccess={() => setShowCreatePost(false)}
         />
       )}
+      <CreateVoiceRoomModal open={showCreateRoom} onClose={() => setShowCreateRoom(false)} />
+      <CreateSongModal open={showCreateSong} onClose={() => setShowCreateSong(false)} onSuccess={() => setShowCreateSong(false)} />
     </div>
   );
 }

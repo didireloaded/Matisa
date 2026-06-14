@@ -8,7 +8,7 @@ export function Skeleton({ className = '' }: { className?: string }) {
 
 export function PostSkeleton() {
   return (
-    <div className="border-b border-[#2E2822] px-4 py-4">
+    <div className="border-b border-[#222222] px-4 py-4">
       <div className="flex gap-3">
         <Skeleton className="h-11 w-11 rounded-full flex-shrink-0" />
         <div className="flex-1 space-y-2">

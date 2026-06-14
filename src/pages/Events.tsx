@@ -263,22 +263,43 @@ export function Events() {
             <div key={i} className="h-64 rounded-2xl skeleton" />
           ))
         ) : filtered.length === 0 ? (
-          <EmptyState
-            icon={<CalendarDays size={26} color="#8A7F74" />}
-            title={tab === 'mine' ? 'No events created yet' : 'No upcoming events'}
-            subtitle={tab === 'mine' ? 'Host an event for the community.' : 'Check back soon or create one.'}
-            action={
-              tab === 'mine' ? (
-                <button
-                  onClick={() => setShowCreate(true)}
-                  className="flex items-center gap-2 rounded-full px-5 py-2 text-sm font-semibold text-white"
-                  style={{ background: '#C8521A' }}
-                >
-                  <Plus size={16} /> Create Event
-                </button>
-              ) : undefined
-            }
-          />
+          <div className="py-12 px-6 text-center border rounded-3xl mx-2 mt-4" style={{ background: '#1C1814', borderColor: '#2E2822' }}>
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-[#C8521A]/10">
+              <CalendarDays size={32} color="#C8521A" />
+            </div>
+            <h2 className="text-lg font-bold text-[#F5F0EA] mb-2">
+              {tab === 'mine' ? 'No events created yet' : '🎉 No events near you'}
+            </h2>
+            <p className="text-sm text-[#8A7F74] mb-8 leading-relaxed max-w-[240px] mx-auto">
+              {tab === 'mine' 
+                ? 'Host your first event and bring the community together.' 
+                : 'There are no upcoming events matching your criteria right now.'}
+            </p>
+            
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowCreate(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold text-white transition hover:opacity-90"
+                style={{ background: '#C8521A' }}
+              >
+                <Plus size={18} strokeWidth={2.5} /> Create Event
+              </button>
+              
+              {tab !== 'mine' && (
+                <>
+                  <button className="w-full flex items-center justify-center gap-2 rounded-xl py-3.5 text-sm font-bold transition border" style={{ color: '#F5F0EA', borderColor: '#2E2822', background: '#221D18' }}>
+                    <Search size={16} /> Discover Namibia Events
+                  </button>
+                  <button className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-semibold text-[#8A7F74] transition hover:text-[#F5F0EA]">
+                    Import from Facebook
+                  </button>
+                  <button className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-xs font-semibold text-[#8A7F74] transition hover:text-[#F5F0EA]">
+                    Import from Eventbrite
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         ) : (
           <AnimatePresence>
             {filtered.map(event => (

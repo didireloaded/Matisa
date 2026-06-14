@@ -66,6 +66,10 @@ function KaraokeRoomInner({ roomId, navigate }: { roomId: string, navigate: any 
   const { profile: user } = useAuth();
   const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
+  
+  // Read title from URL if passed
+  const searchParams = new URLSearchParams(window.location.search);
+  const roomTitle = searchParams.get('title') || 'Friday Night Vibes 🎤';
 
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [listeners, setListeners] = useState(0);
@@ -113,7 +117,7 @@ function KaraokeRoomInner({ roomId, navigate }: { roomId: string, navigate: any 
             <ArrowLeft className="w-5 h-5 text-foreground" />
           </button>
           <div>
-            <h2 className="text-lg font-bold text-foreground">Friday Night Vibes 🎤</h2>
+            <h2 className="text-lg font-bold text-foreground truncate max-w-[200px]">{roomTitle}</h2>
             <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
               <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {Math.max(listeners, participants.length)} listening</span>
               <span>·</span>
