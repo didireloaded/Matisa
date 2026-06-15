@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Video, Settings, Play, Users } from "lucide-react";
+import { X, Video, Settings, Play, Users, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 interface CreateLiveStreamModalProps {
   open: boolean;
@@ -8,10 +11,34 @@ interface CreateLiveStreamModalProps {
 }
 
 export function CreateLiveStreamModal({ open, onClose }: CreateLiveStreamModalProps) {
+  const { profile } = useAuth();
   const [title, setTitle] = useState("");
   const [privacy, setPrivacy] = useState<"public" | "followers">("public");
+  const [loading, setLoading] = useState(false);
 
   if (!open) return null;
+
+  const handleStartStream = async () => {
+    if (!profile || !title.trim()) return;
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.from("live_streams").insert({
+        user_id: profile.id,
+        title: title.trim(),
+        description: "",
+      });
+
+      if (error) throw error;
+      toast.success("You are now live!");
+      setTitle("");
+      onClose();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to start live stream.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -32,11 +59,11 @@ export function CreateLiveStreamModal({ open, onClose }: CreateLiveStreamModalPr
           <div className="absolute top-0 left-0 right-0 p-6 flex justify-between items-center z-10">
             <button
               onClick={onClose}
-              className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white"
+              className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition"
             >
               <X className="w-6 h-6" />
             </button>
-            <button className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white">
+            <button className="p-3 bg-black/40 backdrop-blur-md rounded-full text-white hover:bg-black/60 transition">
               <Settings className="w-6 h-6" />
             </button>
           </div>
@@ -84,9 +111,13 @@ export function CreateLiveStreamModal({ open, onClose }: CreateLiveStreamModalPr
                 </div>
               </div>
 
-              <button className="w-full mt-4 py-4 rounded-full bg-white text-black font-black text-lg flex items-center justify-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:scale-[1.02] active:scale-95 transition-all">
-                <Play className="w-6 h-6 fill-current" />
-                START BROADCAST
+              <button
+                onClick={handleStartStream}
+                disabled={!title.trim() || loading}
+                className="w-full mt-4 py-4 rounded-full bg-white text-black font-black text-lg flex items-center justify-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all"
+              >
+                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
+                {loading ? "STARTING..." : "START BROADCAST"}
               </button>
             </div>
           </div>

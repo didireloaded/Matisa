@@ -1,6 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, LogOut, Bell, Shield, Key, Moon, HelpCircle } from "lucide-react";
+import { ArrowLeft, LogOut, Bell, Shield, Key, Moon, HelpCircle, Ghost } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 
 export function Settings() {
   const navigate = useNavigate();
@@ -12,6 +14,28 @@ export function Settings() {
       navigate("/auth");
     } catch (err) {
       console.error("Logout failed", err);
+    }
+  };
+
+  const [ghostMode, setGhostMode] = useState<string>("approximate");
+  const [updating, setUpdating] = useState(false);
+
+  useEffect(() => {
+    if (profile?.ghost_mode) {
+      setGhostMode(profile.ghost_mode);
+    }
+  }, [profile]);
+
+  const handleGhostModeChange = async (mode: string) => {
+    if (!profile) return;
+    setGhostMode(mode);
+    setUpdating(true);
+    try {
+      await supabase.from("profiles").update({ ghost_mode: mode }).eq("id", profile.id);
+    } catch (err) {
+      console.error("Failed to update ghost mode", err);
+    } finally {
+      setUpdating(false);
     }
   };
 
@@ -76,6 +100,29 @@ export function Settings() {
               </div>
               <span className="text-white/50 text-sm">System</span>
             </button>
+            
+            <div className="w-full flex flex-col p-4 hover:bg-white/5 transition">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <Ghost className="w-5 h-5 text-white/70" />
+                  <span className="font-medium">Ghost Mode</span>
+                </div>
+                {updating && <span className="text-xs text-primary">Saving...</span>}
+              </div>
+              <p className="text-xs text-white/40 mb-3 leading-relaxed">
+                Control who can see your location on the map and discover you locally.
+              </p>
+              <select 
+                className="bg-[#0B0B0B] border border-white/10 rounded-xl p-2.5 text-sm text-white/70 focus:outline-none focus:border-primary w-full"
+                value={ghostMode}
+                onChange={(e) => handleGhostModeChange(e.target.value)}
+                disabled={updating}
+              >
+                <option value="exact">Exact (Show precise distance)</option>
+                <option value="approximate">Approximate (Show region only)</option>
+                <option value="hidden">Hidden (Completely invisible)</option>
+              </select>
+            </div>
           </div>
         </section>
 

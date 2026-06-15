@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Image, AlignLeft, Mic, Users, X } from "lucide-react";
+import { Plus, FileText, Camera, Mic, CalendarDays, Radio } from "lucide-react";
 
 interface CreateRadialMenuProps {
   isOpen: boolean;
@@ -7,108 +7,74 @@ interface CreateRadialMenuProps {
   onSelect?: (action: string) => void;
 }
 
+const CREATE_ITEMS = [
+  { id: "note", label: "Note", icon: FileText, color: "#FF9D2E", angle: -120 },
+  { id: "story", label: "Story", icon: Camera, color: "#A855F7", angle: -60 },
+  { id: "room", label: "Room", icon: Radio, color: "#FF6B6B", angle: 0 },
+  { id: "voice", label: "Voice", icon: Mic, color: "#2D7DD2", angle: 60 },
+  { id: "live", label: "Live", icon: Radio, color: "#22c55e", angle: 120 },
+];
+
 export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenuProps) {
-  const menuItems = [
-    {
-      icon: <Image className="w-5 h-5 text-white" />,
-      label: "Story",
-      color: "bg-blue-500 shadow-blue-500/50",
-    },
-    {
-      icon: <AlignLeft className="w-5 h-5 text-white" />,
-      label: "Note",
-      color: "bg-green-500 shadow-green-500/50",
-    },
-    {
-      icon: <Mic className="w-5 h-5 text-white" />,
-      label: "Voice",
-      color: "bg-yellow-500 shadow-yellow-500/50",
-    },
-    {
-      icon: <Users className="w-5 h-5 text-white" />,
-      label: "Room",
-      color: "bg-purple-500 shadow-purple-500/50",
-    },
-  ];
-
-  // Calculate positions in an arc above the center button
-  const radius = 90; // distance from center
-  const getTransform = (index: number, total: number) => {
-    const angleRange = Math.PI; // 180 degrees
-    const startAngle = Math.PI; // start from left (180 deg)
-
-    if (total === 1) return { x: 0, y: -radius };
-
-    const angle = startAngle - (angleRange / (total - 1)) * index;
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius;
-    return { x, y };
-  };
-
   return (
     <AnimatePresence>
       {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-xl"
-          />
-
-          {/* Radial Menu Container - Anchored to bottom center */}
-          <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-50 pointer-events-none">
-            {/* Menu Items */}
-            {menuItems.map((item, index) => {
-              const pos = getTransform(index, menuItems.length);
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-40"
+        >
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute bottom-[80px] left-1/2 -translate-x-1/2">
+            {CREATE_ITEMS.map((item, i) => {
+              const rad = (item.angle - 90) * (Math.PI / 180);
+              const r = 88;
+              const x = Math.cos(rad) * r;
+              const y = Math.sin(rad) * r;
+              const Icon = item.icon;
               return (
-                <motion.div
-                  key={item.label}
-                  initial={{ opacity: 0, scale: 0, x: 0, y: 0 }}
-                  animate={{ opacity: 1, scale: 1, x: pos.x, y: pos.y }}
-                  exit={{ opacity: 0, scale: 0, x: 0, y: 0 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 25,
-                    delay: index * 0.04,
-                  }}
-                  className="absolute left-1/2 bottom-0 -ml-7 pointer-events-auto"
+                <motion.button
+                  key={item.id}
+                  initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, x, y, scale: 1 }}
+                  exit={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                  transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 22 }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1"
+                  style={{ left: 0, top: 0 }}
                   onClick={() => {
-                    if (onSelect) onSelect(item.label.toLowerCase());
+                    if (onSelect) onSelect(item.id);
                     onClose();
                   }}
                 >
-                  <div className="flex flex-col items-center gap-2 cursor-pointer group">
-                    <div
-                      className={`w-14 h-14 rounded-full flex items-center justify-center ${item.color} shadow-2xl transform transition-all duration-200 group-hover:scale-110 group-active:scale-95`}
-                    >
-                      {item.icon}
-                    </div>
-                    <span className="text-[11px] font-bold text-white bg-black/40 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                      {item.label}
-                    </span>
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
+                    style={{ background: item.color + "22", border: `1.5px solid ${item.color}55` }}
+                  >
+                    <Icon size={20} style={{ color: item.color }} />
                   </div>
-                </motion.div>
+                  <span className="text-white/80 text-[10px] font-semibold">{item.label}</span>
+                </motion.button>
               );
             })}
 
-            {/* Close / Trigger Button overlay */}
             <motion.button
-              initial={{ rotate: -90, scale: 0.5, opacity: 0 }}
-              animate={{ rotate: 0, scale: 1, opacity: 1 }}
-              exit={{ rotate: 90, scale: 0.5, opacity: 0 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              initial={{ rotate: 0 }}
+              animate={{ rotate: 45 }}
+              exit={{ rotate: 0 }}
               onClick={onClose}
-              className="absolute left-1/2 bottom-0 -translate-x-1/2 w-14 h-14 bg-white rounded-full flex items-center justify-center text-black shadow-[0_0_30px_rgba(255,255,255,0.3)] pointer-events-auto z-10 hover:bg-gray-100 transition-colors active:scale-90"
+              className="absolute -translate-x-1/2 -translate-y-1/2 w-[52px] h-[52px] rounded-full flex items-center justify-center"
+              style={{
+                left: 0,
+                top: 0,
+                background: "linear-gradient(135deg, #FF9D2E, #A855F7)",
+                boxShadow: "0 4px 20px rgba(255,157,46,0.5)",
+              }}
             >
-              <X className="w-7 h-7" />
+              <Plus size={26} className="text-black" />
             </motion.button>
           </div>
-        </>
+        </motion.div>
       )}
     </AnimatePresence>
   );

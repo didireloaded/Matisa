@@ -89,7 +89,7 @@ export function UserQuickViewCard({ user, isOpen, onClose }: UserQuickViewCardPr
               {/* Stats Grid */}
               <div className="grid grid-cols-3 gap-2 py-3 border-y border-border">
                 <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-secondary/30">
-                  <span className="text-lg font-bold text-foreground">{user.followers_count || 128}</span>
+                  <span className="text-lg font-bold text-foreground">{user.follower_count || 128}</span>
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Followers</span>
                 </div>
                 <div className="flex flex-col items-center justify-center p-2 rounded-xl bg-secondary/30">

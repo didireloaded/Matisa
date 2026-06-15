@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send } from "lucide-react";
+import { Button } from "@/components/common/Button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -34,7 +35,6 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
       const { error } = await supabase.from("notes").insert({
         user_id: profile.id,
         content: content.trim(),
-        expires_at: expiresAt.toISOString(),
       });
 
       if (error) throw error;
@@ -101,20 +101,15 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
                 </div>
               </div>
 
-              <button
-                onClick={handleSubmit}
-                disabled={loading || !content.trim() || isOverLimit}
-                className="w-full mt-4 h-12 bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] text-white rounded-full font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:grayscale transition-all active:scale-95"
-              >
-                {loading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <Send size={18} />
-                    Post Note
-                  </>
-                )}
-              </button>
+              <Button
+                  onClick={handleSubmit}
+                  disabled={loading || !content.trim() || isOverLimit}
+                  loading={loading}
+                  className="w-full mt-4 h-12 bg-gradient-to-r from-[#FF9D2E] to-[#FF6B6B] text-white rounded-full font-bold flex items-center justify-center gap-2"
+                  ariaLabel="Post note"
+                >
+                  {isOverLimit ? "Too long" : (<> <Send size={18} /> Post Note </>)}
+                </Button>
             </div>
           </motion.div>
         </>

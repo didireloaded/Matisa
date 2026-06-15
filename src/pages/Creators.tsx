@@ -31,7 +31,7 @@ export function Creators() {
         const { data, error } = await supabase
           .from("profiles")
           .select("*")
-          .order("followers_count", { ascending: false })
+          .order("follower_count", { ascending: false })
           .limit(10);
 
         if (error) throw error;
@@ -135,11 +135,11 @@ export function Creators() {
                   </h3>
                   <div className="flex items-center gap-1.5 mt-2 text-white/80 text-sm font-medium">
                     <UsersIcon />
-                    {(creator.followers_count ?? 0) >= 1000000
-                      ? `${((creator.followers_count ?? 0) / 1000000).toFixed(1)}M`
-                      : (creator.followers_count ?? 0) >= 1000
-                        ? `${((creator.followers_count ?? 0) / 1000).toFixed(1)}K`
-                        : (creator.followers_count ?? 0)}
+                    {(creator.follower_count ?? 0) >= 1000000
+                      ? `${((creator.follower_count ?? 0) / 1000000).toFixed(1)}M`
+                      : (creator.follower_count ?? 0) >= 1000
+                        ? `${((creator.follower_count ?? 0) / 1000).toFixed(1)}K`
+                        : (creator.follower_count ?? 0)}
                   </div>
                 </div>
               </motion.div>

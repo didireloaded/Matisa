@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate, Navigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { Search, Plus, Heart, Bell, MessageSquare, Home, User } from "lucide-react";
+import { Search, Plus, Heart, Bell, MessageSquare, Home, User, CalendarDays } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { CreateNoteModal } from "@/components/feed/CreateNoteModal";
@@ -71,28 +71,31 @@ function TopBar() {
   }, [profile]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-background/60 backdrop-blur-3xl border-b border-white/5">
-      {/* Logo equivalent from reference image: a simple 4-dot menu icon */}
-      <div className="flex items-center gap-2 text-white">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between px-5 border-b border-white/5"
+      style={{ background: "rgba(11,11,11,0.75)", backdropFilter: "blur(24px)" }}>
+      {/* Logo */}
+      <div className="flex items-center gap-2">
         <div className="grid grid-cols-2 gap-[3px]">
-          <div className="w-2.5 h-2.5 rounded-sm bg-primary" />
+          <div className="w-2.5 h-2.5 rounded-sm bg-[#A0AEC0]" />
           <div className="w-2.5 h-2.5 rounded-sm bg-white" />
           <div className="w-2.5 h-2.5 rounded-sm bg-white" />
-          <div className="w-2.5 h-2.5 rounded-sm bg-white/50" />
+          <div className="w-2.5 h-2.5 rounded-sm bg-white/30" />
         </div>
-        <span className="text-xl font-display font-extrabold tracking-tight ml-2">Matisa</span>
+        <span className="text-white text-[18px] ml-2 font-display font-extrabold tracking-tight" style={{ fontWeight: 800 }}>
+          Matisa
+        </span>
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         {/* Notifications */}
         <button
           onClick={() => navigate("/activity")}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full text-white/80 hover:text-white hover:bg-white/10 transition"
+          className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/8 transition"
         >
-          <Bell size={20} strokeWidth={2} />
+          <Bell size={19} className="text-white/70" />
           {unreadNotifs > 0 && (
-            <span className="absolute top-0 right-0 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C8521A] px-1 text-[9px] font-bold text-white leading-none shadow-md">
+            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-[#A0AEC0] flex items-center justify-center text-[9px] text-black font-bold shadow-md">
               {unreadNotifs > 9 ? "9+" : unreadNotifs}
             </span>
           )}
@@ -101,11 +104,11 @@ function TopBar() {
         {/* Messages */}
         <button
           onClick={() => navigate("/messages")}
-          className="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-black hover:bg-white/90 transition shadow-lg"
+          className="relative w-9 h-9 rounded-full bg-white flex items-center justify-center shadow transition hover:bg-white/90"
         >
-          <MessageSquare size={18} strokeWidth={2.5} fill="currentColor" />
+          <MessageSquare size={16} className="text-black" strokeWidth={2.5} />
           {unreadMsgs > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#C8521A] px-1 text-[9px] font-bold text-white leading-none shadow-md">
+            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#A0AEC0] flex items-center justify-center text-[9px] text-black font-bold shadow-md">
               {unreadMsgs > 9 ? "9+" : unreadMsgs}
             </span>
           )}
@@ -119,59 +122,65 @@ function TopBar() {
 // FLOATING BOTTOM NAV
 // ─────────────────────────────────────────────
 
+const NAV_ITEMS = [
+  { id: "home", route: "/", icon: Home },
+  { id: "explore", route: "/explore", icon: Search },
+  { id: "__create__", route: "", icon: Plus },
+  { id: "events", route: "/events", icon: CalendarDays },
+  { id: "profile", route: "/profile", icon: User },
+] as const;
+
 function BottomNav({ onCompose }: { onCompose: () => void }) {
   const location = useLocation();
   const navigate = useNavigate();
   const path = location.pathname;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 h-[84px] bg-background/80 backdrop-blur-[40px] border-t border-white/5 flex items-start justify-between px-8 pt-3 pb-[env(safe-area-inset-bottom,20px)] z-40">
-      <button
-        onClick={() => navigate("/")}
-        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 ${path === "/" ? "text-primary" : "text-white/50 hover:text-white"}`}
-      >
-        <div className={`p-1.5 rounded-full ${path === "/" ? "bg-primary/10" : ""}`}>
-          <Home size={26} className={path === "/" ? "fill-primary" : ""} />
-        </div>
-      </button>
-
-      <button
-        onClick={() => navigate("/explore")}
-        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 ${path === "/explore" ? "text-primary" : "text-white/50 hover:text-white"}`}
-      >
-        <div className={`p-1.5 rounded-full ${path === "/explore" ? "bg-primary/10" : ""}`}>
-          <Search size={26} className={path === "/explore" ? "text-primary stroke-[2.5]" : ""} />
-        </div>
-      </button>
-
-      {/* Center Create Button */}
-      <button
-        onClick={onCompose}
-        className="w-[52px] h-[52px] rounded-full bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-black shadow-[0_4px_20px_rgba(255,157,46,0.4)] transition-all active:scale-90 active:shadow-none -mt-5 border-[4px] border-background"
-      >
-        <Plus size={28} />
-      </button>
-
-      <button
-        onClick={() => navigate("/activity")}
-        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 relative ${path === "/activity" ? "text-primary" : "text-white/50 hover:text-white"}`}
-      >
-        <div className={`p-1.5 rounded-full ${path === "/activity" ? "bg-primary/10" : ""}`}>
-          <Heart size={26} className={path === "/activity" ? "fill-primary" : ""} />
-        </div>
-      </button>
-
-      <button
-        onClick={() => navigate("/profile")}
-        className={`flex flex-col items-center gap-1.5 transition-all active:scale-95 active:opacity-70 ${path.startsWith("/profile") ? "text-primary" : "text-white/50 hover:text-white"}`}
-      >
-        <div className={`p-1.5 rounded-full ${path.startsWith("/profile") ? "bg-primary/10" : ""}`}>
-          <User
-            size={26}
-            className={path.startsWith("/profile") ? "fill-primary text-primary" : ""}
-          />
-        </div>
-      </button>
+    <div
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] h-[72px] flex items-center justify-between px-8 z-30 border-t border-white/5"
+      style={{ background: "rgba(11,11,11,0.88)", backdropFilter: "blur(40px)" }}
+    >
+      {NAV_ITEMS.map((item) => {
+        if (item.id === "__create__") {
+          return (
+            <motion.button
+              key="create"
+              whileTap={{ scale: 0.88 }}
+              onClick={onCompose}
+              className="w-[50px] h-[50px] rounded-full flex items-center justify-center -mt-6"
+              style={{
+                background: "linear-gradient(135deg, #2D3748, #4A5568)",
+                boxShadow: "0 4px 24px rgba(45,55,70,0.4)",
+                border: "3px solid #0B0B0B",
+              }}
+            >
+              <Plus size={24} className="text-white" strokeWidth={2.5} />
+            </motion.button>
+          );
+        }
+        const isActive = path === item.route || (item.route !== "/" && path.startsWith(item.route));
+        const Icon = item.icon;
+        return (
+          <motion.button
+            key={item.id}
+            whileTap={{ scale: 0.88 }}
+            onClick={() => navigate(item.route)}
+          >
+            <div
+              className="w-11 h-11 flex items-center justify-center rounded-full transition"
+              style={{ background: isActive ? "rgba(45,55,70,0.1)" : "transparent" }}
+            >
+              <Icon
+                size={24}
+                style={{
+                  color: isActive ? "#A0AEC0" : "rgba(255,255,255,0.4)",
+                  fill: isActive && item.id !== "explore" ? "#A0AEC0" : "none",
+                }}
+              />
+            </div>
+          </motion.button>
+        );
+      })}
     </div>
   );
 }
@@ -197,6 +206,11 @@ export function MainLayout() {
   const { session, loading } = useAuth();
   const path = location.pathname;
 
+  const [pull, setPull] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const touchStartY = useRef(0);
+  const mainRef = useRef<HTMLDivElement>(null);
+
   const isGuest = localStorage.getItem("guestMode") === "true";
   if (!loading && !session && !isGuest) return <Navigate to="/auth" replace />;
   if (loading) {
@@ -210,11 +224,65 @@ export function MainLayout() {
   const hideTop = HIDE_TOP.some((p) => path.startsWith(p));
   const hideNav = HIDE_NAV.some((p) => path.startsWith(p));
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (mainRef.current && mainRef.current.scrollTop <= 0) {
+      touchStartY.current = e.touches[0].clientY;
+    } else {
+      touchStartY.current = 0;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (touchStartY.current > 0 && !isRefreshing) {
+      const delta = e.touches[0].clientY - touchStartY.current;
+      if (delta > 0) {
+        // Stop default scrolling to prevent rubber-banding on some browsers
+        if (e.cancelable) e.preventDefault();
+        setPull(Math.min(delta * 0.4, 80));
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pull > 60 && !isRefreshing) {
+      setIsRefreshing(true);
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPull(0);
+        window.location.reload();
+      }, 1000);
+    } else {
+      setPull(0);
+    }
+    touchStartY.current = 0;
+  };
+
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col shadow-2xl shadow-black bg-background text-foreground pt-safe pb-safe">
+    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col shadow-2xl shadow-black bg-background text-foreground pt-safe pb-safe overflow-hidden relative transform">
       {!hideTop && <TopBar />}
 
-      <main className="flex-1 overflow-y-auto no-scrollbar">
+      {/* Pull To Refresh Indicator */}
+      <div 
+        className="absolute left-0 right-0 flex justify-center items-center z-20 pointer-events-none transition-opacity"
+        style={{ top: hideTop ? 20 : 80, opacity: pull > 10 || isRefreshing ? 1 : 0 }}
+      >
+        <motion.div 
+          animate={{ rotate: isRefreshing ? 360 : (pull * 3) }}
+          transition={isRefreshing ? { repeat: Infinity, duration: 1, ease: "linear" } : { duration: 0 }}
+          className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent shadow-lg bg-background/50 backdrop-blur flex items-center justify-center"
+        >
+          {!isRefreshing && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
+        </motion.div>
+      </div>
+
+      <main 
+        ref={mainRef}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        className="flex-1 overflow-y-auto no-scrollbar relative z-10"
+        style={{ transform: `translateY(${isRefreshing ? 60 : pull}px)`, transition: pull === 0 ? "transform 0.3s ease" : "none" }}
+      >
         <AnimatePresence mode="wait">
           <motion.div
             key={path}

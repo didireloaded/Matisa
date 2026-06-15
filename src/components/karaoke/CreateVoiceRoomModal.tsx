@@ -2,6 +2,9 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic2, X, Users, Globe, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/common/Button";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface CreateVoiceRoomModalProps {
   open: boolean;
@@ -13,17 +16,25 @@ export function CreateVoiceRoomModal({ open, onClose }: CreateVoiceRoomModalProp
   const [isPrivate, setIsPrivate] = useState(false);
   const navigate = useNavigate();
 
-  const handleStart = () => {
-    if (!title.trim()) return;
+  const [loading, setLoading] = useState(false);
 
-    // Generate a random room ID
-    const roomId = `room-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-
-    // Close modal
-    onClose();
-
-    // Navigate to room with title as query param
-    navigate(`/room/${roomId}?title=${encodeURIComponent(title.trim())}`);
+  const handleStart = async () => {
+    if (!title.trim() || !profile) return;
+    setLoading(true);
+    try {
+      const { error, data } = await supabase.from('voice_rooms').insert({
+        host_id: profile.id,
+        title: title.trim(),
+        is_private: isPrivate,
+      }).select().single();
+      if (error) throw error;
+      onClose();
+      navigate(`/room/${data.id}?title=${encodeURIComponent(title.trim())}`);
+    } catch (err: any) {
+      console.error("Failed to start voice room", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -108,14 +119,15 @@ export function CreateVoiceRoomModal({ open, onClose }: CreateVoiceRoomModalProp
               </div>
             </div>
 
-            <button
+            <Button
               onClick={handleStart}
               disabled={!title.trim()}
-              className="mt-8 w-full rounded-full bg-[#F44336] py-3.5 text-sm font-bold text-white shadow-lg transition active:scale-95 disabled:opacity-50 disabled:active:scale-100"
-              style={{ boxShadow: "0 4px 20px rgba(244, 67, 54, 0.3)" }}
+              loading={loading}
+              className="mt-8 w-full rounded-full bg-[#F44336] py-3.5 text-sm font-bold text-white shadow-lg transition"
+              ariaLabel="Start voice room"
             >
               Go Live
-            </button>
+            </Button>
           </motion.div>
         </div>
       )}

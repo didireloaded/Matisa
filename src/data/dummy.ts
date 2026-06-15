@@ -1,0 +1,108 @@
+export const USERS = [
+  { id: "1", username: "hanna_d", name: "Hanna Dowie", avatar: "https://images.unsplash.com/photo-1606416132922-22ab37c1231e?w=200&h=200&fit=crop&auto=format", bio: "Windhoek born 🌿 Creative director & storyteller", location: "Windhoek, NAM", followers: 4820, following: 312, verified: true },
+  { id: "2", username: "dj_kboz", name: "DJ Kboz", avatar: "https://images.unsplash.com/photo-1523477800337-966dbabe060b?w=200&h=200&fit=crop&auto=format", bio: "Afrobeats producer 🎵 Booking: kboz@matisa.na", location: "Windhoek, NAM", followers: 12400, following: 890, verified: true },
+  { id: "3", username: "michelle_v", name: "Michelle V.", avatar: "https://images.unsplash.com/photo-1770283553838-769c5f97d55c?w=200&h=200&fit=crop&auto=format", bio: "Photographer + traveler. Capturing Namibia 📸", location: "Swakopmund, NAM", followers: 7100, following: 540, verified: false },
+  { id: "4", username: "silas_m", name: "Silas Mutonga", avatar: "https://images.unsplash.com/photo-1621061410695-3c32f51bf934?w=200&h=200&fit=crop&auto=format", bio: "Fashion & culture. Based in Katutura 🔥", location: "Katutura, NAM", followers: 3240, following: 211, verified: false },
+  { id: "5", username: "amara_k", name: "Amara Kasaona", avatar: "https://images.unsplash.com/photo-1776780752830-ef0c19c74fe1?w=200&h=200&fit=crop&auto=format", bio: "Events curator | co-founder @NamCulture", location: "Windhoek, NAM", followers: 9820, following: 677, verified: true },
+  { id: "6", username: "tutu_beats", name: "Tutu Beats", avatar: "https://images.unsplash.com/photo-1759891480236-082078157b97?w=200&h=200&fit=crop&auto=format", bio: "Hip-hop artist. New EP out now 🎤", location: "Oshakati, NAM", followers: 18700, following: 420, verified: true },
+];
+
+export const STORIES = [
+  { id: "s1", userId: "1", hasNew: true },
+  { id: "s2", userId: "2", hasNew: true },
+  { id: "s3", userId: "3", hasNew: true },
+  { id: "s4", userId: "4", hasNew: false },
+  { id: "s5", userId: "5", hasNew: true },
+  { id: "s6", userId: "6", hasNew: false },
+];
+
+export const NOTES = [
+  { id: "n1", userId: "1", content: "Windhoek winters hit different ❄️ Anyone else?", gradient: "from-[#1a1a2e] to-[#16213e]", emoji: "❄️", likes: 84, fire: 23, laugh: 12, time: "2m", comments: 14 },
+  { id: "n2", userId: "2", content: "New Afrobeats set dropping midnight 🔥 tag someone who needs this", gradient: "from-[#2d1b00] to-[#1a0f00]", emoji: "🔥", likes: 312, fire: 98, laugh: 5, time: "15m", comments: 47 },
+  { id: "n3", userId: "3", content: "Swakopmund sunsets could cure anything honestly 🌅", gradient: "from-[#1a0a00] to-[#2d1500]", emoji: "🌅", likes: 156, fire: 34, laugh: 8, time: "1h", comments: 22 },
+  { id: "n4", userId: "4", content: "Katutura fashion week is real and it's coming 👀 Save the date: July 18", gradient: "from-[#1a001a] to-[#0d000d]", emoji: "👀", likes: 245, fire: 67, laugh: 3, time: "2h", comments: 33 },
+  { id: "n5", userId: "5", content: "Reminder: you don't need anyone's permission to glow ✨", gradient: "from-[#001a0d] to-[#000d07]", emoji: "✨", likes: 892, fire: 201, laugh: 44, time: "3h", comments: 108 },
+  { id: "n6", userId: "6", content: "EP is certified gold in NAM 🏆🏆 I'm crying for real", gradient: "from-[#1a0500] to-[#0d0200]", emoji: "🏆", likes: 1240, fire: 445, laugh: 89, time: "5h", comments: 234 },
+];
+
+export const EVENTS = [
+  {
+    id: "e1",
+    title: "Namib After Dark",
+    organizer: "amara_k",
+    date: "Sat, Jun 21",
+    time: "20:00",
+    location: "Craft Centre, Windhoek",
+    image: "https://images.unsplash.com/photo-1766393524464-e5eb1b05e4c8?w=800&h=400&fit=crop&auto=format",
+    attendees: 284,
+    price: "N$120",
+    category: "Music",
+    going: false,
+  },
+  {
+    id: "e2",
+    title: "Katutura Fashion Week",
+    organizer: "silas_m",
+    date: "Fri, Jul 18",
+    time: "17:00",
+    location: "Katutura Community Centre",
+    image: "https://images.unsplash.com/photo-1751748951873-a27688579b9d?w=800&h=400&fit=crop&auto=format",
+    attendees: 520,
+    price: "N$80",
+    category: "Fashion",
+    going: true,
+  },
+  {
+    id: "e3",
+    title: "Desert Rave: Sossusvlei",
+    organizer: "dj_kboz",
+    date: "Sat, Jul 26",
+    time: "18:00",
+    location: "Sossusvlei, Namib Desert",
+    image: "https://images.unsplash.com/photo-1488197047962-b48492212cda?w=800&h=400&fit=crop&auto=format",
+    attendees: 900,
+    price: "N$350",
+    category: "Festival",
+    going: false,
+  },
+  {
+    id: "e4",
+    title: "Afro Roots Open Mic",
+    organizer: "tutu_beats",
+    date: "Wed, Jun 18",
+    time: "19:30",
+    location: "The Warehouse, Windhoek",
+    image: "https://images.unsplash.com/photo-1689864727821-e47577e88226?w=800&h=400&fit=crop&auto=format",
+    attendees: 134,
+    price: "Free",
+    category: "Open Mic",
+    going: false,
+  },
+];
+
+export const KARAOKE_ROOMS = [
+  { id: "r1", name: "Afrobeats Only 🔥", host: "dj_kboz", listeners: 34, singers: 2, active: true, genre: "Afrobeats", currentSong: "Essence – Wizkid ft. Tems" },
+  { id: "r2", name: "90s R&B Throwback", host: "michelle_v", listeners: 18, singers: 1, active: true, genre: "R&B", currentSong: "No Scrubs – TLC" },
+  { id: "r3", name: "Nam Hip-Hop Cypher", host: "tutu_beats", listeners: 56, singers: 4, active: true, genre: "Hip-Hop", currentSong: "Open Freestyle" },
+  { id: "r4", name: "Chill Vibes 🌙", host: "hanna_d", listeners: 11, singers: 0, active: false, genre: "Lo-Fi", currentSong: "Waiting for people…" },
+];
+
+export const MESSAGES = [
+  { id: "m1", userId: "2", lastMsg: "Yo the set was fire last night! You coming to the next one?", time: "2m", unread: 3 },
+  { id: "m2", userId: "5", lastMsg: "Yes! I'll be there. Can you add me to the list?", time: "15m", unread: 0 },
+  { id: "m3", userId: "3", lastMsg: "Check out these shots from Sossusvlei 😍", time: "1h", unread: 1 },
+  { id: "m4", userId: "4", lastMsg: "The fits were everything at Fashion Week 🔥", time: "3h", unread: 0 },
+  { id: "m5", userId: "6", lastMsg: "Stream the EP! Link in bio 🎤", time: "1d", unread: 0 },
+];
+
+export const ACTIVITY = [
+  { id: "a1", type: "like", userId: "2", target: "your note", time: "1m" },
+  { id: "a2", type: "follow", userId: "6", target: "", time: "5m" },
+  { id: "a3", type: "comment", userId: "3", target: "your note", content: "literally felt this! Swakop mornings are unreal 😍", time: "12m" },
+  { id: "a4", type: "like", userId: "5", target: "your note", time: "34m" },
+  { id: "a5", type: "mention", userId: "4", target: "a note", content: "hey @hanna_d you'd love this fit drop 👀", time: "1h" },
+  { id: "a6", type: "follow", userId: "1", target: "", time: "2h" },
+  { id: "a7", type: "comment", userId: "2", target: "your event post", content: "Can't wait! Already got my tickets 🙌", time: "3h" },
+];
+
+export const ME = USERS[0];

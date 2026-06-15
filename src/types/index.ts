@@ -93,7 +93,7 @@ export interface Profile {
   is_verified: boolean;
   is_plus?: boolean; // mock
   follower_count?: number; // supabase
-  followers_count?: number; // mock
+  follower_count?: number; // mock
   following_count: number;
   post_count?: number; // supabase
   posts_count?: number; // mock
@@ -281,7 +281,7 @@ export interface Playlist {
   title: string;
   description: string;
   track_count: number;
-  followers_count?: number; // mock
+  follower_count?: number; // mock
   gradient: string; // mock
   is_public: boolean;
   votes: number;

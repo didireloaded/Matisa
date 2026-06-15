@@ -20,7 +20,7 @@ export function CreatePlaylistModal({ children, onCreated }: { children: React.R
     try {
       const { error } = await supabase.from('playlists').insert({
         title: title.trim(),
-        author_id: profile.id,
+        user_id: profile.id,
       });
 
       if (error) throw error;

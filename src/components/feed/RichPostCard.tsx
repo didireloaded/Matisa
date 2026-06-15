@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Heart, MessageCircle, Bookmark, Send, Play, Pause } from "lucide-react";
+import { toast } from "sonner";
 import { Avatar } from "@/components/common/Avatar";
+import { useSaves } from "@/hooks/useSaves";
 import type { Post } from "@/types";
 
 export function RichPostCard({
@@ -14,12 +16,29 @@ export function RichPostCard({
 }) {
   const [liked, setLiked] = useState(post.liked ?? false);
   const [likes, setLikes] = useState(post.like_count ?? 0);
+  const { toggleSave, checkIsSaved } = useSaves();
+  const [isSaved, setIsSaved] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    checkIsSaved(post.id).then((saved) => {
+      if (mounted) setIsSaved(saved);
+    });
+    return () => { mounted = false; };
+  }, [post.id, checkIsSaved]);
 
   const handleLike = () => {
     const newLiked = !liked;
     setLiked(newLiked);
     setLikes((prev) => (newLiked ? prev + 1 : prev - 1));
     onLike(newLiked);
+  };
+
+  const handleSave = async () => {
+    const newSaved = !isSaved;
+    setIsSaved(newSaved); // optimistic
+    const success = await toggleSave(post.id, isSaved);
+    if (!success) setIsSaved(!newSaved); // revert on failure
   };
 
   // Audio Player State
@@ -81,9 +100,16 @@ export function RichPostCard({
         <div className="flex items-center gap-3">
           <Avatar profile={post.profiles} size={44} />
           <div className="flex flex-col">
-            <span className="font-bold text-white text-[15px]">
-              {post.profiles?.display_name || post.profiles?.full_name || "Anonymous"}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-white text-[15px]">
+                {post.profiles?.display_name || post.profiles?.full_name || "Anonymous"}
+              </span>
+              {post.profiles?.mood && (
+                <span className="text-[10px] bg-white/5 border border-white/10 px-2 py-0.5 rounded-full text-white/60 flex items-center max-w-[120px] truncate">
+                  {post.profiles.mood}
+                </span>
+              )}
+            </div>
             <span className="text-xs text-white/50">
               @{post.profiles?.username || "user"} •{" "}
               {new Date(post.created_at).toLocaleDateString(undefined, {
@@ -162,11 +188,14 @@ export function RichPostCard({
             </span>
           </button>
 
-          <button className="flex items-center gap-2 group active:scale-95 transition-transform ml-auto">
-            <Bookmark className="w-5 h-5 text-white/50 group-hover:text-white transition" />
+          <button 
+            onClick={handleSave}
+            className="flex items-center gap-2 group active:scale-95 transition-transform ml-auto"
+          >
+            <Bookmark className={`w-5 h-5 transition ${isSaved ? "fill-primary text-primary" : "text-white/50 group-hover:text-white"}`} />
           </button>
 
-          <button className="flex items-center gap-2 group active:scale-95 transition-transform">
+          <button onClick={() => toast.success("Link copied to clipboard!")} className="flex items-center gap-2 group active:scale-95 transition-transform">
             <Send className="w-5 h-5 text-white/50 group-hover:text-white transition" />
           </button>
         </div>

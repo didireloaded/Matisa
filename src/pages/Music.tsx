@@ -1,219 +1,238 @@
-import { useState, useEffect } from "react";
-import { Music2, Play, Search, Disc, Heart } from "lucide-react";
-import { Skeleton, Avatar } from "@/components/common";
-import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
-import { supabase } from "../lib/supabase";
-import { useAuth } from "../contexts/AuthContext";
-import { toast } from "sonner";
-import { CreatePlaylistModal } from "@/components/music/CreatePlaylistModal";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Mic, Users, Music as MusicIcon, Radio, Plus, Volume2, X } from "lucide-react";
+import { ImageWithFallback } from "@/components/common/ImageWithFallback";
+import { KARAOKE_ROOMS, USERS } from "@/data/dummy";
+import { useAuth } from "@/contexts/AuthContext";
+import { DiscoveryAI } from "@/services/ai";
+import { useMemo, useEffect } from "react";
+
+function getUserByUsername(username: string) {
+  return USERS.find((u) => u.username === username) || USERS[0];
+}
+
+function ActiveRoom({ room, onClose }: { room: typeof KARAOKE_ROOMS[0]; onClose: () => void }) {
+  const [joined, setJoined] = useState(false);
+  const host = getUserByUsername(room.host);
+  const audience = USERS.slice(0, room.listeners > 6 ? 6 : room.listeners);
+
+  return (
+    <motion.div
+      initial={{ y: "100%" }}
+      animate={{ y: 0 }}
+      exit={{ y: "100%" }}
+      transition={{ type: "spring", damping: 28, stiffness: 280 }}
+      className="fixed inset-0 z-50 flex flex-col"
+      style={{ background: "linear-gradient(180deg, #0f0020 0%, #0B0B0B 100%)" }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between px-5 pt-6 pb-4">
+        <div>
+          <h2 className="text-white text-lg font-extrabold">{room.name}</h2>
+          <p className="text-white/40 text-xs mt-0.5">{room.genre} · {room.listeners} listening</p>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+        >
+          <X size={16} className="text-white" />
+        </button>
+      </div>
+
+      {/* Stage */}
+      <div className="flex-1 flex flex-col items-center justify-center px-6">
+        {/* Host */}
+        <div className="relative mb-8">
+          <div
+            className="absolute inset-0 rounded-full blur-2xl opacity-40"
+            style={{ background: "radial-gradient(circle, #A855F7, transparent)" }}
+          />
+          <div className="relative w-24 h-24 rounded-full overflow-hidden border-2 border-[#A855F7]">
+            <ImageWithFallback src={host.avatar} alt={host.name} className="w-full h-full object-cover" />
+          </div>
+          <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#A855F7] text-white text-[10px] font-bold whitespace-nowrap">
+            HOST
+          </div>
+        </div>
+
+        {/* Now playing */}
+        <div className="bg-white/5 rounded-2xl px-5 py-4 mb-6 text-center border border-white/10 w-full max-w-xs">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <MusicIcon size={14} className="text-[#FF9D2E]" />
+            <span className="text-white/50 text-xs uppercase tracking-wider">Now Playing</span>
+          </div>
+          <p className="text-white text-sm" style={{ fontWeight: 600 }}>{room.currentSong}</p>
+        </div>
+
+        {/* Audience */}
+        <div className="w-full">
+          <p className="text-white/30 text-[10px] uppercase tracking-widest text-center mb-3">Audience</p>
+          <div className="flex justify-center flex-wrap gap-3">
+            {audience.map((u) => (
+              <div key={u.id} className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 rounded-full overflow-hidden border border-white/10">
+                  <ImageWithFallback src={u.avatar} alt={u.name} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-white/40 text-[9px]">{u.name.split(" ")[0]}</span>
+              </div>
+            ))}
+            {room.listeners > 6 && (
+              <div className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <span className="text-white/50 text-[10px]">+{room.listeners - 6}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Bottom controls */}
+      <div className="px-6 pb-10 flex gap-3">
+        <motion.button
+          whileTap={{ scale: 0.93 }}
+          onClick={() => setJoined(!joined)}
+          className="flex-1 py-3.5 rounded-2xl text-sm"
+          style={{
+            background: joined
+              ? "rgba(168,85,247,0.15)"
+              : "linear-gradient(135deg, #A855F7, #7C3AED)",
+            color: joined ? "#A855F7" : "white",
+            fontWeight: 700,
+            border: joined ? "1px solid rgba(168,85,247,0.4)" : "none",
+          }}
+        >
+          <span className="flex items-center justify-center gap-2">
+            <Mic size={16} />
+            {joined ? "Leave Stage" : "Take the Stage"}
+          </span>
+        </motion.button>
+        <button className="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+          <Volume2 size={18} className="text-white/60" />
+        </button>
+      </div>
+    </motion.div>
+  );
+}
 
 export function Music() {
   const { profile } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [playlists, setPlaylists] = useState<any[]>([]);
-  const [myPlaylists, setMyPlaylists] = useState<any[]>([]);
-
-  const fetchMusic = async () => {
-    if (!profile) return;
-
-    // Fetch Trending Playlists (ordered by vote count, we do a join)
-    // Since supabase doesn't have a direct order by count without a view, we fetch all and sort
-    const { data: trending } = await supabase
-      .from("playlists")
-      .select("*, profiles(*), playlist_votes(user_id)");
-
-    if (trending) {
-      const withVotes = trending
-        .map((p) => ({
-          ...p,
-          voteCount: p.playlist_votes?.length || 0,
-          hasVoted: p.playlist_votes?.some((v: any) => v.user_id === profile.id),
-        }))
-        .sort((a, b) => b.voteCount - a.voteCount);
-
-      setPlaylists(withVotes);
-      setMyPlaylists(withVotes.filter((p) => p.author_id === profile.id));
-    }
-    setLoading(false);
-  };
+  const [activeRoom, setActiveRoom] = useState<typeof KARAOKE_ROOMS[0] | null>(null);
+  const [recommendedHostnames, setRecommendedHostnames] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchMusic();
+    if (profile) {
+      DiscoveryAI.getRecommendedUsers(profile.id).then(users => {
+        if (users) {
+          setRecommendedHostnames(new Set(users.map((u: any) => u.username)));
+        }
+      }).catch(console.error);
+    }
   }, [profile]);
 
-  const handleVote = async (playlistId: string, hasVoted: boolean) => {
-    if (!profile) return;
-
-    // Optimistic UI update
-    setPlaylists((prev) =>
-      prev.map((p) => {
-        if (p.id === playlistId) {
-          return { ...p, hasVoted: !hasVoted, voteCount: p.voteCount + (hasVoted ? -1 : 1) };
-        }
-        return p;
-      }),
-    );
-
-    if (hasVoted) {
-      await supabase
-        .from("playlist_votes")
-        .delete()
-        .match({ playlist_id: playlistId, user_id: profile.id });
-    } else {
-      await supabase
-        .from("playlist_votes")
-        .insert({ playlist_id: playlistId, user_id: profile.id });
-    }
-  };
+  const sortedRooms = useMemo(() => {
+    return [...KARAOKE_ROOMS].sort((a, b) => {
+      const aRec = recommendedHostnames.has(a.host) ? 1 : 0;
+      const bRec = recommendedHostnames.has(b.host) ? 1 : 0;
+      if (aRec !== bRec) return bRec - aRec;
+      return a.listeners > b.listeners ? -1 : 1;
+    });
+  }, [recommendedHostnames]);
 
   return (
-    <div className="pb-28 min-h-full text-foreground relative">
-      {/* Decorative Blur Gradients for Apple Music / Spotify Premium vibe */}
-      <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0 overflow-hidden">
-        <div className="absolute top-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-secondary/10 blur-[120px]" />
-        <div className="absolute top-[20%] left-[-20%] w-[70vw] h-[70vw] rounded-full bg-accent1/5 blur-[120px]" />
+    <div className="min-h-full pb-28">
+      <div className="px-4 pt-4 pb-2 sticky top-0 z-10 bg-background/80 backdrop-blur-xl">
+        <h1 className="text-white text-2xl mb-1 font-extrabold tracking-tight">Karaoke Rooms</h1>
+        <p className="text-white/40 text-sm">Live audio — join or start a room</p>
       </div>
 
-      <header className="sticky top-0 z-40 px-6 pt-4 pb-4 bg-background/80 backdrop-blur-xl border-b border-border">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-secondary to-primary flex items-center justify-center shadow-lg shadow-secondary/20">
-            <Music2 size={20} className="text-white" />
-          </div>
-          Leaderboards
-        </h1>
-        <div className="mt-6 flex h-12 items-center rounded-2xl bg-card/50 border border-border px-4 focus-within:border-primary/50 transition-colors backdrop-blur-sm">
-          <Search size={18} className="text-muted-foreground" />
-          <input
-            type="text"
-            placeholder="Search playlists, artists, tracks..."
-            className="w-full bg-transparent px-3 text-sm text-foreground font-medium outline-none placeholder:text-muted-foreground"
-          />
+      {/* Create room button */}
+      <div className="px-4 mb-5 mt-2">
+        <motion.button
+          whileTap={{ scale: 0.97 }}
+          className="w-full py-3.5 rounded-2xl flex items-center justify-center gap-2 border border-dashed border-white/20 text-white/50 text-sm hover:border-[#A855F7]/40 hover:text-[#A855F7] transition"
+        >
+          <Plus size={16} />
+          Create a Room
+        </motion.button>
+      </div>
+
+      {/* Live rooms */}
+      <div className="px-4 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Radio size={12} className="text-[#FF6B6B]" />
+          <span className="text-[11px] uppercase tracking-widest text-white/40 font-bold">Live Now</span>
+          <div className="w-2 h-2 rounded-full bg-[#FF6B6B] animate-pulse" />
         </div>
-      </header>
+      </div>
 
-      <main className="px-6 py-8 space-y-12 relative z-10">
-        <section>
-          <h2 className="text-xl font-bold tracking-tight text-foreground mb-6">Trending Now</h2>
-          {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="h-20 w-full rounded-2xl bg-card/50 border border-border"
-                />
-              ))}
-            </div>
-          ) : playlists.length > 0 ? (
-            <div className="space-y-4">
-              {playlists.map((playlist, idx) => (
-                <div
-                  key={playlist.id}
-                  className="flex items-center gap-4 rounded-3xl border border-border bg-card/60 backdrop-blur-md p-4 transition hover:bg-accent/50 group cursor-pointer"
-                >
-                  <div className="w-6 text-center font-bold text-muted-foreground text-lg group-hover:text-primary transition-colors">
-                    {idx + 1}
-                  </div>
-                  <div className="flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-background overflow-hidden border border-border shadow-md">
-                    {playlist.cover_url ? (
-                      <img src={playlist.cover_url} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <Disc size={24} className="text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="text-base font-bold text-foreground truncate">
-                      {playlist.title}
-                    </div>
-                    <div className="text-xs text-muted-foreground font-medium truncate flex items-center gap-1 mt-1">
-                      Created by {playlist.profiles?.display_name || playlist.profiles?.username}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleVote(playlist.id, playlist.hasVoted);
-                      }}
-                      className={`flex flex-col items-center justify-center transition-transform active:scale-95 ${playlist.hasVoted ? "text-secondary" : "text-muted-foreground hover:text-secondary/70"}`}
-                    >
-                      <Heart size={20} className={playlist.hasVoted ? "fill-secondary" : ""} />
-                      <span className="text-[10px] font-bold mt-1">{playlist.voteCount}</span>
-                    </button>
-                    <button className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background shadow-lg transition-transform hover:scale-105 active:scale-95">
-                      <Play size={16} className="fill-current ml-0.5" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <PremiumEmptyState
-              icon={Music2}
-              title="No trending music"
-              description="Be the first to create a playlist and get it trending!"
-              glowColor="secondary"
-            />
-          )}
-        </section>
-
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold tracking-tight text-foreground">Your Library</h2>
-            <CreatePlaylistModal
-              onCreated={() => {
-                setLoading(true);
-                fetchMusic();
-              }}
+      <div className="px-4 space-y-3">
+        {sortedRooms.map((room, i) => {
+          const host = getUserByUsername(room.host);
+          const isRecommended = recommendedHostnames.has(room.host);
+          
+          return (
+            <motion.button
+              key={room.id}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setActiveRoom(room)}
+              className={`w-full bg-[#151515] rounded-[20px] p-4 border text-left transition ${
+                isRecommended 
+                  ? 'border-[#FF9D2E]/40 shadow-[0_0_20px_rgba(255,157,46,0.1)] hover:border-[#FF9D2E]/60' 
+                  : 'border-white/5 hover:border-white/10'
+              }`}
             >
-              <button className="text-sm font-bold text-secondary bg-secondary/10 px-4 py-2 rounded-full hover:bg-secondary/20 transition-colors border border-secondary/20">
-                + New Playlist
-              </button>
-            </CreatePlaylistModal>
-          </div>
-          {loading ? (
-            <div className="grid grid-cols-2 gap-4">
-              {[1, 2].map((i) => (
-                <Skeleton
-                  key={i}
-                  className="aspect-square w-full rounded-3xl bg-card/50 border border-border"
-                />
-              ))}
-            </div>
-          ) : myPlaylists.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4">
-              {myPlaylists.map((playlist) => (
-                <div
-                  key={playlist.id}
-                  className="rounded-3xl border border-border bg-card overflow-hidden p-4 aspect-square flex flex-col justify-end relative group cursor-pointer shadow-lg"
-                >
-                  {playlist.cover_url ? (
-                    <img
-                      src={playlist.cover_url}
-                      className="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:scale-105 group-hover:opacity-80 transition-all duration-500"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 bg-gradient-to-tr from-secondary/40 to-primary/40 opacity-60 group-hover:opacity-80 transition-opacity" />
+              <div className="flex items-start gap-3">
+                <div className="relative flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full overflow-hidden">
+                    <ImageWithFallback src={host.avatar} alt={host.name} className="w-full h-full object-cover" />
+                  </div>
+                  {room.active && (
+                    <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#FF6B6B] border-2 border-[#0B0B0B] flex items-center justify-center">
+                      <div className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                    </div>
                   )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/40 to-transparent" />
-                  <div className="relative z-10">
-                    <h3 className="font-bold text-foreground text-lg tracking-tight leading-tight mb-1">
-                      {playlist.title}
-                    </h3>
-                    <p className="text-xs text-primary font-bold">{playlist.voteCount} votes</p>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-white text-sm font-bold">{room.name}</h3>
+                    <span
+                      className="px-2 py-0.5 rounded-full text-[10px] flex-shrink-0 font-bold"
+                      style={{
+                        background: room.active ? "rgba(255,107,107,0.15)" : "rgba(255,255,255,0.05)",
+                        color: room.active ? "#FF6B6B" : "rgba(255,255,255,0.3)",
+                      }}
+                    >
+                      {room.active ? "LIVE" : "IDLE"}
+                    </span>
+                  </div>
+                  <p className="text-white/40 text-xs mt-0.5">@{room.host} · {room.genre}</p>
+                  <p className="text-white/60 text-xs mt-1 truncate font-bold">♪ {room.currentSong}</p>
+                  <div className="flex items-center gap-3 mt-2">
+                    <span className="flex items-center gap-1 text-white/40 text-[11px] font-bold">
+                      <Users size={11} />
+                      {room.listeners}
+                    </span>
+                    <span className="flex items-center gap-1 text-white/40 text-[11px] font-bold">
+                      <Mic size={11} />
+                      {room.singers} on stage
+                    </span>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <PremiumEmptyState
-              icon={Disc}
-              title="No playlists yet"
-              description="Create a playlist to save your favorite tracks."
-              glowColor="accent1"
-            />
-          )}
-        </section>
-      </main>
+              </div>
+            </motion.button>
+          );
+        })}
+      </div>
+
+      <AnimatePresence>
+        {activeRoom && (
+          <ActiveRoom room={activeRoom} onClose={() => setActiveRoom(null)} />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

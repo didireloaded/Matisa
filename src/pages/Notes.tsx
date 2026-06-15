@@ -1,72 +1,19 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Avatar } from "@/components/common/Avatar";
-import { Heart, Flame, Smile, CheckCircle2 } from "lucide-react";
+import { Heart, Flame, Smile, AlignLeft } from "lucide-react";
+import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import type { Profile } from "@/types";
+import { useAuth } from "@/contexts/AuthContext";
+import { DiscoveryAI } from "@/services/ai";
 
 interface Note {
   id: string;
   user_id: string;
   content: string;
   created_at: string;
-  expires_at: string;
-  likes_count: number;
-  fire_count: number;
-  laugh_count: number;
   profiles?: Profile;
 }
-
-// Mock data since we might not have notes in DB yet
-const MOCK_NOTES: Note[] = [
-  {
-    id: "1",
-    user_id: "123",
-    content: "Windhoek is freezing today! 🥶",
-    created_at: new Date().toISOString(),
-    expires_at: new Date(Date.now() + 86400000).toISOString(),
-    likes_count: 12,
-    fire_count: 3,
-    laugh_count: 5,
-    profiles: {
-      id: "123",
-      username: "hanna_dowie",
-      display_name: "Hanna D.",
-      avatar_url: "https://i.pravatar.cc/150?u=123",
-    } as any,
-  },
-  {
-    id: "2",
-    user_id: "456",
-    content: "Just dropped a new track on Soundcloud 🔥",
-    created_at: new Date(Date.now() - 3600000).toISOString(),
-    expires_at: new Date(Date.now() + 82800000).toISOString(),
-    likes_count: 45,
-    fire_count: 20,
-    laugh_count: 0,
-    profiles: {
-      id: "456",
-      username: "dj_kboz",
-      display_name: "DJ Kboz",
-      avatar_url: "https://i.pravatar.cc/150?u=456",
-    } as any,
-  },
-  {
-    id: "3",
-    user_id: "789",
-    content: "Need coffee ASAP. ☕",
-    created_at: new Date(Date.now() - 7200000).toISOString(),
-    expires_at: new Date(Date.now() + 79200000).toISOString(),
-    likes_count: 8,
-    fire_count: 1,
-    laugh_count: 12,
-    profiles: {
-      id: "789",
-      username: "michelle_v",
-      display_name: "Michelle",
-      avatar_url: "https://i.pravatar.cc/150?u=789",
-    } as any,
-  },
-];
 
 function NoteCard({ note }: { note: Note }) {
   const [reacted, setReacted] = useState<string | null>(null);
@@ -121,7 +68,7 @@ function NoteCard({ note }: { note: Note }) {
           }`}
         >
           <Heart size={14} className={reacted === "heart" ? "fill-current" : ""} />
-          <span>{note.likes_count + (reacted === "heart" ? 1 : 0)}</span>
+          <span>{(reacted === "heart" ? 1 : 0)}</span>
         </button>
         <button
           onClick={() => handleReact("fire")}
@@ -132,7 +79,7 @@ function NoteCard({ note }: { note: Note }) {
           }`}
         >
           <Flame size={14} className={reacted === "fire" ? "fill-current" : ""} />
-          <span>{note.fire_count + (reacted === "fire" ? 1 : 0)}</span>
+          <span>{(reacted === "fire" ? 1 : 0)}</span>
         </button>
         <button
           onClick={() => handleReact("laugh")}
@@ -143,7 +90,7 @@ function NoteCard({ note }: { note: Note }) {
           }`}
         >
           <Smile size={14} className={reacted === "laugh" ? "fill-current" : ""} />
-          <span>{note.laugh_count + (reacted === "laugh" ? 1 : 0)}</span>
+          <span>{(reacted === "laugh" ? 1 : 0)}</span>
         </button>
       </div>
     </div>
@@ -151,34 +98,63 @@ function NoteCard({ note }: { note: Note }) {
 }
 
 export function Notes() {
+  const { profile } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Poll for new notes every 5 seconds or when mounted
   useEffect(() => {
     async function fetchNotes() {
       try {
         const { data, error } = await supabase
           .from("notes")
           .select("*, profiles(*)")
-          .gt("expires_at", new Date().toISOString())
+          .gt("created_at", new Date(Date.now() - 86400000).toISOString())
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-
-        if (data && data.length > 0) {
-          setNotes(data as any[]);
-        } else {
-          setNotes(MOCK_NOTES);
+        
+        let fetchedNotes = (data as any[]) || [];
+        
+        // Invisible AI Ranking
+        if (profile) {
+          try {
+             const recommendedUsers = await DiscoveryAI.getRecommendedUsers(profile.id);
+             if (recommendedUsers && recommendedUsers.length > 0) {
+               const recommendedIds = new Set(recommendedUsers.map((u: any) => u.id));
+               fetchedNotes.sort((a, b) => {
+                 const aIsRec = recommendedIds.has(a.user_id) ? 1 : 0;
+                 const bIsRec = recommendedIds.has(b.user_id) ? 1 : 0;
+                 if (aIsRec !== bIsRec) return bIsRec - aIsRec;
+                 return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+               });
+             }
+          } catch(err) {
+             console.error("AI Sort Error", err);
+          }
         }
+
+        setNotes(fetchedNotes);
       } catch (e) {
-        console.warn("Failed to fetch notes, using mock data", e);
-        setNotes(MOCK_NOTES);
+        console.warn("Failed to fetch notes", e);
       } finally {
         setLoading(false);
       }
     }
     fetchNotes();
-  }, []);
+    
+    // Subscribe to realtime changes
+    const channel = supabase
+      .channel('public:notes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notes' }, () => {
+        fetchNotes();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile]);
 
   return (
     <div className="flex flex-col h-[calc(100dvh-54px-60px)] bg-background">
@@ -196,6 +172,13 @@ export function Notes() {
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 rounded-full border-2 border-[#FF9D2E] border-t-transparent animate-spin" />
           </div>
+        ) : notes.length === 0 ? (
+          <PremiumEmptyState
+            icon={AlignLeft}
+            title="No Notes Yet"
+            description="Be the first to share a quick thought or update with the community."
+            glowColor="primary"
+          />
         ) : (
           <div className="columns-1 sm:columns-2 gap-4">
             {notes.map((note) => (
