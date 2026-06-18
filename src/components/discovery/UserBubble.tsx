@@ -46,7 +46,7 @@ export const UserBubble = memo(function UserBubble({
   const scoreSize = isRecommended ? 10 : 0; // Make recommended users slightly larger
   const size = baseSize + scoreSize;
 
-  const isCreator = user.is_creator || user.creator_badge;
+  const isCreator = user.is_creator;
 
   return (
     <motion.div
@@ -76,9 +76,7 @@ export const UserBubble = memo(function UserBubble({
         />
       </div>
 
-      {user.online && (
-        <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-black bg-green-500 animate-pulse" />
-      )}
+      {/* Online indicator removed or using isOnline flag if available */}
     </motion.div>
   );
 });

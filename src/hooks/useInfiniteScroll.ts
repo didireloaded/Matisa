@@ -3,7 +3,7 @@
  * Observes a sentinel element and triggers callback when visible
  */
 
-import { useEffect, useRef, useCallback, RefObject } from 'react';
+import { useEffect, useRef, useCallback, RefObject } from "react";
 
 export interface UseInfiniteScrollOptions {
   threshold?: number | number[];
@@ -15,11 +15,11 @@ export interface UseInfiniteScrollOptions {
 
 export function useInfiniteScroll<T extends HTMLElement = HTMLDivElement>({
   threshold = 0.1,
-  rootMargin = '100px',
+  rootMargin = "100px",
   root = null,
   onLoadMore,
   enabled = true,
-}: UseInfiniteScrollOptions): RefObject<T> {
+}: UseInfiniteScrollOptions): RefObject<T | null> {
   const ref = useRef<T>(null);
   const isLoadingRef = useRef(false);
 

@@ -21,96 +21,39 @@ import { toast } from "sonner";
 function TopBar() {
   const navigate = useNavigate();
   const { profile } = useAuth();
-  const [unreadMsgs, setUnreadMsgs] = useState(0);
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
   useEffect(() => {
     if (!profile) return;
-
-    // Unread notifications count
     supabase
       .from("notifications")
       .select("*", { count: "exact", head: true })
       .eq("recipient_id", profile.id)
       .eq("is_read", false)
       .then(({ count }) => setUnreadNotifs(count ?? 0));
-
-    // Unread messages
-    supabase
-      .from("conversation_members")
-      .select("conversations!inner(last_message_at), last_read_at")
-      .eq("user_id", profile.id)
-      .then(({ data }) => {
-        const unread = (data ?? []).filter((m: any) => {
-          if (!m.conversations?.last_message_at) return false;
-          return (
-            !m.last_read_at || new Date(m.conversations.last_message_at) > new Date(m.last_read_at)
-          );
-        }).length;
-        setUnreadMsgs(unread);
-      });
-
-    // Realtime subscription for new notifications
-    const ch = supabase
-      .channel(`topbar_notifs_${profile.id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notifications",
-          filter: `recipient_id=eq.${profile.id}`,
-        },
-        () => setUnreadNotifs((c) => c + 1),
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(ch);
-    };
   }, [profile]);
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between px-5 border-b border-white/5"
-      style={{ background: "rgba(11,11,11,0.75)", backdropFilter: "blur(24px)" }}>
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-5 bg-gradient-to-b from-[var(--color-background)] to-transparent">
       {/* Logo */}
-      <div className="flex items-center gap-2">
-        <div className="grid grid-cols-2 gap-[3px]">
-          <div className="w-2.5 h-2.5 rounded-sm bg-[#A0AEC0]" />
-          <div className="w-2.5 h-2.5 rounded-sm bg-white" />
-          <div className="w-2.5 h-2.5 rounded-sm bg-white" />
-          <div className="w-2.5 h-2.5 rounded-sm bg-white/30" />
-        </div>
-        <span className="text-white text-[18px] ml-2 font-display font-extrabold tracking-tight" style={{ fontWeight: 800 }}>
-          Matisa
+      <div className="flex items-center">
+        <span className="text-white text-[22px] font-display font-bold tracking-tight lowercase">
+          matisa
         </span>
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-3">
-        {/* Notifications */}
+      <div className="flex items-center gap-5">
+        <button className="text-white hover:text-[var(--color-primary-light)] transition-colors">
+          <Search size={22} strokeWidth={2} />
+        </button>
         <button
           onClick={() => navigate("/activity")}
-          className="relative w-9 h-9 rounded-full flex items-center justify-center hover:bg-white/8 transition"
+          className="relative text-white hover:text-[var(--color-primary-light)] transition-colors"
         >
-          <Bell size={19} className="text-white/70" />
+          <Bell size={22} strokeWidth={2} />
           {unreadNotifs > 0 && (
-            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-[#A0AEC0] flex items-center justify-center text-[9px] text-black font-bold shadow-md">
-              {unreadNotifs > 9 ? "9+" : unreadNotifs}
-            </span>
-          )}
-        </button>
-
-        {/* Messages */}
-        <button
-          onClick={() => navigate("/messages")}
-          className="relative w-9 h-9 rounded-full bg-white flex items-center justify-center shadow transition hover:bg-white/90"
-        >
-          <MessageSquare size={16} className="text-black" strokeWidth={2.5} />
-          {unreadMsgs > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full bg-[#A0AEC0] flex items-center justify-center text-[9px] text-black font-bold shadow-md">
-              {unreadMsgs > 9 ? "9+" : unreadMsgs}
-            </span>
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[var(--color-primary)] border border-[var(--color-background)]" />
           )}
         </button>
       </div>
@@ -124,8 +67,8 @@ function TopBar() {
 
 const NAV_ITEMS = [
   { id: "home", route: "/", icon: Home },
-  { id: "explore", route: "/explore", icon: Search },
-  { id: "__create__", route: "", icon: Plus },
+  { id: "discovery", route: "/discovery", icon: Search },
+  { id: "rooms", route: "/rooms", icon: MessageSquare },
   { id: "events", route: "/events", icon: CalendarDays },
   { id: "profile", route: "/profile", icon: User },
 ] as const;
@@ -136,51 +79,55 @@ function BottomNav({ onCompose }: { onCompose: () => void }) {
   const path = location.pathname;
 
   return (
-    <div
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] h-[72px] flex items-center justify-between px-8 z-30 border-t border-white/5"
-      style={{ background: "rgba(11,11,11,0.88)", backdropFilter: "blur(40px)" }}
-    >
-      {NAV_ITEMS.map((item) => {
-        if (item.id === "__create__") {
+    <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-6 pb-safe pt-2 bg-gradient-to-t from-[var(--color-background)] via-[var(--color-background)] to-transparent z-40 pointer-events-none">
+      <div className="flex items-center justify-between px-6 h-[64px] rounded-[32px] glass-panel border border-[var(--color-border)] pointer-events-auto shadow-2xl shadow-black/50 mb-4 relative">
+        {NAV_ITEMS.map((item, index) => {
+          const isActive =
+            path === item.route || (item.route !== "/" && path.startsWith(item.route));
+          const Icon = item.icon;
+
+          // Insert the center action button
+          if (index === 2) {
+            return (
+              <div key="compose-btn" className="relative -top-5">
+                <button
+                  onClick={onCompose}
+                  className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.5)] transition-transform active:scale-90"
+                >
+                  <Plus size={28} strokeWidth={2.5} />
+                </button>
+              </div>
+            );
+          }
+
           return (
-            <motion.button
-              key="create"
-              whileTap={{ scale: 0.88 }}
-              onClick={onCompose}
-              className="w-[50px] h-[50px] rounded-full flex items-center justify-center -mt-6"
-              style={{
-                background: "linear-gradient(135deg, #2D3748, #4A5568)",
-                boxShadow: "0 4px 24px rgba(45,55,70,0.4)",
-                border: "3px solid #0B0B0B",
-              }}
+            <button
+              key={item.id}
+              onClick={() => navigate(item.route)}
+              className="relative p-2 flex flex-col items-center justify-center group focus:outline-none"
             >
-              <Plus size={24} className="text-white" strokeWidth={2.5} />
-            </motion.button>
+              <motion.div whileTap={{ scale: 0.9 }} className="relative z-10">
+                <Icon
+                  size={24}
+                  strokeWidth={isActive ? 2.5 : 2}
+                  className={`transition-colors duration-300 ${
+                    isActive
+                      ? "text-[var(--color-primary)]"
+                      : "text-[var(--color-text-muted)] group-hover:text-white"
+                  }`}
+                />
+              </motion.div>
+              {isActive && (
+                <motion.div
+                  layoutId="bottom-nav-active"
+                  className="absolute -bottom-1 w-1 h-1 rounded-full bg-[var(--color-primary)]"
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                />
+              )}
+            </button>
           );
-        }
-        const isActive = path === item.route || (item.route !== "/" && path.startsWith(item.route));
-        const Icon = item.icon;
-        return (
-          <motion.button
-            key={item.id}
-            whileTap={{ scale: 0.88 }}
-            onClick={() => navigate(item.route)}
-          >
-            <div
-              className="w-11 h-11 flex items-center justify-center rounded-full transition"
-              style={{ background: isActive ? "rgba(45,55,70,0.1)" : "transparent" }}
-            >
-              <Icon
-                size={24}
-                style={{
-                  color: isActive ? "#A0AEC0" : "rgba(255,255,255,0.4)",
-                  fill: isActive && item.id !== "explore" ? "#A0AEC0" : "none",
-                }}
-              />
-            </div>
-          </motion.button>
-        );
-      })}
+        })}
+      </div>
     </div>
   );
 }
@@ -202,6 +149,9 @@ export function MainLayout() {
   const [showCreateStory, setShowCreateStory] = useState(false);
   const [showCreateVoice, setShowCreateVoice] = useState(false);
   const [showCreateLive, setShowCreateLive] = useState(false);
+  const [showCreateEvent, setShowCreateEvent] = useState(false);
+  const [showCreateOpp, setShowCreateOpp] = useState(false);
+
   const location = useLocation();
   const { session, loading } = useAuth();
   const path = location.pathname;
@@ -215,8 +165,8 @@ export function MainLayout() {
   if (!loading && !session && !isGuest) return <Navigate to="/auth" replace />;
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/50 border-t-white" />
+      <div className="flex h-screen items-center justify-center bg-[var(--color-background)]">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-[var(--color-primary)] border-t-transparent" />
       </div>
     );
   }
@@ -236,7 +186,6 @@ export function MainLayout() {
     if (touchStartY.current > 0 && !isRefreshing) {
       const delta = e.touches[0].clientY - touchStartY.current;
       if (delta > 0) {
-        // Stop default scrolling to prevent rubber-banding on some browsers
         if (e.cancelable) e.preventDefault();
         setPull(Math.min(delta * 0.4, 80));
       }
@@ -258,30 +207,35 @@ export function MainLayout() {
   };
 
   return (
-    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col shadow-2xl shadow-black bg-background text-foreground pt-safe pb-safe overflow-hidden relative transform">
+    <div className="mx-auto flex min-h-[100dvh] max-w-md flex-col bg-[var(--color-background)] text-[var(--color-text)] overflow-hidden relative shadow-[0_0_40px_rgba(0,0,0,0.5)]">
       {!hideTop && <TopBar />}
 
       {/* Pull To Refresh Indicator */}
-      <div 
+      <div
         className="absolute left-0 right-0 flex justify-center items-center z-20 pointer-events-none transition-opacity"
         style={{ top: hideTop ? 20 : 80, opacity: pull > 10 || isRefreshing ? 1 : 0 }}
       >
-        <motion.div 
-          animate={{ rotate: isRefreshing ? 360 : (pull * 3) }}
-          transition={isRefreshing ? { repeat: Infinity, duration: 1, ease: "linear" } : { duration: 0 }}
+        <motion.div
+          animate={{ rotate: isRefreshing ? 360 : pull * 3 }}
+          transition={
+            isRefreshing ? { repeat: Infinity, duration: 1, ease: "linear" } : { duration: 0 }
+          }
           className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent shadow-lg bg-background/50 backdrop-blur flex items-center justify-center"
         >
           {!isRefreshing && <div className="w-1.5 h-1.5 rounded-full bg-primary" />}
         </motion.div>
       </div>
 
-      <main 
+      <main
         ref={mainRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         className="flex-1 overflow-y-auto no-scrollbar relative z-10"
-        style={{ transform: `translateY(${isRefreshing ? 60 : pull}px)`, transition: pull === 0 ? "transform 0.3s ease" : "none" }}
+        style={{
+          transform: `translateY(${isRefreshing ? 60 : pull}px)`,
+          transition: pull === 0 ? "transform 0.3s ease" : "none",
+        }}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -309,6 +263,10 @@ export function MainLayout() {
           else if (action === "story") setTimeout(() => setShowCreateStory(true), 300);
           else if (action === "voice") setTimeout(() => setShowCreateVoice(true), 300);
           else if (action === "live") setTimeout(() => setShowCreateLive(true), 300);
+          else if (action === "event") setTimeout(() => setShowCreateEvent(true), 300);
+          else if (action === "question")
+            setTimeout(() => setShowCreateNote(true), 300); // reuse note for now
+          else if (action === "opportunity") setTimeout(() => setShowCreateOpp(true), 300);
         }}
       />
 

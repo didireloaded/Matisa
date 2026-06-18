@@ -14,8 +14,8 @@ export function RichPostCard({
   onLike: (liked: boolean) => void;
   onComment: () => void;
 }) {
-  const [liked, setLiked] = useState(post.liked ?? false);
-  const [likes, setLikes] = useState(post.like_count ?? 0);
+  const [liked, setLiked] = useState(post.is_liked ?? false);
+  const [likes, setLikes] = useState(post.likes_count ?? 0);
   const { toggleSave, checkIsSaved } = useSaves();
   const [isSaved, setIsSaved] = useState(false);
 
@@ -24,13 +24,15 @@ export function RichPostCard({
     checkIsSaved(post.id).then((saved) => {
       if (mounted) setIsSaved(saved);
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [post.id, checkIsSaved]);
 
   const handleLike = () => {
     const newLiked = !liked;
     setLiked(newLiked);
-    setLikes((prev) => (newLiked ? prev + 1 : prev - 1));
+    setLikes((prev: number) => (newLiked ? prev + 1 : prev - 1));
     onLike(newLiked);
   };
 
@@ -150,8 +152,8 @@ export function RichPostCard({
               </div>
 
               <span className="text-xs font-bold text-white/50 w-8 text-right">
-                {post.voice_duration
-                  ? `0:${post.voice_duration.toString().padStart(2, "0")}`
+                {post.duration_seconds
+                  ? `${Math.floor(post.duration_seconds / 60)}:${(post.duration_seconds % 60).toString().padStart(2, "0")}`
                   : "0:14"}
               </span>
             </div>
@@ -184,18 +186,25 @@ export function RichPostCard({
           >
             <MessageCircle className="w-5 h-5 text-white/50 group-hover:text-white transition" />
             <span className="text-sm font-medium text-white/50 group-hover:text-white">
-              {post.comment_count > 0 ? post.comment_count : ""}
+              <span className="text-xs font-bold">
+                {post.comments_count > 0 ? post.comments_count : "Comment"}
+              </span>
             </span>
           </button>
 
-          <button 
+          <button
             onClick={handleSave}
             className="flex items-center gap-2 group active:scale-95 transition-transform ml-auto"
           >
-            <Bookmark className={`w-5 h-5 transition ${isSaved ? "fill-primary text-primary" : "text-white/50 group-hover:text-white"}`} />
+            <Bookmark
+              className={`w-5 h-5 transition ${isSaved ? "fill-primary text-primary" : "text-white/50 group-hover:text-white"}`}
+            />
           </button>
 
-          <button onClick={() => toast.success("Link copied to clipboard!")} className="flex items-center gap-2 group active:scale-95 transition-transform">
+          <button
+            onClick={() => toast.success("Link copied to clipboard!")}
+            className="flex items-center gap-2 group active:scale-95 transition-transform"
+          >
             <Send className="w-5 h-5 text-white/50 group-hover:text-white transition" />
           </button>
         </div>

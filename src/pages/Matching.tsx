@@ -1,220 +1,145 @@
-import { useState, useEffect } from "react";
-import { motion, useAnimation, PanInfo } from "framer-motion";
-import { Menu, Bell, X, Star, Share2, Heart, Loader2 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Heart, MessageCircle, Star, Music, Mic, Award } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { Button } from "@/components/ui/Button";
 
-interface CommunityCard {
-  id: string;
-  title: string;
-  roomName: string;
-  members: number;
-  tags: string[];
-  image: string;
-  avatars: string[];
-}
+const DUMMY_PROFILES = [
+  {
+    id: "1",
+    name: "Alex Rivera",
+    role: "Producer / Beatmaker",
+    image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=800&h=1000&fit=crop",
+    bio: "Looking for vocalists for my upcoming synthwave EP. I have a studio in downtown LA.",
+    tags: ["Synthwave", "Ableton", "Mixing"],
+    distance: "2 miles away",
+  },
+  {
+    id: "2",
+    name: "Sarah Chen",
+    role: "Vocalist / Songwriter",
+    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=1000&fit=crop",
+    bio: "R&B and Neo-soul singer looking for producers to collaborate with. Let's make magic.",
+    tags: ["R&B", "Vocals", "Topline"],
+    distance: "5 miles away",
+  },
+];
 
 export function Matching() {
-  const navigate = useNavigate();
-  const [cards, setCards] = useState<CommunityCard[]>([]);
-  const [loading, setLoading] = useState(true);
-  const controls = useAnimation();
+  const [profiles, setProfiles] = useState(DUMMY_PROFILES);
 
-  useEffect(() => {
-    async function fetchCommunities() {
-      try {
-        const { data, error } = await supabase
-          .from("communities")
-          .select("*")
-          .order("member_count", { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-
-        // Map communities to our Card format
-        const formattedCards = data.map((community: any) => ({
-          id: community.id,
-          title: community.description || community.name,
-          roomName: community.name,
-          members: community.member_count || 1,
-          tags: community.category ? [community.category, "Discovery"] : ["Community", "Social"],
-          image:
-            community.cover_url ||
-            "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?w=800&q=80",
-          // Mock avatars for now to preserve the UI design reference
-          avatars: [
-            `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.id}1`,
-            `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.id}2`,
-            `https://api.dicebear.com/7.x/avataaars/svg?seed=${community.id}3`,
-          ],
-        }));
-
-        setCards(formattedCards);
-      } catch (err) {
-        console.error("Error fetching communities:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchCommunities();
-  }, []);
-
-  const handleDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
-    const swipeThreshold = 100;
-    if (info.offset.x > swipeThreshold) {
-      // Swipe Right
-      controls.start({ x: "100vw", opacity: 0 }).then(() => {
-        setCards((prev) => prev.slice(1));
-        controls.set({ x: 0, opacity: 1 });
-      });
-    } else if (info.offset.x < -swipeThreshold) {
-      // Swipe Left
-      controls.start({ x: "-100vw", opacity: 0 }).then(() => {
-        setCards((prev) => prev.slice(1));
-        controls.set({ x: 0, opacity: 1 });
-      });
-    } else {
-      // Return to center
-      controls.start({ x: 0, opacity: 1 });
-    }
+  const handleSwipe = (direction: "left" | "right") => {
+    setProfiles((prev) => prev.slice(1));
   };
 
+  if (profiles.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[100dvh] bg-[var(--color-background)] px-5 text-center pb-28">
+        <div className="w-20 h-20 bg-[var(--color-surface-2)] rounded-full flex items-center justify-center mb-6">
+          <Star className="text-[var(--color-primary)] w-10 h-10" />
+        </div>
+        <h2 className="text-2xl font-bold text-white mb-2">You're all caught up!</h2>
+        <p className="text-[var(--color-text-muted)] mb-8">
+          We're searching for more creators in your area.
+        </p>
+        <Button variant="outline" onClick={() => setProfiles(DUMMY_PROFILES)}>
+          Refresh Matches
+        </Button>
+      </div>
+    );
+  }
+
+  const currentProfile = profiles[0];
+
   return (
-    <div className="flex flex-col h-full bg-[#E8EAE6] text-black relative overflow-hidden font-sans">
-      {/* Top Header */}
-      <div className="flex items-center justify-between p-6 z-10">
-        <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition-transform">
-          <Menu className="w-5 h-5 text-black" />
-        </button>
-
-        <h1 className="text-xl font-medium tracking-tight">friendlyhours</h1>
-
-        <button className="relative w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm hover:scale-105 transition-transform">
-          <Bell className="w-5 h-5 text-black" />
-          <div className="absolute -top-1 -left-1 w-5 h-5 bg-[#FF9D2E] rounded-full text-[10px] font-bold flex items-center justify-center text-white border-2 border-white">
-            2
-          </div>
-        </button>
+    <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)] pb-28 overflow-hidden relative">
+      {/* Header */}
+      <div className="px-5 pt-4 pb-2 absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent">
+        <h1 className="text-white text-2xl font-display font-bold tracking-tight text-center">
+          Find Collaborators
+        </h1>
       </div>
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-[#FF9D2E]" />
-        </div>
-      ) : (
-        <>
-          {/* Room Info (Dynamic based on top card) */}
-          {cards[0] && (
-            <div className="px-6 flex items-center justify-between z-10 mb-6">
-              <div className="flex items-center">
-                {cards[0].avatars.map((avatar, i) => (
-                  <div
-                    key={i}
-                    className={`w-12 h-12 rounded-full border-[3px] border-[#E8EAE6] bg-gray-200 overflow-hidden ${i !== 0 ? "-ml-4" : ""} shadow-sm z-[${10 - i}]`}
-                  >
-                    <img src={avatar} className="w-full h-full object-cover" />
-                  </div>
-                ))}
-                <div className="w-12 h-12 rounded-full bg-white/80 backdrop-blur-md border-[3px] border-[#E8EAE6] -ml-4 flex items-center justify-center text-xs font-bold shadow-sm z-0">
-                  +{cards[0].members > 3 ? cards[0].members - 3 : 0}
-                </div>
-              </div>
-              <div className="text-right">
-                <h3 className="font-bold text-[15px]">{cards[0].roomName}</h3>
-                <p className="text-sm text-black/50 flex items-center justify-end gap-1">
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M22 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                  </svg>
-                  {cards[0].members} Members
-                </p>
-              </div>
+      <div className="flex-1 flex flex-col justify-center px-4 pt-16">
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={currentProfile.id}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 1.05, opacity: 0, x: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            className="relative w-full aspect-[3/4] max-h-[600px] rounded-[32px] overflow-hidden shadow-2xl bg-[var(--color-surface-2)]"
+          >
+            <img
+              src={currentProfile.image}
+              alt={currentProfile.name}
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+
+            <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+              <span className="text-white text-xs font-bold flex items-center gap-1">
+                <Star size={12} className="text-[var(--color-primary)]" fill="currentColor" /> Match
+              </span>
             </div>
-          )}
 
-          {/* Main Card Swiper */}
-          <div className="flex-1 relative px-6 pb-28 w-full h-full">
-            {cards.length > 0 ? (
-              <motion.div
-                drag="x"
-                dragConstraints={{ left: 0, right: 0 }}
-                onDragEnd={handleDragEnd}
-                animate={controls}
-                className="w-full h-[100%] max-h-[600px] rounded-[40px] relative overflow-hidden bg-white shadow-xl cursor-grab active:cursor-grabbing"
-              >
-                <img src={cards[0].image} alt="Cover" className="w-full h-full object-cover" />
+            <div className="absolute bottom-0 left-0 right-0 p-6 pt-20">
+              <h2 className="text-3xl font-bold text-white mb-1 leading-tight">
+                {currentProfile.name}
+              </h2>
+              <p className="text-[var(--color-primary)] font-bold text-sm mb-3 flex items-center gap-1.5">
+                <Mic size={14} /> {currentProfile.role}
+              </p>
 
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-black/20 to-black/80 flex flex-col justify-end p-8">
-                  <h2 className="text-[2.5rem] font-bold leading-tight text-white mb-6 tracking-tight">
-                    {cards[0].title.split(" ").map((word, i) => (
-                      <span key={i}>{word} </span>
-                    ))}
-                  </h2>
-
-                  <div className="flex flex-wrap gap-2">
-                    {cards[0].tags.map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-4 py-2 bg-white/20 backdrop-blur-md border border-white/20 rounded-full text-white text-sm font-medium"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
-            ) : (
-              <div className="w-full h-[600px] rounded-[40px] bg-white/50 flex items-center justify-center">
-                <p className="text-black/50 font-medium">No more rooms to discover.</p>
+              <div className="flex flex-wrap gap-2 mb-4">
+                {currentProfile.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 bg-white/10 backdrop-blur-md text-white text-xs font-semibold rounded-full border border-white/10"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
-            )}
-          </div>
-        </>
-      )}
 
-      {/* Bottom Floating Action Pill */}
-      {cards.length > 0 && !loading && (
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center justify-center bg-[#1C1C1C] rounded-[40px] p-2 shadow-2xl z-30">
-          <button
-            onClick={() => {
-              controls.start({ x: "-100vw", opacity: 0 }).then(() => {
-                setCards((prev) => prev.slice(1));
-                controls.set({ x: 0, opacity: 1 });
-              });
-            }}
-            className="w-16 h-16 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors hover:bg-white/10"
+              <p className="text-white/80 text-sm leading-relaxed line-clamp-3 mb-2">
+                "{currentProfile.bio}"
+              </p>
+              <p className="text-white/50 text-xs font-semibold uppercase tracking-wider">
+                📍 {currentProfile.distance}
+              </p>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Action Buttons */}
+        <div className="flex justify-center items-center gap-6 mt-8">
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleSwipe("left")}
+            className="w-16 h-16 rounded-full bg-[var(--color-surface-2)] text-[var(--color-text-muted)] flex items-center justify-center hover:bg-[var(--color-surface-3)] hover:text-white transition shadow-lg border border-[var(--color-border)]"
           >
-            <X className="w-6 h-6" />
-          </button>
-          <button className="w-16 h-16 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors hover:bg-white/10">
-            <Star className="w-6 h-6 fill-current" />
-          </button>
-          <button className="w-16 h-16 rounded-full flex items-center justify-center text-white/50 hover:text-white transition-colors hover:bg-white/10">
-            <Share2 className="w-6 h-6" />
-          </button>
-          <button
-            onClick={() => {
-              controls.start({ x: "100vw", opacity: 0 }).then(() => {
-                navigate(`/room/${cards[0].id}?title=${encodeURIComponent(cards[0].roomName)}`);
-              });
-            }}
-            className="w-[100px] h-16 rounded-[32px] flex items-center justify-center text-white ml-2 shadow-[0_0_20px_rgba(255,157,46,0.3)] hover:scale-105 transition-transform"
-            style={{ background: "linear-gradient(135deg, #FF9D2E, #FF6B6B)" }}
+            <X size={28} />
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="w-14 h-14 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center hover:bg-blue-500/20 transition shadow-lg border border-blue-500/20"
           >
-            <Heart className="w-7 h-7 fill-current" />
-          </button>
+            <MessageCircle size={24} />
+          </motion.button>
+
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            onClick={() => handleSwipe("right")}
+            className="w-16 h-16 rounded-full bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] text-white flex items-center justify-center shadow-[0_0_20px_rgba(255,65,108,0.4)]"
+          >
+            <Heart size={28} fill="currentColor" />
+          </motion.button>
         </div>
-      )}
+      </div>
     </div>
   );
 }
+
+export default Matching;

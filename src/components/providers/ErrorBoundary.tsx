@@ -3,23 +3,17 @@
  * and user-friendly error display
  */
 
-import {
-  ReactNode,
-  ErrorInfo,
-} from 'react';
-import { ErrorBoundary as ReactErrorBoundary, FallbackComponent } from 'react-error-boundary';
-import { AlertCircle } from 'lucide-react';
+import { ReactNode, ErrorInfo } from "react";
+import { ErrorBoundary as ReactErrorBoundary, FallbackProps } from "react-error-boundary";
+import { AlertCircle } from "lucide-react";
 
 interface ErrorFallbackProps {
   error: Error;
   resetErrorBoundary: () => void;
 }
 
-const ErrorFallback: FallbackComponent = ({
-  error,
-  resetErrorBoundary,
-}: ErrorFallbackProps) => {
-  const isProduction = process.env.NODE_ENV === 'production';
+const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps) => {
+  const isProduction = process.env.NODE_ENV === "production";
 
   return (
     <div className="flex h-screen w-full flex-col items-center justify-center bg-[#0F0D0B] p-6 text-center text-[#F5F0EA]">
@@ -29,7 +23,8 @@ const ErrorFallback: FallbackComponent = ({
 
       <h2 className="mb-2 text-2xl font-bold text-red-500">Something Went Wrong</h2>
       <p className="mb-6 text-sm text-[#8A7F74] max-w-md">
-        We encountered an unexpected error. Please try again or contact support if the problem persists.
+        We encountered an unexpected error. Please try again or contact support if the problem
+        persists.
       </p>
 
       {!isProduction && (
@@ -38,8 +33,8 @@ const ErrorFallback: FallbackComponent = ({
             Technical Details (Development Only)
           </summary>
           <pre className="mt-2 overflow-auto bg-[#1C1814] p-3 rounded text-xs text-red-400 border border-[#222222]">
-            {error.message}
-            {error.stack}
+            {(error as any).message}
+            {(error as any).stack}
           </pre>
         </details>
       )}
@@ -52,7 +47,7 @@ const ErrorFallback: FallbackComponent = ({
           Try Again
         </button>
         <button
-          onClick={() => (window.location.href = '/')}
+          onClick={() => (window.location.href = "/")}
           className="rounded-full border border-[#C8521A] px-6 py-2 font-bold text-[#C8521A] transition hover:bg-[#C8521A]/10"
         >
           Go Home
@@ -64,8 +59,8 @@ const ErrorFallback: FallbackComponent = ({
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  fallback?: FallbackComponent;
-  onError?: (error: Error, info: ErrorInfo) => void;
+  fallback?: React.ComponentType<FallbackProps>;
+  onError?: (error: any, info: React.ErrorInfo) => void;
 }
 
 export function AppErrorBoundary({
@@ -73,12 +68,12 @@ export function AppErrorBoundary({
   fallback = ErrorFallback,
   onError,
 }: ErrorBoundaryProps) {
-  const handleError = (error: Error, info: ErrorInfo) => {
+  const handleError = (error: any, info: ErrorInfo) => {
     // Log to error tracking service (Sentry, LogRocket, etc.)
-    console.error('ErrorBoundary caught:', error, info);
+    console.error("ErrorBoundary caught:", error, info);
 
     // Send to external service in production
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === "production") {
       // Example: Sentry.captureException(error, { contexts: info });
     }
 
@@ -87,15 +82,11 @@ export function AppErrorBoundary({
 
   const handleReset = () => {
     // Clear app state if needed
-    window.location.href = '/';
+    window.location.href = "/";
   };
 
   return (
-    <ReactErrorBoundary
-      FallbackComponent={fallback}
-      onReset={handleReset}
-      onError={handleError}
-    >
+    <ReactErrorBoundary FallbackComponent={fallback} onReset={handleReset} onError={handleError}>
       {children}
     </ReactErrorBoundary>
   );

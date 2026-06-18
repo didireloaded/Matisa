@@ -10,7 +10,7 @@ import { Loader2 } from "lucide-react";
 // Lazy load pages for code splitting (Performance Phase 4)
 const Home = lazy(() => import("./pages/Home").then((m) => ({ default: m.Home })));
 const Notes = lazy(() => import("./pages/Notes").then((m) => ({ default: m.Notes })));
-const Explore = lazy(() => import("./pages/Explore").then((m) => ({ default: m.Explore })));
+const Discovery = lazy(() => import("./pages/Discovery").then((m) => ({ default: m.Discovery })));
 const Events = lazy(() => import("./pages/Events").then((m) => ({ default: m.Events })));
 const Music = lazy(() => import("./pages/Music").then((m) => ({ default: m.Music })));
 const Activity = lazy(() => import("./pages/Activity").then((m) => ({ default: m.Activity })));
@@ -24,6 +24,9 @@ const Auth = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Auth })
 const Matching = lazy(() => import("./pages/Matching").then((m) => ({ default: m.Matching })));
 const Creators = lazy(() => import("./pages/Creators").then((m) => ({ default: m.Creators })));
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
+const Opportunities = lazy(() =>
+  import("./pages/Opportunities").then((m) => ({ default: m.Opportunities })),
+);
 
 function PageLoader() {
   return (
@@ -65,7 +68,7 @@ function App() {
                 <Route element={<MainLayout />}>
                   <Route path="/" element={<Home />} />
                   <Route path="/notes" element={<Notes />} />
-                  <Route path="/explore" element={<Explore />} />
+                  <Route path="/discovery" element={<Discovery />} />
                   <Route path="/events" element={<Events />} />
                   <Route path="/music" element={<Music />} />
                   <Route path="/activity" element={<Activity />} />
@@ -75,6 +78,7 @@ function App() {
                   <Route path="/matching" element={<Matching />} />
                   <Route path="/creators" element={<Creators />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/opportunities" element={<Opportunities />} />
                 </Route>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/chat/:id" element={<Chat />} />

@@ -1,22 +1,29 @@
-import * as React from "react";
+import { InputHTMLAttributes, forwardRef } from "react";
 
-import { cn } from "@/lib/utils";
+export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+  icon?: React.ReactNode;
+  error?: string;
+  containerClassName?: string;
+}
 
-const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
-  ({ className, type, ...props }, ref) => {
+export const Input = forwardRef<HTMLInputElement, InputProps>(
+  ({ className = "", containerClassName = "", icon, error, ...props }, ref) => {
     return (
-      <input
-        type={type}
-        className={cn(
-          "flex h-14 w-full rounded-full border border-input bg-card px-6 py-2 text-base shadow-sm transition-all file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-transparent disabled:cursor-not-allowed disabled:opacity-50",
-          className,
-        )}
-        ref={ref}
-        {...props}
-      />
+      <div className={`w-full flex flex-col gap-1.5 ${containerClassName}`}>
+        <div className="relative flex items-center w-full">
+          {icon && <div className="absolute left-4 text-[var(--color-text-muted)]">{icon}</div>}
+          <input
+            ref={ref}
+            className={`w-full h-14 rounded-[16px] bg-[var(--color-surface-2)] text-white placeholder-[var(--color-text-muted)] border border-[var(--color-border)] focus:border-[var(--color-primary)] focus:outline-none transition-colors ${
+              icon ? "pl-12" : "pl-5"
+            } pr-5 ${error ? "border-[var(--color-error)]" : ""} ${className}`}
+            {...props}
+          />
+        </div>
+        {error && <span className="text-[var(--color-error)] text-xs pl-2">{error}</span>}
+      </div>
     );
   },
 );
-Input.displayName = "Input";
 
-export { Input };
+Input.displayName = "Input";

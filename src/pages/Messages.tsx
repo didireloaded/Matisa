@@ -1,18 +1,23 @@
 import { useState, useEffect } from "react";
-import { Search } from "lucide-react";
+import { Search, PenSquare, Mic } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../contexts/AuthContext";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
-import { timeAgo } from "@/types";
+import { PremiumEmptyState as EmptyState } from "@/components/common/PremiumEmptyState";
+import { timeAgo } from "@/lib/utils";
+import { DiscoveryAI } from "@/services/ai";
 import type { Conversation } from "@/types";
+import { Tabs } from "@/components/ui/Tabs";
+import { Input } from "@/components/ui/input";
+import { Avatar } from "@/components/common/Avatar";
 
 export function Messages() {
   const { profile } = useAuth();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
 
   useEffect(() => {
     async function loadConversations() {
@@ -43,7 +48,6 @@ export function Messages() {
           .map((d) => {
             const conv = d.conversations as any;
             if (!conv) return null;
-            // Find the other participant
             const otherParticipant = conv.conversation_participants?.find(
               (p: any) => p.user_id !== profile.id,
             );
@@ -60,90 +64,133 @@ export function Messages() {
     loadConversations();
   }, [profile]);
 
-  const filtered = conversations.filter(conv => {
+  const filtered = conversations.filter((conv) => {
     if (!search) return true;
     const name = conv.group_name || (conv as any).otherProfile?.display_name || "";
     return name.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
-    <div className="min-h-full pb-28 relative">
-      <div className="px-4 pt-4 pb-2">
-        <h1 className="text-white text-2xl mb-1 font-extrabold tracking-tight">Messages</h1>
+    <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)]">
+      {/* Header */}
+      <div className="px-5 pt-4 pb-2 flex items-center justify-between">
+        <h1 className="text-white text-3xl font-display font-bold tracking-tight">Messages</h1>
+        <button className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-white hover:bg-[var(--color-surface-3)] transition-colors">
+          <PenSquare size={20} />
+        </button>
       </div>
 
-      <div className="px-4 py-2">
-        <div className="relative">
-          <Search size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/30" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations…"
-            className="w-full bg-[#1a1a1a] text-white placeholder:text-white/30 rounded-2xl pl-9 pr-4 py-2.5 text-sm outline-none border border-white/5"
-          />
-        </div>
+      {/* Tabs */}
+      <div className="px-5 mb-4">
+        <Tabs
+          variant="pill"
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          tabs={[
+            { id: "all", label: "All" },
+            { id: "primary", label: "Primary", badge: 2 },
+            { id: "requests", label: "Requests" },
+          ]}
+        />
       </div>
 
-      <div className="mt-2">
+      {/* Search */}
+      <div className="px-5 mb-6">
+        <Input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search messages..."
+          icon={<Search size={18} />}
+          className="h-12 rounded-full border-none bg-[var(--color-surface-2)]"
+        />
+      </div>
+
+      {/* Conversation List */}
+      <div className="flex-1 px-5">
         {loading ? (
-          <div className="px-4 space-y-4 pt-4">
+          <div className="space-y-6">
             {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-4 items-center py-2">
-                <div className="h-12 w-12 rounded-full bg-white/5 animate-pulse" />
+              <div key={i} className="flex gap-4 items-center">
+                <div className="h-14 w-14 rounded-full bg-[var(--color-surface-2)] animate-pulse" />
                 <div className="space-y-2 flex-1">
-                  <div className="h-4 w-1/2 bg-white/5 animate-pulse rounded" />
-                  <div className="h-3 w-3/4 bg-white/5 animate-pulse rounded" />
+                  <div className="h-4 w-1/2 bg-[var(--color-surface-2)] animate-pulse rounded" />
+                  <div className="h-3 w-3/4 bg-[var(--color-surface-2)] animate-pulse rounded" />
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="px-4 mt-8 text-center text-white/50 text-sm">
+          <div className="mt-12 text-center text-[var(--color-text-muted)] text-sm">
             No conversations found.
           </div>
         ) : (
-          filtered.map((conv, i) => {
-            const other = (conv as any).otherProfile;
-            const name = conv.group_name || other?.display_name || "User";
-            const avatar = other?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${other?.id}`;
-            const unread = 0; // Replace with actual unread count if available
+          <div className="flex flex-col space-y-2">
+            {filtered.map((conv, i) => {
+              const other = (conv as any).otherProfile;
+              const name = conv.group_name || other?.display_name || "User";
+              const avatar =
+                other?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${other?.id}`;
+              const unread = i === 0 ? 2 : 0; // Dummy logic for visual demo
 
-            return (
-              <motion.div
-                key={conv.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.06 }}
-              >
-                <Link
-                  to={`/chat/${conv.id}`}
-                  className="w-full flex items-center gap-3 px-4 py-3.5 hover:bg-white/5 border-b border-white/5 text-left transition"
+              return (
+                <motion.div
+                  key={conv.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
                 >
-                  <div className="relative flex-shrink-0">
-                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                      <ImageWithFallback src={avatar} alt={name} className="w-full h-full object-cover" />
-                    </div>
-                    {unread > 0 && (
-                      <div className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#FF9D2E] flex items-center justify-center">
-                        <span className="text-[10px] text-black font-bold">{unread}</span>
+                  <Link to={`/chat/${conv.id}`} className="flex items-center gap-4 py-3 group">
+                    <Avatar
+                      size={56}
+                      isOnline={i % 3 === 0}
+                      profile={{
+                        id: other?.id || "unknown",
+                        display_name: name,
+                        avatar_url: avatar,
+                      }}
+                    />
+
+                    <div className="flex-1 min-w-0 flex flex-col justify-center">
+                      <div className="flex items-center justify-between mb-1">
+                        <span
+                          className={`text-base truncate ${unread > 0 ? "text-white font-bold" : "text-white/90 font-semibold"}`}
+                        >
+                          {name}
+                        </span>
+                        <span
+                          className={`text-xs whitespace-nowrap ${unread > 0 ? "text-[var(--color-primary)] font-bold" : "text-[var(--color-text-muted)] font-medium"}`}
+                        >
+                          {conv.last_message_at ? timeAgo(conv.last_message_at) : "Just now"}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-0.5">
-                      <span className="text-white text-sm" style={{ fontWeight: unread > 0 ? 700 : 500 }}>{name}</span>
-                      <span className="text-white/30 text-xs">
-                        {conv.last_message_at ? timeAgo(conv.last_message_at) : ""}
-                      </span>
+
+                      <div className="flex items-center justify-between">
+                        <p
+                          className={`text-sm truncate pr-4 flex items-center gap-1.5 ${unread > 0 ? "text-white font-medium" : "text-[var(--color-text-muted)]"}`}
+                        >
+                          {i === 1 ? (
+                            <>
+                              <Mic size={14} className="text-[var(--color-primary)]" />
+                              <span className="text-[var(--color-primary)] font-medium">
+                                Sent a voice note
+                              </span>
+                            </>
+                          ) : (
+                            conv.last_message?.content || "Started a conversation"
+                          )}
+                        </p>
+                        {unread > 0 && (
+                          <div className="w-5 h-5 rounded-full bg-[var(--color-primary)] flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(139,92,246,0.5)]">
+                            <span className="text-[10px] text-white font-bold">{unread}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-white/40 text-xs truncate">
-                      {conv.last_message || "No messages yet"}
-                    </p>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>

@@ -30,7 +30,16 @@ export interface UserProfile extends User {
   is_following: boolean;
   is_followed_by: boolean;
   mutual_followers_count: number;
+  full_name?: string;
+  ghost_mode?: boolean | string;
+  city?: string;
+  distance?: number;
+  interests?: string[];
 }
+
+// Aliases for compatibility with older code and V3 refactors
+export type Profile = UserProfile;
+export type Creator = UserProfile;
 
 export interface AuthUser {
   id: string;
@@ -51,7 +60,7 @@ export interface AuthUser {
 export interface Media {
   id: string;
   url: string;
-  type: 'image' | 'video' | 'audio';
+  type: "image" | "video" | "audio";
   width?: number;
   height?: number;
   duration?: number;
@@ -73,13 +82,22 @@ export interface Post {
   deleted_at?: string;
   is_liked?: boolean;
   is_bookmarked?: boolean;
+
+  // V3 specific fields
+  type?: string;
+  voice_url?: string;
+  duration_seconds?: number;
+  profiles?: Profile | Profile[];
 }
 
-export interface Note extends Omit<Post, 'media'> {
+export interface Note extends Omit<Post, "media"> {
   expires_at?: string; // Ephemeral content
 }
 
-export interface Story extends Omit<Post, 'content' | 'likes_count' | 'comments_count' | 'shares_count'> {
+export interface Story extends Omit<
+  Post,
+  "content" | "likes_count" | "comments_count" | "shares_count"
+> {
   expires_at: string;
   views_count: number;
   viewed_by?: string[];
@@ -144,16 +162,22 @@ export interface Message {
   deleted_at?: string;
 }
 
+export type ChatMessage = Message;
+
 export interface ChatRoom {
   id: string;
   user_id: string;
   recipient_id: string;
   recipient?: User;
   last_message?: Message;
+  last_message_at?: string;
   unread_count: number;
   created_at: string;
   updated_at: string;
+  group_name?: string;
 }
+
+export type Conversation = ChatRoom;
 
 export interface GroupChatRoom {
   id: string;
@@ -196,20 +220,20 @@ export interface Event {
 }
 
 export type EventCategory =
-  | 'music'
-  | 'sports'
-  | 'social'
-  | 'business'
-  | 'education'
-  | 'entertainment'
-  | 'other';
+  | "music"
+  | "sports"
+  | "social"
+  | "business"
+  | "education"
+  | "entertainment"
+  | "other";
 
 export interface EventAttendee {
   id: string;
   event_id: string;
   user_id: string;
   user?: User;
-  status: 'attending' | 'interested' | 'declined';
+  status: "attending" | "interested" | "declined";
   created_at: string;
 }
 
@@ -259,13 +283,13 @@ export interface KaraokePerformance {
 // ============================================================================
 
 export type NotificationType =
-  | 'like'
-  | 'comment'
-  | 'follow'
-  | 'message'
-  | 'mention'
-  | 'event_reminder'
-  | 'event_invite';
+  | "like"
+  | "comment"
+  | "follow"
+  | "message"
+  | "mention"
+  | "event_reminder"
+  | "event_invite";
 
 export interface Notification {
   id: string;
@@ -280,11 +304,15 @@ export interface Notification {
   action_url?: string;
   read_at?: string;
   created_at: string;
+  is_read?: boolean;
+  profiles?: Profile | Profile[];
 }
+
+export type AppNotification = Notification;
 
 export interface Toast {
   id: string;
-  type: 'success' | 'error' | 'info' | 'warning';
+  type: "success" | "error" | "info" | "warning";
   title: string;
   message: string;
   duration?: number;
@@ -298,7 +326,7 @@ export interface Toast {
 // SEARCH TYPES
 // ============================================================================
 
-export type SearchType = 'users' | 'posts' | 'events' | 'hashtags';
+export type SearchType = "users" | "posts" | "events" | "hashtags";
 
 export interface SearchResult {
   type: SearchType;
@@ -342,10 +370,10 @@ export interface MatchPreferences {
 // ============================================================================
 
 export type AsyncState<T> =
-  | { status: 'idle' }
-  | { status: 'loading' }
-  | { status: 'success'; data: T }
-  | { status: 'error'; error: APIError };
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; data: T }
+  | { status: "error"; error: APIError };
 
 export type PaginatedAsyncState<T> = AsyncState<PaginatedResponse<T>>;
 
@@ -377,7 +405,7 @@ export interface ValidationError extends APIError {
 // AUDIT LOG TYPES
 // ============================================================================
 
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW';
+export type AuditAction = "CREATE" | "UPDATE" | "DELETE" | "VIEW";
 
 export interface AuditLog {
   id: string;

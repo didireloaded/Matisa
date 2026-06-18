@@ -1,188 +1,156 @@
-import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
-import { Search, Bell, Plus, Play, Zap, Award, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Search, MapPin, Music, Star, ArrowRight, Play, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
-import type { Profile } from "@/types";
+import { Avatar } from "@/components/ui/Avatar";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Tabs } from "@/components/ui/Tabs";
 
-// Vibrant color palette matching the reference
-const COLORS = [
-  "bg-[#DEB887]", // Tan
-  "bg-[#DDA0DD]", // Plum/Pink
-  "bg-[#8FBC8F]", // Sage Green
-  "bg-[#DAA520]", // Goldenrod
-  "bg-[#CD5C5C]", // Indian Red
-  "bg-[#4682B4]", // Steel Blue
+const DUMMY_CREATORS = [
+  {
+    id: "1",
+    name: "Sarah Chen",
+    role: "Vocalist",
+    location: "Los Angeles",
+    followers: "12K",
+    image: "https://i.pravatar.cc/150?u=user_2",
+  },
+  {
+    id: "2",
+    name: "Marcus J.",
+    role: "Producer",
+    location: "New York",
+    followers: "8.5K",
+    image: "https://i.pravatar.cc/150?u=user_3",
+  },
+  {
+    id: "3",
+    name: "Elena R.",
+    role: "Video Editor",
+    location: "London",
+    followers: "24K",
+    image: "https://i.pravatar.cc/150?u=user_4",
+  },
+  {
+    id: "4",
+    name: "David Kim",
+    role: "Guitarist",
+    location: "Seoul",
+    followers: "45K",
+    image: "https://i.pravatar.cc/150?u=user_5",
+  },
 ];
-
-interface Creator extends Profile {
-  color: string;
-  large: boolean;
-}
 
 export function Creators() {
   const navigate = useNavigate();
-  const [creators, setCreators] = useState<Creator[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchCreators() {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .order("follower_count", { ascending: false })
-          .limit(10);
-
-        if (error) throw error;
-
-        const formattedCreators = data.map((profile, i) => ({
-          ...profile,
-          color: COLORS[i % COLORS.length],
-          large: i === 0, // Make the first one large like the reference
-        }));
-
-        setCreators(formattedCreators);
-      } catch (err) {
-        console.error("Error fetching creators:", err);
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchCreators();
-  }, []);
+  const [activeTab, setActiveTab] = useState("trending");
 
   return (
-    <div className="flex flex-col h-full bg-[#1A181C] text-white relative overflow-hidden">
-      {/* Top Header */}
-      <div className="flex items-center justify-between p-6 z-10">
-        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center transform rotate-45 shadow-lg">
-          <div className="w-4 h-4 bg-black rounded-sm transform -rotate-45" />
-        </div>
-
-        <div className="flex items-center gap-4">
-          <button className="text-white/70 hover:text-white">
-            <Search className="w-6 h-6" />
-          </button>
-          <button className="relative text-white/70 hover:text-white">
-            <Bell className="w-6 h-6" />
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF416C] rounded-full text-[9px] font-bold flex items-center justify-center border-2 border-[#1A181C]">
-              9
-            </div>
-          </button>
-        </div>
+    <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)] pb-28">
+      <div className="px-5 pt-4 pb-2">
+        <h1 className="text-white text-3xl font-display font-bold tracking-tight">Creators</h1>
       </div>
 
-      {/* Main Grid */}
-      <div className="flex-1 overflow-y-auto px-6 pb-28 no-scrollbar">
-        {loading ? (
-          <div className="flex h-full items-center justify-center">
-            <Loader2 className="w-8 h-8 animate-spin text-white/50" />
+      <div className="px-5 mb-4">
+        <Input
+          placeholder="Find producers, singers..."
+          icon={<Search size={18} />}
+          className="h-12 rounded-full border-none bg-[var(--color-surface-2)]"
+        />
+      </div>
+
+      <div className="px-5 mb-6">
+        <Tabs
+          variant="pill"
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          tabs={[
+            { id: "trending", label: "Trending" },
+            { id: "new", label: "New Arrivals" },
+            { id: "local", label: "Near You" },
+          ]}
+        />
+      </div>
+
+      <div className="flex-1 px-5 space-y-8">
+        {/* Spotlight */}
+        <div>
+          <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+            Spotlight
+          </h2>
+          <div className="relative w-full h-[200px] rounded-[24px] overflow-hidden group cursor-pointer">
+            <img
+              src="https://images.unsplash.com/photo-1516280440502-861f23fb0477?w=800&q=80"
+              alt="Spotlight"
+              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+            <div className="absolute top-4 left-4 bg-[#FF416C]/20 text-[#FF416C] px-3 py-1 rounded-full border border-[#FF416C]/30 flex items-center gap-1 backdrop-blur-md">
+              <Star size={12} fill="currentColor" />
+              <span className="text-xs font-bold uppercase tracking-wider">
+                Creator of the Week
+              </span>
+            </div>
+
+            <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+              <div>
+                <h3 className="text-white font-bold text-2xl mb-1 leading-tight">
+                  The Midnight Project
+                </h3>
+                <p className="text-white/80 text-sm font-medium flex items-center gap-1.5">
+                  <Music size={14} /> Electronic Duo
+                </p>
+              </div>
+              <Button variant="solid" size="sm" className="bg-white text-black font-bold">
+                View Profile
+              </Button>
+            </div>
           </div>
-        ) : (
+        </div>
+
+        {/* Creator Grid */}
+        <div>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
+              Top Creators
+            </h2>
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
-            {creators.map((creator, i) => (
-              <motion.div
+            {DUMMY_CREATORS.map((creator) => (
+              <Card
                 key={creator.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                onClick={() => navigate(`/profile/${creator.id}`)}
-                className={`relative rounded-[32px] p-6 flex flex-col justify-between overflow-hidden cursor-pointer ${
-                  creator.color
-                } ${creator.large ? "col-span-2 aspect-[2/1.2]" : "col-span-1 aspect-[4/5]"}`}
+                variant="surface"
+                className="p-4 flex flex-col items-center text-center cursor-pointer hover:bg-[var(--color-surface-3)] transition group"
               >
-                {/* Subtle wavy background overlay */}
-                <div className="absolute inset-0 opacity-20 pointer-events-none">
-                  <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full">
-                    <path
-                      d="M0,50 Q25,20 50,50 T100,50 L100,100 L0,100 Z"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="0.5"
-                    />
-                    <path
-                      d="M0,70 Q30,90 60,70 T100,70 L100,100 L0,100 Z"
-                      fill="none"
-                      stroke="#fff"
-                      strokeWidth="0.3"
-                    />
-                  </svg>
-                </div>
-
-                <div className="relative z-10 w-16 h-16 rounded-full bg-white/20 backdrop-blur-md p-1 border border-white/30">
-                  <img
-                    src={
-                      creator.avatar_url ||
-                      `https://api.dicebear.com/7.x/avataaars/svg?seed=${creator.id}`
-                    }
-                    alt={creator.display_name || creator.username}
-                    className="w-full h-full rounded-full object-cover"
+                <div className="relative mb-3">
+                  <Avatar
+                    size={72}
+                    profile={{
+                      id: creator.id,
+                      display_name: creator.name,
+                      avatar_url: creator.image,
+                    }}
                   />
-                </div>
-
-                <div className="relative z-10 mt-auto">
-                  <h3
-                    className={`font-bold text-white leading-tight ${creator.large ? "text-3xl" : "text-xl"}`}
-                  >
-                    {(creator.display_name || creator.username).split(" ").map((n, idx) => (
-                      <span key={idx}>
-                        {n}
-                        <br />
-                      </span>
-                    ))}
-                  </h3>
-                  <div className="flex items-center gap-1.5 mt-2 text-white/80 text-sm font-medium">
-                    <UsersIcon />
-                    {(creator.follower_count ?? 0) >= 1000000
-                      ? `${((creator.follower_count ?? 0) / 1000000).toFixed(1)}M`
-                      : (creator.follower_count ?? 0) >= 1000
-                        ? `${((creator.follower_count ?? 0) / 1000).toFixed(1)}K`
-                        : (creator.follower_count ?? 0)}
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[var(--color-surface-2)] border border-[var(--color-border)] px-2 py-0.5 rounded-full text-[9px] font-bold text-[var(--color-text-muted)] flex items-center gap-0.5 whitespace-nowrap shadow-sm">
+                    <Star size={8} className="text-[#F59E0B]" fill="currentColor" />{" "}
+                    {creator.followers}
                   </div>
                 </div>
-              </motion.div>
+
+                <h3 className="text-white font-bold text-sm truncate w-full mb-0.5">
+                  {creator.name}
+                </h3>
+                <p className="text-[var(--color-primary)] text-xs font-bold truncate w-full mb-1">
+                  {creator.role}
+                </p>
+                <p className="text-[var(--color-text-muted)] text-[10px] truncate w-full flex items-center justify-center gap-1">
+                  <MapPin size={10} /> {creator.location}
+                </p>
+              </Card>
             ))}
-          </div>
-        )}
-      </div>
-
-      {/* Floating Right Actions */}
-      <div className="absolute bottom-32 right-6 flex flex-col gap-3 z-20">
-        <button className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-black shadow-lg hover:scale-105 transition-transform">
-          <Play className="w-5 h-5 fill-current ml-1" />
-        </button>
-        <button className="w-12 h-12 bg-[#2A2A2A] border border-white/10 rounded-full flex items-center justify-center text-white relative shadow-lg hover:bg-[#3A3A3A] transition-colors">
-          <Zap className="w-5 h-5" />
-          <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#FF9D2E] rounded-full text-[9px] font-bold text-black flex items-center justify-center border-2 border-[#1A181C]">
-            2
-          </div>
-        </button>
-        <button className="w-12 h-12 bg-[#2A2A2A] border border-white/10 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-[#3A3A3A] transition-colors">
-          <Award className="w-5 h-5" />
-        </button>
-        <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-[#FF416C] shadow-lg cursor-pointer">
-          <img
-            src="https://api.dicebear.com/7.x/avataaars/svg?seed=you"
-            alt="You"
-            className="w-full h-full object-cover bg-black"
-          />
-        </div>
-      </div>
-
-      {/* Bottom Floating Nav mimicking reference */}
-      <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between z-20">
-        <div className="flex items-center gap-6">
-          <button className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#FF416C] to-[#8E2DE2] flex items-center justify-center shadow-lg hover:scale-105 transition-transform">
-            <Plus className="w-6 h-6 text-white" />
-          </button>
-          <div className="flex items-center gap-4 text-white/50 text-sm font-medium">
-            <button className="hover:text-white transition-colors">Dares</button>
-            <button className="text-white relative">
-              Trend Creators
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-white rounded-full" />
-            </button>
           </div>
         </div>
       </div>
@@ -190,22 +158,4 @@ export function Creators() {
   );
 }
 
-function UsersIcon() {
-  return (
-    <svg
-      width="14"
-      height="14"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-      <circle cx="9" cy="7" r="4"></circle>
-      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-    </svg>
-  );
-}
+export default Creators;

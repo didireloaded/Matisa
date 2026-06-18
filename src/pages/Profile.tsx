@@ -1,34 +1,58 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
-import { ArrowLeft, Settings as SettingsIcon, MessageSquare, Loader2, MapPin, Link2, BookOpen, Heart, Grid3X3 } from "lucide-react";
+import {
+  ArrowLeft,
+  Settings as SettingsIcon,
+  MessageSquare,
+  Loader2,
+  MapPin,
+  Grid3X3,
+  Mic,
+  Calendar,
+} from "lucide-react";
 import { motion } from "framer-motion";
-import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "../lib/supabase";
-import { ImageWithFallback } from "@/components/common/ImageWithFallback";
 import type { Post } from "@/types";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
-import { Bookmark as BookmarkIcon } from "lucide-react";
 import { useSaves } from "@/hooks/useSaves";
 import { FollowButton } from "@/components/common/FollowButton";
+import { VoicePlayer } from "@/components/ui/VoicePlayer";
+import { Avatar } from "@/components/common/Avatar";
+import { Tabs } from "@/components/ui/Tabs";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/card";
 
 export function Profile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { profile: currentUser } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("Posts");
+  const [activeTab, setActiveTab] = useState("notes");
   const [userProfile, setUserProfile] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
   const targetId = id || currentUser?.id;
   const isOwnProfile = targetId === currentUser?.id;
-  const PROFILE_TABS = isOwnProfile ? ["Posts", "Media", "Liked", "Saved"] : ["Posts", "Media", "Liked"];
-  const { savedPosts, fetchSavedPosts, loading: savesLoading } = useSaves();
+
+  const PROFILE_TABS = isOwnProfile
+    ? [
+        { id: "notes", label: "Notes" },
+        { id: "voice", label: "Voice" },
+        { id: "rooms", label: "Rooms" },
+        { id: "saved", label: "Saved" },
+      ]
+    : [
+        { id: "notes", label: "Notes" },
+        { id: "voice", label: "Voice" },
+        { id: "rooms", label: "Rooms" },
+      ];
+
+  const { fetchSavedPosts } = useSaves();
 
   useEffect(() => {
-    if (activeTab === "Saved" && isOwnProfile) {
+    if (activeTab === "saved" && isOwnProfile) {
       fetchSavedPosts();
     }
   }, [activeTab, isOwnProfile, fetchSavedPosts]);
@@ -42,27 +66,21 @@ export function Profile() {
       setLoading(true);
 
       try {
-        // Fetch Profile
         const { data: profileData } = await supabase
           .from("profiles")
           .select("*")
           .eq("id", targetId)
           .single();
 
-        if (profileData) {
-          setUserProfile(profileData);
-        }
+        if (profileData) setUserProfile(profileData);
 
-        // Fetch Posts
         const { data: postsData } = await supabase
           .from("posts")
           .select("*")
           .eq("user_id", targetId)
           .order("created_at", { ascending: false });
 
-        if (postsData) {
-          setPosts(postsData as Post[]);
-        }
+        if (postsData) setPosts(postsData as Post[]);
       } catch (err) {
         console.error("Error loading profile:", err);
       } finally {
@@ -74,11 +92,10 @@ export function Profile() {
   }, [targetId]);
 
   return (
-    <div className="flex flex-col min-h-full pb-28 relative bg-[#0B0B0B]">
+    <div className="flex flex-col min-h-full pb-28 relative bg-[var(--color-background)]">
       {loading ? (
         <div className="flex flex-col items-center justify-center flex-1 mt-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[#FF9D2E] mb-4" />
-          <span className="text-white/50 text-sm">Loading profile...</span>
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-4" />
         </div>
       ) : !userProfile ? (
         <div className="flex-1 flex flex-col items-center justify-center px-6 mt-10">
@@ -87,180 +104,175 @@ export function Profile() {
             title={!targetId ? "Sign In Required" : "User Not Found"}
             description={
               !targetId
-                ? "Create an account to set up your profile, track your activity, and connect with other creators."
-                : "This account may have been deleted or does not exist."
+                ? "Create an account to set up your profile."
+                : "This account does not exist."
             }
-            action={
-              !targetId
-                ? { label: "Sign In / Sign Up", onClick: () => navigate("/auth") }
-                : { label: "Go Home", onClick: () => navigate("/") }
-            }
+            action={{
+              label: !targetId ? "Sign In" : "Go Home",
+              onClick: () => navigate(!targetId ? "/auth" : "/"),
+            }}
             glowColor="primary"
           />
         </div>
       ) : (
         <>
-          {/* Cover + Avatar */}
+          {/* Cover */}
           <div className="relative">
             <button
               onClick={() => navigate(-1)}
-              className="absolute top-4 left-4 z-10 w-9 h-9 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center"
+              className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white"
             >
-              <ArrowLeft size={20} className="text-white" />
+              <ArrowLeft size={20} />
             </button>
             <div
-              className="h-36"
+              className="h-40"
               style={{
-                background: "linear-gradient(135deg, #1a0a00 0%, #2d0d5a 50%, #0a1a00 100%)",
+                background:
+                  "linear-gradient(135deg, var(--color-background) 0%, var(--color-primary) 100%)",
+                opacity: 0.8,
               }}
             />
-            <div className="absolute bottom-0 translate-y-1/2 left-5">
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full overflow-hidden border-4 border-[#0B0B0B]">
-                  <ImageWithFallback 
-                     src={userProfile.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile.id}`} 
-                     alt={userProfile.display_name} 
-                     className="w-full h-full object-cover" 
-                  />
-                </div>
-                {/* Verified badge placeholder */}
-                {userProfile.follower_count > 1000 && (
-                  <div className="absolute bottom-1 right-1 w-5 h-5 bg-[#FF9D2E] rounded-full flex items-center justify-center border-2 border-[#0B0B0B]">
-                    <span className="text-[9px] text-black font-bold">✓</span>
-                  </div>
+
+            {/* Avatar & Actions */}
+            <div className="absolute -bottom-10 left-5 flex items-end justify-between w-[calc(100%-40px)]">
+              <div className="relative rounded-full p-1 bg-[var(--color-background)]">
+                <Avatar
+                  size={80}
+                  profile={{
+                    id: userProfile.id,
+                    display_name: userProfile.display_name,
+                    avatar_url: userProfile.avatar_url,
+                  }}
+                />
+              </div>
+
+              <div className="flex gap-2 mb-2">
+                {isOwnProfile ? (
+                  <Link to="/settings">
+                    <Button variant="glass" size="sm" className="h-8 text-xs font-semibold px-4">
+                      Edit Profile
+                    </Button>
+                  </Link>
+                ) : (
+                  <>
+                    <FollowButton userId={targetId as string} />
+                    <Button
+                      variant="glass"
+                      size="sm"
+                      className="h-8 text-xs font-semibold px-4"
+                      onClick={() => navigate("/messages")}
+                    >
+                      Message
+                    </Button>
+                  </>
                 )}
               </div>
             </div>
-            <div className="absolute bottom-3 right-4 flex gap-2">
-              {isOwnProfile ? (
-                <Link to="/settings" className="px-4 py-1.5 rounded-full bg-[#151515] border border-white/10 text-white/70 text-xs flex items-center gap-1.5 transition hover:bg-white/10">
-                  <SettingsIcon size={12} />
-                  Edit Profile
-                </Link>
-              ) : (
-                <>
-                  <FollowButton userId={targetId as string} />
-                  <button onClick={() => navigate("/messages")} className="px-4 py-1.5 rounded-full bg-[#151515] border border-white/10 text-white/70 text-xs flex items-center gap-1.5 transition hover:bg-white/10">
-                    Message
-                  </button>
-                </>
-              )}
-            </div>
           </div>
 
-          {/* Profile info */}
+          {/* Profile Info */}
           <div className="px-5 pt-14 pb-4">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h1 className="text-white text-xl font-extrabold">{userProfile.display_name || userProfile.full_name || "Anonymous"}</h1>
-              {userProfile.follower_count > 1000 && <span className="text-[#FF9D2E] text-sm">✓</span>}
-            </div>
-            <p className="text-white/40 text-sm mb-2">@{userProfile.username || userProfile.id.slice(0, 8)}</p>
+            <h1 className="text-white text-2xl font-bold tracking-tight mb-0.5">
+              {userProfile.display_name || userProfile.full_name || "Anonymous"}
+            </h1>
+            <p className="text-[var(--color-text-muted)] text-sm mb-3">
+              @{userProfile.username || userProfile.id.slice(0, 8)}
+            </p>
+
             {userProfile.bio && (
-               <p className="text-white/70 text-sm leading-relaxed mb-3 whitespace-pre-wrap">{userProfile.bio}</p>
+              <p className="text-white/80 text-sm leading-relaxed mb-4">{userProfile.bio}</p>
             )}
-            <div className="flex items-center gap-3 text-xs text-white/40 mb-4">
-              <span className="flex items-center gap-1"><MapPin size={11} />Namibia</span>
-              <span className="flex items-center gap-1"><Link2 size={11} />matisa.na/@{userProfile.username || userProfile.id.slice(0, 8)}</span>
+
+            {/* Badges / Stats */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
+                Available
+              </span>
+              <span className="px-3 py-1 bg-[var(--color-surface-2)] text-[var(--color-text-muted)] rounded-full uppercase tracking-wider text-[10px] font-bold flex items-center gap-1">
+                <MapPin size={10} />
+                Windhoek
+              </span>
+              <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
+                Vocalist
+              </span>
             </div>
 
-            <div className="flex gap-6">
-              <div className="text-center">
-                <p className="text-white text-base font-bold">{userProfile.follower_count > 1000 ? (userProfile.follower_count / 1000).toFixed(1) + 'K' : userProfile.follower_count || 0}</p>
-                <p className="text-white/40 text-xs">Followers</p>
+            {/* Voice Intro */}
+            {userProfile.voice_intro_url && (
+              <div className="mb-6">
+                <VoicePlayer
+                  audioUrl={userProfile.voice_intro_url}
+                  duration="0:30"
+                  waveform={[4, 8, 12, 16, 12, 8, 14, 10, 6, 12, 18]}
+                />
               </div>
-              <div className="text-center">
-                <p className="text-white text-base font-bold">{userProfile.following_count || 0}</p>
-                <p className="text-white/40 text-xs">Following</p>
+            )}
+
+            {/* Active Rooms */}
+            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 mb-4">
+              <div className="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl px-4 py-2.5 flex items-center gap-2 shrink-0">
+                <div className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
+                <span className="text-xs text-[var(--color-primary)] font-bold tracking-wide">
+                  In Room: Creator Chat
+                </span>
               </div>
-              <div className="text-center">
-                <p className="text-white text-base font-bold">{posts.length}</p>
-                <p className="text-white/40 text-xs">Posts</p>
+            </div>
+
+            {/* Connections */}
+            <div className="flex items-center gap-6 mb-6 pt-4 border-t border-[var(--color-border)]">
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-lg">
+                  {userProfile.follower_count || 0}
+                </span>
+                <span className="text-[var(--color-text-muted)] text-xs font-medium">
+                  Followers
+                </span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-white font-bold text-lg">
+                  {userProfile.following_count || 0}
+                </span>
+                <span className="text-[var(--color-text-muted)] text-xs font-medium">
+                  Following
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex border-b border-white/5 px-4 mb-4 mt-2 overflow-x-auto scrollbar-hide">
-            {PROFILE_TABS.map((t) => (
-              <button
-                key={t}
-                onClick={() => setActiveTab(t)}
-                className="flex-1 py-3 px-4 min-w-max text-sm transition relative"
-                style={{ color: activeTab === t ? "#FF9D2E" : "rgba(255,255,255,0.4)", fontWeight: activeTab === t ? 700 : 400 }}
+          {/* Content Tabs */}
+          <div className="px-5 mb-4">
+            <Tabs
+              variant="pill"
+              activeTab={activeTab}
+              onChange={setActiveTab}
+              tabs={PROFILE_TABS}
+            />
+          </div>
+
+          {/* Content Feed */}
+          <div className="px-5">
+            {posts.length === 0 ? (
+              <Card
+                variant="solid"
+                className="p-8 flex flex-col items-center justify-center text-center"
               >
-                {t}
-                {activeTab === t && (
-                  <motion.div
-                    layoutId="profile-tab"
-                    className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-7 rounded-full bg-[#FF9D2E]"
-                  />
-                )}
-              </button>
-            ))}
+                <Grid3X3 className="text-[var(--color-text-muted)] mb-3" size={24} />
+                <h3 className="text-white font-bold mb-1">No Posts Yet</h3>
+                <p className="text-[var(--color-text-muted)] text-sm">
+                  When they post something, it will show up here.
+                </p>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {/* Map through posts and render FeedCards... for now just show a simple list */}
+                {posts.map((p) => (
+                  <Card key={p.id} variant="solid" className="p-4">
+                    <p className="text-white text-sm">{p.content}</p>
+                  </Card>
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* Tab content */}
-          {activeTab === "Posts" && (
-            <div className="px-4 space-y-3">
-              {posts.length === 0 ? (
-                <div className="flex flex-col items-center py-16 text-center">
-                  <BookOpen size={32} className="text-white/20 mb-3" />
-                  <p className="text-white/40 text-sm">No posts yet</p>
-                </div>
-              ) : (
-                posts.map((post) => (
-                  <div key={post.id} className="bg-[#151515] rounded-2xl p-4 border border-white/5">
-                    <p className="text-white/80 text-sm leading-relaxed">{post.type === "voice" ? "🎵 Voice Note" : post.content}</p>
-                    <div className="flex items-center gap-4 mt-3">
-                      <span className="text-white/30 text-xs flex items-center gap-1"><Heart size={11} />{post.like_count || 0}</span>
-                      <span className="text-white/30 text-xs">{new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-
-          {activeTab === "Media" && (
-            <div className="flex flex-col items-center py-16">
-              <Grid3X3 size={32} className="text-white/20 mb-3" />
-              <p className="text-white/40 text-sm">Media appears here</p>
-            </div>
-          )}
-
-          {activeTab === "Liked" && (
-            <div className="flex flex-col items-center py-16">
-              <Heart size={32} className="text-white/20 mb-3" />
-              <p className="text-white/40 text-sm">Liked posts appear here</p>
-            </div>
-          )}
-
-          {activeTab === "Saved" && isOwnProfile && (
-            <div className="px-4 space-y-3">
-              {savesLoading ? (
-                <div className="flex justify-center py-10"><Loader2 className="w-6 h-6 animate-spin text-[#FF9D2E]" /></div>
-              ) : savedPosts.length === 0 ? (
-                <div className="flex flex-col items-center py-16 text-center">
-                  <BookmarkIcon size={32} className="text-white/20 mb-3" />
-                  <p className="text-white/40 text-sm">No saved posts yet</p>
-                </div>
-              ) : (
-                savedPosts.map((post) => (
-                  <div key={post.id} className="bg-[#151515] rounded-2xl p-4 border border-white/5">
-                    <div className="flex items-center gap-2 mb-2">
-                      <ImageWithFallback src={post.profiles?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${post.user_id}`} alt="avatar" className="w-5 h-5 rounded-full" />
-                      <span className="text-xs text-white/50">@{post.profiles?.username || "user"}</span>
-                    </div>
-                    <p className="text-white/80 text-sm leading-relaxed">{post.type === "voice" ? "🎵 Voice Note" : post.content}</p>
-                    <div className="flex items-center gap-4 mt-3">
-                      <span className="text-white/30 text-xs flex items-center gap-1"><Heart size={11} />{post.like_count || 0}</span>
-                      <span className="text-white/30 text-xs">{new Date(post.created_at).toLocaleDateString()}</span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
         </>
       )}
     </div>

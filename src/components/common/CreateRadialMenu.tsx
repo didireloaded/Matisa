@@ -7,12 +7,15 @@ interface CreateRadialMenuProps {
   onSelect?: (action: string) => void;
 }
 
+import { HelpCircle, Briefcase } from "lucide-react";
+
 const CREATE_ITEMS = [
-  { id: "note", label: "Note", icon: FileText, color: "#FF9D2E", angle: -120 },
-  { id: "story", label: "Story", icon: Camera, color: "#A855F7", angle: -60 },
-  { id: "room", label: "Room", icon: Radio, color: "#FF6B6B", angle: 0 },
-  { id: "voice", label: "Voice", icon: Mic, color: "#2D7DD2", angle: 60 },
-  { id: "live", label: "Live", icon: Radio, color: "#22c55e", angle: 120 },
+  { id: "voice", label: "Voice", icon: Mic, color: "#2D7DD2", angle: -150 },
+  { id: "note", label: "Note", icon: FileText, color: "#FF9D2E", angle: -90 },
+  { id: "room", label: "Room", icon: Radio, color: "#FF6B6B", angle: -30 },
+  { id: "event", label: "Event", icon: CalendarDays, color: "#22c55e", angle: 30 },
+  { id: "question", label: "Ask", icon: HelpCircle, color: "#A855F7", angle: 90 },
+  { id: "opportunity", label: "Post", icon: Briefcase, color: "#F43F5E", angle: 150 },
 ];
 
 export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenuProps) {

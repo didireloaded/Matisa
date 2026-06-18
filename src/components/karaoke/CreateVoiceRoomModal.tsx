@@ -12,6 +12,7 @@ interface CreateVoiceRoomModalProps {
 }
 
 export function CreateVoiceRoomModal({ open, onClose }: CreateVoiceRoomModalProps) {
+  const { profile } = useAuth();
   const [title, setTitle] = useState("");
   const [isPrivate, setIsPrivate] = useState(false);
   const navigate = useNavigate();
@@ -22,11 +23,15 @@ export function CreateVoiceRoomModal({ open, onClose }: CreateVoiceRoomModalProp
     if (!title.trim() || !profile) return;
     setLoading(true);
     try {
-      const { error, data } = await supabase.from('voice_rooms').insert({
-        host_id: profile.id,
-        title: title.trim(),
-        is_private: isPrivate,
-      }).select().single();
+      const { error, data } = await supabase
+        .from("voice_rooms")
+        .insert({
+          host_id: profile.id,
+          title: title.trim(),
+          is_private: isPrivate,
+        })
+        .select()
+        .single();
       if (error) throw error;
       onClose();
       navigate(`/room/${data.id}?title=${encodeURIComponent(title.trim())}`);
