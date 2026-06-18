@@ -1,318 +1,435 @@
-export type Region =
-  | "Khomas"
-  | "Erongo"
-  | "Hardap"
-  | "//Karas"
-  | "Kavango East"
-  | "Kavango West"
-  | "Kunene"
-  | "Ohangwena"
-  | "Omaheke"
-  | "Omusati"
-  | "Oshana"
-  | "Oshikoto"
-  | "Otjozondjupa"
-  | "Zambezi";
+/**
+ * Comprehensive TypeScript type definitions for Matisa
+ * Central source of truth for all data models
+ */
 
-export const REGIONS: Region[] = [
-  "Khomas",
-  "Erongo",
-  "Hardap",
-  "//Karas",
-  "Kavango East",
-  "Kavango West",
-  "Kunene",
-  "Ohangwena",
-  "Omaheke",
-  "Omusati",
-  "Oshana",
-  "Oshikoto",
-  "Otjozondjupa",
-  "Zambezi",
-];
+// ============================================================================
+// USER TYPES
+// ============================================================================
 
-export type Interest =
-  | "Photography"
-  | "Film"
-  | "Music"
-  | "Cars"
-  | "Sports"
-  | "Fashion"
-  | "Business"
-  | "Gaming"
-  | "Tech"
-  | "Travel"
-  | "Art"
-  | "Food";
-
-export const INTERESTS: Interest[] = [
-  "Photography",
-  "Film",
-  "Music",
-  "Cars",
-  "Sports",
-  "Fashion",
-  "Business",
-  "Gaming",
-  "Tech",
-  "Travel",
-  "Art",
-  "Food",
-];
-
-export type GhostMode = "hidden" | "approximate" | "exact";
-export type PostType = "text" | "photo" | "video" | "voice" | "reel" | "poll" | "location";
-export type MediaType = "image" | "video" | "audio" | "gif";
-
-export type CreatorBadge =
-  | "Photographer"
-  | "Videographer"
-  | "Model"
-  | "DJ"
-  | "Musician"
-  | "Event Planner"
-  | "Makeup Artist"
-  | "Filmmaker"
-  | "Designer";
-
-export interface Profile {
+export interface User {
   id: string;
+  email: string;
   username: string;
-  display_name?: string; // supabase
-  full_name?: string; // mock
-  bio: string | null;
-  avatar_url: string | null;
-  cover_url?: string | null;
-  gradient?: string; // mock
-  region: Region | null;
-  city: string | null;
-  mood: string | null;
-  interests?: Interest[];
-  creator_badge?: CreatorBadge; // mock
-  is_creator?: boolean; // mock
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
   is_verified: boolean;
-  is_plus?: boolean; // mock
-  follower_count?: number; // supabase
-  follower_count?: number; // mock
+  is_creator: boolean;
+  followers_count: number;
   following_count: number;
-  post_count?: number; // supabase
-  posts_count?: number; // mock
-  song_title?: string | null;
-  song_artist?: string | null;
-  voice_intro_url?: string | null;
-  voice_intro_duration?: number | null;
-  joined_date?: string; // mock
-  created_at?: string; // supabase
-  ghost_mode: GhostMode;
-  online?: boolean; // mock
-  distance?: number;
-  bearing?: number; // mock
-  is_following?: boolean;
-  latitude?: number;
-  longitude?: number;
+  posts_count: number;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+export interface UserProfile extends User {
+  is_following: boolean;
+  is_followed_by: boolean;
+  mutual_followers_count: number;
+}
+
+export interface AuthUser {
+  id: string;
+  email: string;
+  email_confirmed_at?: string;
+  phone?: string;
+  phone_confirmed_at?: string;
+  app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================================================
+// POST TYPES
+// ============================================================================
+
+export interface Media {
+  id: string;
+  url: string;
+  type: 'image' | 'video' | 'audio';
+  width?: number;
+  height?: number;
+  duration?: number;
+  thumbnail_url?: string;
 }
 
 export interface Post {
   id: string;
   user_id: string;
-  content: string | null;
-  type: PostType;
-  media_url?: string | null; // mock
-  media_urls: string[] | null;
-  voice_url?: string | null; // supabase
-  voice_duration?: number | null;
-  region: Region | null;
-  location_name?: string | null; // supabase
-  like_count?: number; // supabase
-  likes_count?: number; // mock
-  comment_count?: number; // supabase
-  comments_count?: number; // mock
-  repost_count?: number; // supabase
-  reposts_count?: number; // mock
-  save_count?: number; // supabase
-  saves_count?: number; // mock
-  is_repost?: boolean; // supabase
-  original_post_id?: string | null; // supabase
+  user?: User;
+  content: string;
+  media: Media[];
+  likes_count: number;
+  comments_count: number;
+  shares_count: number;
+  is_public: boolean;
   created_at: string;
-  profiles: Profile;
-  liked?: boolean;
-  saved?: boolean;
+  updated_at: string;
+  deleted_at?: string;
+  is_liked?: boolean;
+  is_bookmarked?: boolean;
+}
+
+export interface Note extends Omit<Post, 'media'> {
+  expires_at?: string; // Ephemeral content
+}
+
+export interface Story extends Omit<Post, 'content' | 'likes_count' | 'comments_count' | 'shares_count'> {
+  expires_at: string;
+  views_count: number;
+  viewed_by?: string[];
 }
 
 export interface Comment {
   id: string;
   post_id: string;
   user_id: string;
+  user?: User;
   content: string;
-  like_count: number;
+  media?: Media[];
+  likes_count: number;
+  is_liked?: boolean;
   created_at: string;
-  profiles: Profile;
-  liked?: boolean;
+  updated_at: string;
+  deleted_at?: string;
 }
 
-export interface Story {
+// ============================================================================
+// ENGAGEMENT TYPES
+// ============================================================================
+
+export interface Like {
   id: string;
   user_id: string;
-  kind?: MediaType; // mock
-  media_type?: MediaType; // supabase
-  media_url: string;
-  caption: string | null;
-  gradient?: string; // mock
-  expires_at: string;
-  view_count?: number; // supabase
-  created_at?: string; // supabase
-  profiles?: Profile; // supabase
-  viewed?: boolean;
+  post_id?: string;
+  comment_id?: string;
+  created_at: string;
 }
 
-export interface EventItem {
-  // Merged Event & EventItem
+export interface Bookmark {
   id: string;
-  created_by: string;
-  title: string;
-  description: string | null;
-  cover_url?: string | null; // supabase
-  location_name: string | null;
-  region: Region | null;
-  date?: string; // mock
-  time?: string; // mock
-  starts_at?: string; // supabase
-  ends_at?: string | null; // supabase
-  rsvp_count: number;
-  interested_count?: number; // mock
-  is_free: boolean;
-  price?: number; // mock
-  ticket_price?: number | null; // supabase
-  ticket_link?: string | null; // supabase
-  gradient?: string; // mock
-  has_tickets?: boolean; // mock
-  has_event_chat?: boolean; // mock
-  attendee_ids?: string[]; // mock
-  category: string | null;
-  created_at?: string; // supabase
-  profiles?: Profile; // supabase
-  rsvpd?: boolean;
+  user_id: string;
+  post_id: string;
+  created_at: string;
 }
 
-export interface Community {
+export interface Follow {
+  id: string;
+  user_id: string; // The user being followed
+  follower_id: string; // The user following
+  created_at: string;
+  deleted_at?: string;
+}
+
+// ============================================================================
+// MESSAGING TYPES
+// ============================================================================
+
+export interface Message {
+  id: string;
+  room_id: string;
+  user_id: string;
+  user?: User;
+  content: string;
+  media?: Media[];
+  is_edited: boolean;
+  read_by: string[]; // Array of user IDs who read this message
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
+}
+
+export interface ChatRoom {
+  id: string;
+  user_id: string;
+  recipient_id: string;
+  recipient?: User;
+  last_message?: Message;
+  unread_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface GroupChatRoom {
   id: string;
   name: string;
-  slug?: string; // supabase
-  description: string | null;
-  cover_url?: string | null; // supabase
-  gradient?: string; // mock
+  description?: string;
+  avatar_url?: string;
+  created_by: string;
+  members: User[];
   member_count: number;
-  post_count: number;
-  today_posts?: number; // mock
-  active_users?: number; // mock
-  is_region?: boolean; // mock
-  region: Region | null;
-  category: string | null;
-  created_at?: string; // supabase
-  joined?: boolean;
-}
-
-export interface Conversation {
-  id: string;
-  is_group: boolean;
-  group_name: string | null;
-  group_avatar?: string | null; // supabase
-  created_by?: string | null; // supabase
-  member_ids?: string[]; // mock
-  members?: Profile[]; // supabase
-  last_message: string | null;
-  last_message_at: string | null;
-  created_at?: string; // supabase
-  unread?: number; // mock
-  unread_count?: number; // supabase
-}
-
-export interface ChatMessage {
-  // Merged Message & ChatMessage
-  id: string;
-  conversation_id: string;
-  sender_id: string;
-  content: string | null;
-  kind?: "text" | "voice" | "image" | "video" | "gif"; // mock
-  media_url?: string | null; // supabase
-  media_type?: string | null; // supabase
-  gif_url?: string | null; // supabase
-  voice_duration?: number | null;
-  reply_to_id?: string | null; // supabase
-  is_edited?: boolean; // supabase
-  is_deleted?: boolean; // supabase
+  is_muted: boolean;
+  last_message?: Message;
+  unread_count: number;
   created_at: string;
-  read?: boolean; // mock
-  reactions?: string[]; // mock
-  profiles?: Profile; // supabase
+  updated_at: string;
 }
 
-export interface AppNotification {
-  // Merged Notification & AppNotification
-  id: string;
-  recipient_id: string;
-  actor_id: string;
-  type:
-    | "like"
-    | "comment"
-    | "follow"
-    | "repost"
-    | "mention"
-    | "message"
-    | "event_rsvp"
-    | "community_post"
-    | "rsvp"
-    | "view"
-    | "event_invite";
-  entity_id?: string | null; // supabase
-  entity_type?: string | null; // supabase
-  body: string | null;
-  when?: string; // mock
-  bucket?: "today" | "week" | "earlier"; // mock
-  is_read?: boolean; // supabase
-  read?: boolean; // mock
-  created_at?: string; // supabase
-  profiles?: Profile; // supabase
-}
+// ============================================================================
+// EVENT TYPES
+// ============================================================================
 
-export interface Playlist {
+export interface Event {
   id: string;
   user_id: string;
+  user?: User;
   title: string;
   description: string;
-  track_count: number;
-  follower_count?: number; // mock
-  gradient: string; // mock
-  is_public: boolean;
-  votes: number;
-  created_at?: string;
+  location?: string;
+  latitude?: number;
+  longitude?: number;
+  start_at: string;
+  end_at: string;
+  image_url?: string;
+  category: EventCategory;
+  capacity?: number;
+  current_attendees: number;
+  is_attending?: boolean;
+  created_at: string;
+  updated_at: string;
+  deleted_at?: string;
 }
 
-export interface TrendingItem {
+export type EventCategory =
+  | 'music'
+  | 'sports'
+  | 'social'
+  | 'business'
+  | 'education'
+  | 'entertainment'
+  | 'other';
+
+export interface EventAttendee {
+  id: string;
+  event_id: string;
+  user_id: string;
+  user?: User;
+  status: 'attending' | 'interested' | 'declined';
+  created_at: string;
+}
+
+// ============================================================================
+// KARAOKE TYPES
+// ============================================================================
+
+export interface KaraokeRoom {
+  id: string;
+  name: string;
+  host_id: string;
+  host?: User;
+  is_live: boolean;
+  current_song?: KaraokeSong;
+  current_queue: KaraokeSong[];
+  participants: User[];
+  max_participants: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface KaraokeSong {
   id: string;
   title: string;
-  subtitle: string;
-  type: "event" | "community" | "topic" | "creator";
-  entity_id: string;
-  engagement: number;
+  artist: string;
+  duration: number;
+  added_by: string;
+  position_in_queue: number;
+  created_at: string;
 }
 
-export interface SearchResults {
-  profiles: Profile[];
-  posts: Post[];
+export interface KaraokePerformance {
+  id: string;
+  room_id: string;
+  user_id: string;
+  user?: User;
+  song_id: string;
+  song?: KaraokeSong;
+  score?: number;
+  duration: number;
+  started_at: string;
+  ended_at: string;
 }
 
-export function fmtCount(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
-  if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-  return String(n);
+// ============================================================================
+// NOTIFICATION TYPES
+// ============================================================================
+
+export type NotificationType =
+  | 'like'
+  | 'comment'
+  | 'follow'
+  | 'message'
+  | 'mention'
+  | 'event_reminder'
+  | 'event_invite';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  actor_id?: string; // User who triggered the notification
+  actor?: User;
+  related_id?: string; // Post, comment, event ID, etc.
+  title: string;
+  message: string;
+  image_url?: string;
+  action_url?: string;
+  read_at?: string;
+  created_at: string;
 }
 
-export function timeAgo(ts: string): string {
-  const d = Math.floor((Date.now() - new Date(ts).getTime()) / 1000);
-  if (d < 60) return `${d}s`;
-  if (d < 3600) return `${Math.floor(d / 60)}m`;
-  if (d < 86400) return `${Math.floor(d / 3600)}h`;
-  if (d < 604800) return `${Math.floor(d / 86400)}d`;
-  return `${Math.floor(d / 604800)}w`;
+export interface Toast {
+  id: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+  title: string;
+  message: string;
+  duration?: number;
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
+}
+
+// ============================================================================
+// SEARCH TYPES
+// ============================================================================
+
+export type SearchType = 'users' | 'posts' | 'events' | 'hashtags';
+
+export interface SearchResult {
+  type: SearchType;
+  results: Array<User | Post | Event | Hashtag>;
+  total_count: number;
+  query: string;
+}
+
+export interface Hashtag {
+  id: string;
+  name: string;
+  posts_count: number;
+  trending_rank?: number;
+  created_at: string;
+}
+
+// ============================================================================
+// MATCHING TYPES
+// ============================================================================
+
+export interface UserMatch {
+  user: UserProfile;
+  match_score: number; // 0-100
+  common_interests: string[];
+  mutual_followers_count: number;
+}
+
+export interface MatchPreferences {
+  user_id: string;
+  min_age?: number;
+  max_age?: number;
+  gender_preference?: string;
+  distance_radius_km?: number;
+  interests?: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+// ============================================================================
+// ASYNC STATE TYPES
+// ============================================================================
+
+export type AsyncState<T> =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: APIError };
+
+export type PaginatedAsyncState<T> = AsyncState<PaginatedResponse<T>>;
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total_count: number;
+  page: number;
+  page_size: number;
+  has_more: boolean;
+}
+
+// ============================================================================
+// API ERROR TYPES
+// ============================================================================
+
+export interface APIError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+  statusCode: number;
+  timestamp: string;
+}
+
+export interface ValidationError extends APIError {
+  field_errors: Record<string, string[]>;
+}
+
+// ============================================================================
+// AUDIT LOG TYPES
+// ============================================================================
+
+export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW';
+
+export interface AuditLog {
+  id: string;
+  table_name: string;
+  record_id: string;
+  action: AuditAction;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
+  changed_by: string;
+  changed_at: string;
+}
+
+// ============================================================================
+// ANALYTICS TYPES
+// ============================================================================
+
+export interface UserEngagementStats {
+  user_id: string;
+  total_posts: number;
+  total_likes_received: number;
+  followers_count: number;
+  avg_engagement: number;
+  profile_views: number;
+  updated_at: string;
+}
+
+export interface PostAnalytics {
+  post_id: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  engagement_rate: number;
+  reach: number;
+  updated_at: string;
+}
+
+// ============================================================================
+// FORM STATE TYPES
+// ============================================================================
+
+export interface FormState {
+  values: Record<string, unknown>;
+  errors: Record<string, string>;
+  touched: Record<string, boolean>;
+  isSubmitting: boolean;
+  isValid: boolean;
+}
+
+export interface FieldMeta {
+  value: unknown;
+  error?: string;
+  touched: boolean;
+  isDirty: boolean;
 }
