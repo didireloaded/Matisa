@@ -11,10 +11,10 @@ import {
   Search,
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 
 const DUMMY_TRACKS = [
   {

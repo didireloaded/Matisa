@@ -23,6 +23,7 @@ import { VoicePlayer } from "@/components/ui/VoicePlayer";
 import type { Profile } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { LiveRoomsBanner } from "@/components/voice/LiveRoomsBanner";
 
 interface Note {
   id: string;
@@ -202,24 +203,38 @@ function FeedCard({ note }: { note: Note }) {
       )}
 
       <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--color-border)]">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
           onClick={() => setReacted(!reacted)}
           className={`flex items-center gap-1.5 ${reacted ? "text-pink-500" : "text-[var(--color-text-muted)]"} hover:text-pink-500 transition-colors`}
         >
           <Heart size={18} className={reacted ? "fill-current" : ""} />
           <span className="text-[12px] font-bold">{reacted ? 25 : 24}</span>
-        </button>
-        <button className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors">
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors"
+        >
           <MessageCircle size={18} />
           <span className="text-[12px] font-bold">Reply</span>
-        </button>
-        <button className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-purple-400 transition-colors">
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-purple-400 transition-colors"
+        >
           <Mic size={18} />
           <span className="text-[12px] font-bold">Voice Reply</span>
-        </button>
-        <button className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors ml-auto bg-surface-2 px-3 py-1.5 rounded-full">
+        </motion.button>
+        <motion.button 
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors ml-auto bg-surface-2 px-3 py-1.5 rounded-full"
+        >
           <span className="text-[12px] font-bold">Join Discussion</span>
-        </button>
+        </motion.button>
       </div>
     </Card>
   );
@@ -260,35 +275,7 @@ function PeopleToMeetSection() {
   );
 }
 
-function ActiveRoomsSection() {
-  return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between px-5 mb-3">
-        <h2 className="text-white text-sm font-bold tracking-wide">LIVE ROOMS</h2>
-        <button className="text-[var(--color-primary)] text-xs font-semibold">See all</button>
-      </div>
-      <div className="px-5 flex flex-col gap-3">
-        <Card
-          variant="glass"
-          className="p-4 flex items-center justify-between group cursor-pointer hover:border-primary/50 transition-colors"
-        >
-          <div>
-            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 text-[10px] font-bold uppercase tracking-wider mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" /> Live Now
-            </span>
-            <h3 className="text-white font-bold text-sm">Late Night R&B Vibes 🎶</h3>
-            <p className="text-[var(--color-text-muted)] text-[11px] mt-1">
-              Host: Sarah • 14 listening
-            </p>
-          </div>
-          <button className="px-4 py-2 bg-white text-black font-bold text-xs rounded-full">
-            Join
-          </button>
-        </Card>
-      </div>
-    </div>
-  );
-}
+// We've moved ActiveRoomsSection to a dedicated component: LiveRoomsBanner
 
 function OpportunitiesSection() {
   const navigate = useNavigate();
@@ -363,7 +350,7 @@ export function Home() {
       <StoriesSection />
 
       {/* 2. Active Voice Rooms */}
-      <ActiveRoomsSection />
+      <LiveRoomsBanner />
 
       {/* 3. People To Meet (Discovery Injected) */}
       <PeopleToMeetSection />

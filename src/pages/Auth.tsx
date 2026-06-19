@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
 import { User, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 
 export function Auth() {
@@ -133,7 +133,7 @@ export function Auth() {
           />
 
           <Button
-            variant="solid"
+            variant="primary"
             disabled={loading}
             className="w-full h-14 rounded-2xl font-bold text-base mt-4 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
           >

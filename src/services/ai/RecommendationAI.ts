@@ -6,7 +6,14 @@ export const RecommendationAI = {
    * Fetches personalized event recommendations.
    */
   async getRecommendedEvents(userId?: string) {
-    // const { data } = await supabase.functions.invoke("recommendEvents", { body: { userId } });
+    try {
+      const { data, error } = await supabase.functions.invoke("generateRecommendations", {
+        body: { type: 'events', limit: 10 },
+      });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn("Edge function failed, falling back to local calculation", err);
+    }
 
     // Mock local logic
     const score = IntelligenceEngine.calculateEventScore(
@@ -24,7 +31,14 @@ export const RecommendationAI = {
    * Fetches personalized opportunity recommendations.
    */
   async getRecommendedOpportunities(userId?: string) {
-    // const { data } = await supabase.functions.invoke("recommendOpportunities", { body: { userId } });
+    try {
+      const { data, error } = await supabase.functions.invoke("generateRecommendations", {
+        body: { type: 'opportunities', limit: 10 },
+      });
+      if (!error && data) return data;
+    } catch (err) {
+      console.warn("Edge function failed, falling back to local calculation", err);
+    }
 
     const score = IntelligenceEngine.calculateOpportunityScore(
       Math.random() * 100, // Skill Match

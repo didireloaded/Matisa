@@ -79,8 +79,13 @@ export function Activity() {
             ))}
           </div>
         ) : notifications.length === 0 ? (
-          <div className="mt-12 text-center text-[var(--color-text-muted)] text-sm">
-            No activity yet.
+          <div className="mt-8">
+            <EmptyState
+              icon={Bell}
+              title="All caught up!"
+              description="When people interact with you or your notes, you'll see it here."
+              glowColor="primary"
+            />
           </div>
         ) : (
           <div className="flex flex-col space-y-4">

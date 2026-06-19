@@ -42,6 +42,8 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
                   initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
                   animate={{ opacity: 1, x, y, scale: 1 }}
                   exit={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.9 }}
                   transition={{ delay: i * 0.04, type: "spring", stiffness: 300, damping: 22 }}
                   className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center gap-1"
                   style={{ left: 0, top: 0 }}
@@ -65,6 +67,8 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
               initial={{ rotate: 0 }}
               animate={{ rotate: 45 }}
               exit={{ rotate: 0 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.9 }}
               onClick={onClose}
               className="absolute -translate-x-1/2 -translate-y-1/2 w-[52px] h-[52px] rounded-full flex items-center justify-center"
               style={{

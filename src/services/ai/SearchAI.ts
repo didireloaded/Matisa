@@ -5,10 +5,28 @@ export const SearchAI = {
    * Performs an AI-powered smart search with intent expansion.
    */
   async search(query: string, userId?: string) {
-    // In a real environment:
-    // const { data } = await supabase.functions.invoke("smartSearch", { body: { query, userId } });
+    try {
+      const { data, error } = await supabase.functions.invoke("semanticSearch", {
+        body: { query, type: 'all', limit: 10 },
+      });
+      
+      if (!error && data) {
+        return {
+          query,
+          ai_intent: {
+            intent_category: ["profile", "post", "opportunity"],
+            expanded_terms: [query], // The embedding handles the semantic expansion
+          },
+          results: data.users || [],
+          opportunities: data.opportunities || [],
+          notes: data.notes || []
+        };
+      }
+    } catch (err) {
+      console.warn("Edge function failed, falling back to local mock", err);
+    }
 
-    // Local Semantic Intent Mocking
+    // Local Semantic Intent Mocking (Fallback)
     let semanticExpansions = [query];
     const lowerQuery = query.toLowerCase();
 

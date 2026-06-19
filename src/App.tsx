@@ -27,6 +27,7 @@ const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m
 const Opportunities = lazy(() =>
   import("./pages/Opportunities").then((m) => ({ default: m.Opportunities })),
 );
+const Wallet = lazy(() => import("./pages/Wallet").then((m) => ({ default: m.Wallet })));
 
 function PageLoader() {
   return (
@@ -79,6 +80,7 @@ function App() {
                   <Route path="/creators" element={<Creators />} />
                   <Route path="/settings" element={<Settings />} />
                   <Route path="/opportunities" element={<Opportunities />} />
+                  <Route path="/wallet" element={<Wallet />} />
                 </Route>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/chat/:id" element={<Chat />} />

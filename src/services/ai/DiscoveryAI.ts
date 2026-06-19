@@ -8,10 +8,20 @@ export const DiscoveryAI = {
    * Interest Match(25%) + Mutuals(20%) + Shared Events(10%) + Shared Rooms(10%) + Location(10%) + Activity(10%) + Profile Sim(10%) + Voice Sim(5%)
    */
   async getRecommendedUsers(userId?: string): Promise<Profile[]> {
-    // In a real environment, we'd call an Edge Function:
-    // const { data } = await supabase.functions.invoke("generateDiscoveryFeed", { body: { userId } });
+    try {
+      // 1. Try to invoke the real Edge Function
+      const { data, error } = await supabase.functions.invoke("generateRecommendations", {
+        body: { type: 'users', limit: 20 },
+      });
 
-    // Fallback/Mock logic using the local IntelligenceEngine
+      if (!error && data && data.length > 0) {
+        return data;
+      }
+    } catch (err) {
+      console.warn("Edge function failed, falling back to local calculation", err);
+    }
+
+    // 2. Fallback/Mock logic using the local IntelligenceEngine if edge function isn't deployed or fails
     const { data: profiles } = await supabase.from("profiles").select("*").limit(20);
 
     if (!profiles) return [];

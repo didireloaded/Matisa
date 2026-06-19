@@ -13,6 +13,7 @@ import { CreateVoicePostModal } from "@/components/feed/CreateVoicePostModal";
 import { CreateLiveStreamModal } from "@/components/live/CreateLiveStreamModal";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
+import { FloatingVoicePlayer } from "@/components/voice/FloatingVoicePlayer";
 
 // ─────────────────────────────────────────────
 // TOP BAR
@@ -68,10 +69,41 @@ function TopBar() {
 const NAV_ITEMS = [
   { id: "home", route: "/", icon: Home },
   { id: "discovery", route: "/discovery", icon: Search },
-  { id: "rooms", route: "/rooms", icon: MessageSquare },
+  { id: "messages", route: "/messages", icon: MessageSquare },
   { id: "events", route: "/events", icon: CalendarDays },
   { id: "profile", route: "/profile", icon: User },
 ] as const;
+
+function NavItem({ item, path, navigate }: any) {
+  const isActive = path === item.route || (item.route !== "/" && path.startsWith(item.route));
+  const Icon = item.icon;
+
+  return (
+    <button
+      onClick={() => navigate(item.route)}
+      className="relative p-2 flex flex-col items-center justify-center group focus:outline-none"
+    >
+      <motion.div whileTap={{ scale: 0.9 }} className="relative z-10">
+        <Icon
+          size={24}
+          strokeWidth={isActive ? 2.5 : 2}
+          className={`transition-colors duration-300 ${
+            isActive
+              ? "text-[var(--color-primary)]"
+              : "text-[var(--color-text-muted)] group-hover:text-white"
+          }`}
+        />
+      </motion.div>
+      {isActive && (
+        <motion.div
+          layoutId="bottom-nav-active"
+          className="absolute -bottom-1 w-1 h-1 rounded-full bg-[var(--color-primary)]"
+          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+        />
+      )}
+    </button>
+  );
+}
 
 function BottomNav({ onCompose }: { onCompose: () => void }) {
   const location = useLocation();
@@ -81,52 +113,22 @@ function BottomNav({ onCompose }: { onCompose: () => void }) {
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-6 pb-safe pt-2 bg-gradient-to-t from-[var(--color-background)] via-[var(--color-background)] to-transparent z-40 pointer-events-none">
       <div className="flex items-center justify-between px-6 h-[64px] rounded-[32px] glass-panel border border-[var(--color-border)] pointer-events-auto shadow-2xl shadow-black/50 mb-4 relative">
-        {NAV_ITEMS.map((item, index) => {
-          const isActive =
-            path === item.route || (item.route !== "/" && path.startsWith(item.route));
-          const Icon = item.icon;
+        {NAV_ITEMS.slice(0, 2).map((item) => <NavItem key={item.id} item={item} path={path} navigate={navigate} />)}
+        
+        <div className="relative -top-5">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9 }}
+            animate={{ boxShadow: ["0 0 20px rgba(255,157,46,0.4)", "0 0 30px rgba(255,157,46,0.6)", "0 0 20px rgba(255,157,46,0.4)"] }}
+            transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
+            onClick={onCompose}
+            className="flex items-center justify-center w-14 h-14 rounded-full bg-[var(--color-primary)] text-white transition-colors hover:bg-orange-400"
+          >
+            <Plus size={28} strokeWidth={2.5} />
+          </motion.button>
+        </div>
 
-          // Insert the center action button
-          if (index === 2) {
-            return (
-              <div key="compose-btn" className="relative -top-5">
-                <button
-                  onClick={onCompose}
-                  className="flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.5)] transition-transform active:scale-90"
-                >
-                  <Plus size={28} strokeWidth={2.5} />
-                </button>
-              </div>
-            );
-          }
-
-          return (
-            <button
-              key={item.id}
-              onClick={() => navigate(item.route)}
-              className="relative p-2 flex flex-col items-center justify-center group focus:outline-none"
-            >
-              <motion.div whileTap={{ scale: 0.9 }} className="relative z-10">
-                <Icon
-                  size={24}
-                  strokeWidth={isActive ? 2.5 : 2}
-                  className={`transition-colors duration-300 ${
-                    isActive
-                      ? "text-[var(--color-primary)]"
-                      : "text-[var(--color-text-muted)] group-hover:text-white"
-                  }`}
-                />
-              </motion.div>
-              {isActive && (
-                <motion.div
-                  layoutId="bottom-nav-active"
-                  className="absolute -bottom-1 w-1 h-1 rounded-full bg-[var(--color-primary)]"
-                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                />
-              )}
-            </button>
-          );
-        })}
+        {NAV_ITEMS.slice(2).map((item) => <NavItem key={item.id} item={item} path={path} navigate={navigate} />)}
       </div>
     </div>
   );
@@ -252,6 +254,8 @@ export function MainLayout() {
       </main>
 
       {!hideNav && <BottomNav onCompose={() => setShowCreateMenu(true)} />}
+
+      <FloatingVoicePlayer />
 
       {/* Compose Menu */}
       <CreateRadialMenu

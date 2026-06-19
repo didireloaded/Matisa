@@ -17,21 +17,65 @@ import {
   Trophy,
   Star,
 } from "lucide-react";
+import { Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GiftingModal, type GiftItem } from "@/components/common/GiftingModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { KaraokeService } from "@/services/karaoke";
 import type { UserProfile } from "@/types";
 import { Avatar } from "@/components/common/Avatar";
 import { Button } from "@/components/ui/Button";
+import { useVoice } from "@/contexts/VoiceContext";
+import { supabase } from "@/lib/supabase";
 
 // MOCK: In a real app, this would use LiveKit logic. For this UI overhaul, we're building the aesthetic.
 export function KaraokeRoom() {
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { profile } = useAuth();
+  const { joinRoom, leaveRoom, isMuted: isContextMuted, toggleMute } = useVoice();
+  const [roomData, setRoomData] = useState<any>(null);
 
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
+  const [isGiftingOpen, setIsGiftingOpen] = useState(false);
+  const [floatingGifts, setFloatingGifts] = useState<{ id: string; gift: GiftItem }[]>([]);
+
+  const handleSendGift = (gift: GiftItem) => {
+    // Add floating animation
+    const id = Math.random().toString(36).substr(2, 9);
+    setFloatingGifts((prev) => [...prev, { id, gift }]);
+    setTimeout(() => {
+      setFloatingGifts((prev) => prev.filter((g) => g.id !== id));
+    }, 2000);
+  };
+
+  useEffect(() => {
+    if (!roomId) return;
+    async function loadRoom() {
+      const { data } = await supabase
+        .from("voice_rooms")
+        .select("*, profiles(*)")
+        .eq("id", roomId)
+        .single();
+      
+      if (data) {
+        setRoomData(data);
+        joinRoom(roomId as string, data.title);
+      }
+    }
+    loadRoom();
+  }, [roomId]);
+
+  const handleLeave = () => {
+    leaveRoom();
+    navigate(-1);
+  };
+
+  const room = {
+    performers: roomData?.profiles ? [roomData.profiles] : [{ id: "speaker", display_name: "Loading...", avatar_url: "" }],
+    host: roomData?.profiles || { id: "host", display_name: "Loading...", avatar_url: "" }
+  };
 
   return (
     <div className="flex flex-col h-[100dvh] bg-black text-white relative overflow-hidden">
@@ -51,7 +95,7 @@ export function KaraokeRoom() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="font-bold text-lg leading-tight">Creator Lounge</h1>
+            <h1 className="font-bold text-lg leading-tight">{roomData?.title || "Creator Lounge"}</h1>
             <p className="text-[11px] font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF] animate-pulse" /> Live Now
             </p>
@@ -67,32 +111,61 @@ export function KaraokeRoom() {
 
       {/* Main Stage */}
       <div className="relative z-10 flex-1 px-5 flex flex-col justify-center">
-        {/* Active Speaker */}
-        <div className="flex flex-col items-center justify-center mb-12">
-          <div className="relative">
-            <motion.div
-              animate={{ scale: [1, 1.05, 1] }}
-              transition={{ repeat: Infinity, duration: 2 }}
-              className="absolute inset-[-10px] rounded-full border-2 border-[var(--color-primary)] opacity-50"
-            />
-            <Avatar
-              size={120}
-              profile={{
-                id: "speaker",
-                display_name: "Sarah Chen",
-                avatar_url: "https://i.pravatar.cc/150?u=user_2",
-              }}
-            />
-            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[var(--color-primary)] px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-[0_0_12px_rgba(139,92,246,0.5)]">
-              Speaking
-            </div>
-          </div>
-          <h2 className="mt-6 text-xl font-bold">Sarah Chen</h2>
-          <p className="text-white/50 text-sm">Host</p>
+        {/* Performers (Central Area) */}
+        <div className="absolute inset-0 flex items-center justify-center p-4">
+          <AnimatePresence>
+            {room.performers.map((p, i) => (
+              <motion.div
+                key={p.id}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className={`relative flex flex-col items-center ${i === 0 ? "z-20" : "z-10 -ml-12 opacity-80 scale-90"}`}
+              >
+                <div className="relative">
+                  <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-[var(--color-primary)] shadow-[0_0_30px_rgba(255,157,46,0.3)]">
+                    <Avatar size={128} profile={p} className="w-full h-full" />
+                  </div>
+                  {/* Singer indicator */}
+                  <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] rounded-full flex items-center justify-center border-2 border-black shadow-lg">
+                    <Mic className="w-5 h-5 text-white" />
+                  </div>
+
+                  {/* Floating Gifts Animation */}
+                  <AnimatePresence>
+                    {floatingGifts.map((fg) => {
+                      const Icon = fg.gift.icon;
+                      return (
+                        <motion.div
+                          key={fg.id}
+                          initial={{ opacity: 0, y: 50, scale: 0.5 }}
+                          animate={{ opacity: 1, y: -100, scale: 1.5 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 1.5, ease: "easeOut" }}
+                          className={`absolute top-0 left-1/2 -translate-x-1/2 ${fg.gift.color}`}
+                        >
+                          <Icon fill="currentColor" size={32} className="drop-shadow-lg" />
+                        </motion.div>
+                      );
+                    })}
+                  </AnimatePresence>
+                </div>
+                <div className="mt-4 text-center">
+                  <p className="text-white font-bold text-lg leading-tight truncate max-w-[150px]">
+                    {p.display_name}
+                  </p>
+                  <div className="flex items-center justify-center gap-1 mt-1 bg-white/10 rounded-full px-2 py-0.5 border border-white/10">
+                    <Star size={10} className="text-yellow-400 fill-current" />
+                    <span className="text-[10px] font-bold text-white tracking-widest uppercase">Performer</span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
 
         {/* Audience Grid */}
-        <div className="grid grid-cols-4 gap-4 max-w-[300px] mx-auto">
+        <div className="grid grid-cols-4 gap-4 max-w-[300px] mx-auto absolute bottom-24 w-full left-1/2 -translate-x-1/2">
           {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="flex flex-col items-center gap-1.5">
               <Avatar
@@ -115,10 +188,10 @@ export function KaraokeRoom() {
       <div className="relative z-10 p-5 pb-safe bg-gradient-to-t from-black via-black/80 to-transparent">
         <div className="flex items-center justify-between bg-white/10 backdrop-blur-2xl border border-white/10 rounded-full px-6 py-4 shadow-2xl">
           <button
-            onClick={() => setIsMuted(!isMuted)}
-            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isMuted ? "bg-red-500/20 text-red-500" : "bg-white/10 text-white"}`}
+            onClick={toggleMute}
+            className={`w-12 h-12 flex items-center justify-center rounded-full transition-all ${isContextMuted ? "bg-red-500/20 text-red-500" : "bg-white/10 text-white"}`}
           >
-            {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
+            {isContextMuted ? <MicOff size={20} /> : <Mic size={20} />}
           </button>
 
           <button
@@ -133,13 +206,28 @@ export function KaraokeRoom() {
           </button>
 
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => setIsGiftingOpen(true)}
+            className="w-14 h-14 flex items-center justify-center rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 text-white shadow-[0_0_20px_rgba(244,63,94,0.4)] hover:scale-105 transition-transform"
+          >
+            <Gift size={24} />
+          </button>
+
+          <button
+            onClick={handleLeave}
             className="w-12 h-12 flex items-center justify-center rounded-full bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]"
           >
             <LogOut size={20} className="ml-1" />
           </button>
         </div>
       </div>
+
+      <GiftingModal
+        isOpen={isGiftingOpen}
+        onClose={() => setIsGiftingOpen(false)}
+        recipient={room.performers[0] || room.host}
+        balance={1250} // Mock balance
+        onSendGift={handleSendGift}
+      />
     </div>
   );
 }

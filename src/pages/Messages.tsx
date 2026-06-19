@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Search, PenSquare, Mic } from "lucide-react";
+import { Search, PenSquare, Mic, MessageSquare } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "../lib/supabase";
@@ -120,8 +120,13 @@ export function Messages() {
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="mt-12 text-center text-[var(--color-text-muted)] text-sm">
-            No conversations found.
+          <div className="mt-8">
+            <EmptyState
+              icon={MessageSquare}
+              title={search ? "No matches found" : "No messages yet"}
+              description={search ? "Try a different search term." : "Start a conversation by reaching out to someone."}
+              glowColor="primary"
+            />
           </div>
         ) : (
           <div className="flex flex-col space-y-2">

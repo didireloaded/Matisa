@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Search, MapPin, Music, Star, ArrowRight, Play, Heart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Avatar } from "@/components/ui/Avatar";
-import { Card } from "@/components/ui/Card";
+import { Avatar } from "@/components/common/Avatar";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/Tabs";
 
 const DUMMY_CREATORS = [
@@ -103,8 +103,8 @@ export function Creators() {
                   <Music size={14} /> Electronic Duo
                 </p>
               </div>
-              <Button variant="solid" size="sm" className="bg-white text-black font-bold">
-                View Profile
+              <Button variant="primary" className="h-10 px-5 rounded-full font-bold">
+                Become a Creator
               </Button>
             </div>
           </div>
@@ -122,8 +122,8 @@ export function Creators() {
             {DUMMY_CREATORS.map((creator) => (
               <Card
                 key={creator.id}
-                variant="surface"
-                className="p-4 flex flex-col items-center text-center cursor-pointer hover:bg-[var(--color-surface-3)] transition group"
+                variant="outline"
+                className="p-4 flex flex-col items-center text-center"
               >
                 <div className="relative mb-3">
                   <Avatar

@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Mic, MicOff, Users, ArrowLeft, MessageSquare, Hand } from "lucide-react";
+import { Mic, MicOff, Users, ArrowLeft, MessageSquare, Hand, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { GiftingModal, type GiftItem } from "@/components/common/GiftingModal";
 import { useAuth } from "../../contexts/AuthContext";
 import {
   LiveKitRoom,
@@ -11,6 +12,8 @@ import {
   TrackToggle,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
+
+type Reaction = { id: number; emoji: string; x: number };
 
 export function LiveRoom() {
   const { user } = useAuth();
@@ -39,7 +42,17 @@ export function LiveRoom() {
 function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) {
   const participants = useParticipants();
   const { localParticipant, isMicrophoneEnabled } = useLocalParticipant();
-  const [reactions, setReactions] = useState<{ id: number; emoji: string; x: number }[]>([]);
+  const [reactions, setReactions] = useState<Reaction[]>([]);
+  const [isGiftingOpen, setIsGiftingOpen] = useState(false);
+  const [floatingGifts, setFloatingGifts] = useState<{ id: string; gift: GiftItem }[]>([]);
+
+  const handleSendGift = (gift: GiftItem) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setFloatingGifts((prev) => [...prev, { id, gift }]);
+    setTimeout(() => {
+      setFloatingGifts((prev) => prev.filter((g) => g.id !== id));
+    }, 2000);
+  };
 
   const handleReact = (emoji: string) => {
     const newReaction = { id: Date.now(), emoji, x: Math.random() * 80 + 10 };
@@ -146,6 +159,27 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
         </AnimatePresence>
       </div>
 
+      {/* Floating Gifts */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+        <AnimatePresence>
+          {floatingGifts.map((fg) => {
+            const Icon = fg.gift.icon;
+            return (
+              <motion.div
+                key={fg.id}
+                initial={{ opacity: 0, y: "80vh", scale: 0.5 }}
+                animate={{ opacity: 1, y: "20vh", scale: 2 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 2, ease: "easeOut" }}
+                className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${fg.gift.color}`}
+              >
+                <Icon fill="currentColor" size={48} className="drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
+              </motion.div>
+            );
+          })}
+        </AnimatePresence>
+      </div>
+
       {/* Bottom Controls */}
       <div className="absolute bottom-0 left-0 w-full p-6 bg-gradient-to-t from-background via-background/90 to-transparent">
         <div className="flex items-center justify-between">
@@ -166,6 +200,12 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsGiftingOpen(true)}
+              className="w-12 h-12 flex items-center justify-center rounded-full bg-gradient-to-tr from-pink-500 to-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.4)] hover:scale-105 transition-transform"
+            >
+              <Gift size={20} />
+            </button>
             <button className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center text-white/80 hover:bg-white/20">
               <Hand className="w-5 h-5" />
             </button>
@@ -180,6 +220,14 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
           </div>
         </div>
       </div>
+
+      <GiftingModal
+        isOpen={isGiftingOpen}
+        onClose={() => setIsGiftingOpen(false)}
+        recipient={speakers[0] ? ({ id: speakers[0].identity, display_name: speakers[0].name || "Speaker", avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${speakers[0].identity}` } as any) : ({ id: "host", display_name: "Host", avatar_url: "" } as any)}
+        balance={1250} // Mock balance
+        onSendGift={handleSendGift}
+      />
     </div>
   );
 }

@@ -21,8 +21,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avatar";
-import { Card } from "@/components/ui/Card";
+import { Avatar } from "@/components/common/Avatar";
+import { Card } from "@/components/ui/card";
 
 const INTERESTS = [
   { id: "Music", icon: Music },
@@ -111,20 +111,14 @@ export function Onboarding() {
     }
   };
 
-  const handleVoiceRecording = async (blob: Blob) => {
+  const handleVoiceRecording = async (url: string) => {
     if (!profile) return;
     try {
-      const filePath = `${profile.id}/intro_${Date.now()}.webm`;
-      const { error: uploadError } = await supabase.storage.from("audio").upload(filePath, blob);
-
-      if (uploadError) throw uploadError;
-
-      const { data } = supabase.storage.from("audio").getPublicUrl(filePath);
-      setVoiceUrl(data.publicUrl);
+      setVoiceUrl(url);
 
       await supabase
         .from("profiles")
-        .update({ voice_intro_url: data.publicUrl })
+        .update({ voice_intro_url: url })
         .eq("id", profile.id);
     } catch (err: any) {
       toast.error("Failed to save voice intro: " + err.message);
@@ -174,7 +168,7 @@ export function Onboarding() {
                 Let's set up your creative profile so you can connect with the right people.
               </p>
               <Button
-                variant="solid"
+                variant="primary"
                 onClick={handleNext}
                 className="w-full h-14 rounded-full font-bold shadow-lg"
               >
@@ -220,7 +214,7 @@ export function Onboarding() {
               </div>
 
               <Button
-                variant="solid"
+                variant="primary"
                 onClick={saveInterests}
                 disabled={isSavingInterests}
                 className="w-full h-14 rounded-full font-bold mt-8"
@@ -288,7 +282,7 @@ export function Onboarding() {
                   Skip
                 </Button>
                 <Button
-                  variant="solid"
+                  variant="primary"
                   onClick={handleNext}
                   className="flex-[2] h-14 rounded-full font-bold"
                 >
@@ -320,7 +314,9 @@ export function Onboarding() {
                     <p className="text-white font-bold">Intro recorded!</p>
                   </div>
                 ) : (
-                  <AudioRecorder onRecordingComplete={handleVoiceRecording} />
+                  <div className="bg-[var(--color-surface-2)] p-6 rounded-[24px] border border-[var(--color-border)] text-center">
+                    <AudioRecorder onUploadSuccess={handleVoiceRecording} />
+                  </div>
                 )}
               </div>
 
@@ -333,7 +329,7 @@ export function Onboarding() {
                   Skip
                 </Button>
                 <Button
-                  variant="solid"
+                  variant="primary"
                   onClick={handleNext}
                   className="flex-[2] h-14 rounded-full font-bold"
                 >
@@ -360,11 +356,11 @@ export function Onboarding() {
                   return (
                     <Card
                       key={user.id}
-                      variant="surface"
+                      variant="outline"
                       className="flex items-center justify-between p-4"
                     >
                       <div className="flex items-center gap-3">
-                        <Avatar size={48} profile={user} />
+                        <Avatar size={40} profile={user} />
                         <div>
                           <p className="text-white font-bold text-sm">
                             {user.display_name || user.username}
@@ -394,7 +390,7 @@ export function Onboarding() {
               </div>
 
               <Button
-                variant="solid"
+                variant="primary"
                 onClick={finishOnboarding}
                 className="w-full h-14 rounded-full font-bold mt-8 shadow-lg"
               >

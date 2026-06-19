@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Edit3, Image, Mic } from "lucide-react";
-import { Card } from "@/components/ui/Card";
-import { Avatar } from "@/components/ui/Avatar";
-import { Input } from "@/components/ui/Input";
+import { Card } from "@/components/ui/card";
+import { Avatar } from "@/components/common/Avatar";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
+import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 
 // This page is largely redundant now that Home.tsx is the main feed,
 // but we'll keep it updated for UI consistency.
@@ -17,7 +18,7 @@ export function Notes() {
 
       <div className="flex-1 px-5 space-y-6 pt-4">
         {/* Composer */}
-        <Card variant="surface" className="p-4">
+        <Card variant="solid" className="p-4">
           <div className="flex gap-3 mb-3">
             <Avatar
               size={40}
@@ -42,16 +43,20 @@ export function Notes() {
                 <Mic size={18} />
               </button>
             </div>
-            <Button variant="solid" size="sm" className="font-bold px-5">
+            <Button variant="primary" size="sm" className="font-bold px-5">
               Post
             </Button>
           </div>
         </Card>
 
         {/* Empty State */}
-        <div className="text-center text-[var(--color-text-muted)] mt-10">
-          <Edit3 className="w-12 h-12 mx-auto mb-3 opacity-20" />
-          <p>No notes yet.</p>
+        <div className="mt-8">
+          <PremiumEmptyState
+            icon={Edit3}
+            title="It's quiet here"
+            description="Be the first to share a note."
+            glowColor="secondary"
+          />
         </div>
       </div>
 

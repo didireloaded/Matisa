@@ -101,7 +101,9 @@ export function Opportunities() {
             key={opp.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            transition={{ delay: i * 0.05, type: "spring", stiffness: 400, damping: 25 }}
           >
             <Card variant="solid" className={`p-5 relative overflow-hidden`}>
               {/* Colored left border indicator based on type */}

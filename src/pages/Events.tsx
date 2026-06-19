@@ -15,7 +15,7 @@ import {
   Flame,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Card } from "@/components/ui/Card";
+import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
@@ -128,7 +128,7 @@ export function Events() {
                   <div className="flex items-center justify-between">
                     <span className="text-white font-bold text-lg">{event.price}</span>
                     <Button
-                      variant="solid"
+                      variant="primary"
                       size="sm"
                       className="bg-white text-black hover:bg-white/90 font-bold px-4"
                     >
@@ -153,7 +153,7 @@ export function Events() {
             {DUMMY_EVENTS.map((event, i) => (
               <Card
                 key={`list_${event.id}`}
-                variant="surface"
+                variant="outline"
                 className="flex gap-4 p-3 pr-4 overflow-hidden group cursor-pointer hover:bg-[var(--color-surface-3)] transition"
               >
                 <div className="relative w-24 h-24 rounded-2xl overflow-hidden shrink-0">
