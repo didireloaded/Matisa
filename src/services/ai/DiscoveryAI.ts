@@ -11,7 +11,7 @@ export const DiscoveryAI = {
     try {
       // 1. Try to invoke the real Edge Function
       const { data, error } = await supabase.functions.invoke("generateRecommendations", {
-        body: { type: 'users', limit: 20 },
+        body: { type: "users", limit: 20 },
       });
 
       if (!error && data && data.length > 0) {
@@ -22,7 +22,10 @@ export const DiscoveryAI = {
     }
 
     // 2. Fallback/Mock logic using the local IntelligenceEngine if edge function isn't deployed or fails
-    const { data: profiles } = await supabase.from("profiles").select("*").limit(20);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, display_name, username, avatar_url, bio, follower_count, master_user_score")
+      .limit(20);
 
     if (!profiles) return [];
 
@@ -41,7 +44,9 @@ export const DiscoveryAI = {
       return { ...p, _discoveryScore: score };
     });
 
-    return scoredProfiles.sort((a, b) => b._discoveryScore - a._discoveryScore);
+    return scoredProfiles.sort(
+      (a, b) => b._discoveryScore - a._discoveryScore,
+    ) as any[] as Profile[];
   },
 
   /**

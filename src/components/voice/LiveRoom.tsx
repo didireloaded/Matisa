@@ -12,11 +12,12 @@ import {
   TrackToggle,
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
+import { supabase } from "@/lib/supabase";
 
 type Reaction = { id: number; emoji: string; x: number };
 
 export function LiveRoom() {
-  const { user } = useAuth();
+  const { profile } = useAuth();
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [token, setToken] = useState("dev-token"); // Mock token for now
@@ -45,8 +46,51 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
   const [reactions, setReactions] = useState<Reaction[]>([]);
   const [isGiftingOpen, setIsGiftingOpen] = useState(false);
   const [floatingGifts, setFloatingGifts] = useState<{ id: string; gift: GiftItem }[]>([]);
+  const [roomData, setRoomData] = useState<any>(null);
+  const [balance, setBalance] = useState(0);
+  const { profile } = useAuth();
 
-  const handleSendGift = (gift: GiftItem) => {
+  useEffect(() => {
+    async function fetchRoomAndBalance() {
+      const { data: room } = await supabase
+        .from("voice_rooms")
+        .select("id, name, host_id, status, type, created_at")
+        .eq("id", roomId)
+        .single();
+      if (room) setRoomData(room);
+
+      if (profile) {
+        const { data: wallet } = await supabase
+          .from("wallets")
+          .select("balance")
+          .eq("user_id", profile.id)
+          .single();
+        if (wallet) setBalance(wallet.balance);
+      }
+    }
+    fetchRoomAndBalance();
+  }, [roomId, profile]);
+
+  const handleSendGift = async (gift: GiftItem) => {
+    if (!profile) return;
+    // We assume the recipient is the room creator for now, or the currently active speaker.
+    // For MVP, sending gift to room creator
+    const receiverId = roomData?.creator_id;
+    if (!receiverId) return;
+
+    const { data, error } = await supabase.rpc("send_gift", {
+      p_sender_id: profile.id,
+      p_receiver_id: receiverId,
+      p_amount: gift.cost,
+    });
+
+    if (error || !data) {
+      alert("Failed to send gift. Try again later.");
+      return;
+    }
+
+    setBalance((prev) => prev - gift.cost);
+
     const id = Math.random().toString(36).substr(2, 9);
     setFloatingGifts((prev) => [...prev, { id, gift }]);
     setTimeout(() => {
@@ -78,7 +122,9 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
           <ArrowLeft className="w-5 h-5 text-white/80" />
         </button>
         <div className="flex flex-col items-center">
-          <h2 className="text-lg font-bold text-white tracking-wide">Design Talk</h2>
+          <h2 className="text-lg font-bold text-white tracking-wide">
+            {roomData?.title || "Design Talk"}
+          </h2>
           <span className="text-xs text-[var(--primary)] font-medium">Public Room</span>
         </div>
         <button className="w-10 h-10 border border-white/20 rounded-full flex items-center justify-center hover:bg-white/10 transition-colors relative">
@@ -173,7 +219,11 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
                 transition={{ duration: 2, ease: "easeOut" }}
                 className={`absolute bottom-0 left-1/2 -translate-x-1/2 ${fg.gift.color}`}
               >
-                <Icon fill="currentColor" size={48} className="drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]" />
+                <Icon
+                  fill="currentColor"
+                  size={48}
+                  className="drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]"
+                />
               </motion.div>
             );
           })}
@@ -219,15 +269,19 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
             </TrackToggle>
           </div>
         </div>
-      </div>
 
-      <GiftingModal
-        isOpen={isGiftingOpen}
-        onClose={() => setIsGiftingOpen(false)}
-        recipient={speakers[0] ? ({ id: speakers[0].identity, display_name: speakers[0].name || "Speaker", avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${speakers[0].identity}` } as any) : ({ id: "host", display_name: "Host", avatar_url: "" } as any)}
-        balance={1250} // Mock balance
-        onSendGift={handleSendGift}
-      />
+        <GiftingModal
+          isOpen={isGiftingOpen}
+          onClose={() => setIsGiftingOpen(false)}
+          recipient={
+            roomData?.creator_id
+              ? ({ id: roomData.creator_id, display_name: "Room Creator", avatar_url: "" } as any)
+              : ({ id: "unknown", display_name: "Speaker", avatar_url: "" } as any)
+          }
+          onSendGift={handleSendGift}
+          balance={balance}
+        />
+      </div>
     </div>
   );
 }

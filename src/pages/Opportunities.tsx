@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Briefcase, MapPin, ChevronLeft, MoreHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -6,64 +6,83 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/common/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
-const DUMMY_OPPORTUNITIES = [
-  {
-    id: "opp_1",
-    creator: { id: "user_2", name: "Sarah Chen", avatar: "https://i.pravatar.cc/150?u=user_2" },
-    type: "Gig",
-    role: "Videographer",
-    description:
-      "Shooting a music video this weekend. Need someone with a drone for aerial shots over the beach.",
-    budget: "$500 - $1,000",
-    location: "Los Angeles, CA",
-    date: "This Saturday",
-    tags: ["Music Video", "Drone", "Camera Operator"],
-    matchScore: 92,
-  },
-  {
-    id: "opp_2",
-    creator: { id: "user_3", name: "Marcus Johnson", avatar: "https://i.pravatar.cc/150?u=user_3" },
-    type: "Collaboration",
-    role: "Vocalist / Singer",
-    description:
-      "Looking for a soulful R&B vocalist to feature on my new track. I have the beat and lyrics ready.",
-    budget: "Revenue Split",
-    location: "Remote",
-    date: "Flexible",
-    tags: ["R&B", "Feature", "Vocals"],
-    matchScore: 85,
-  },
-  {
-    id: "opp_3",
-    creator: {
-      id: "user_4",
-      name: "Elena Rodriguez",
-      avatar: "https://i.pravatar.cc/150?u=user_4",
-    },
-    type: "Job",
-    role: "Video Editor",
-    description:
-      "Need a fast-paced editor for a 3-part YouTube documentary series. Premiere Pro required.",
-    budget: "$3,000 Total",
-    location: "Remote",
-    date: "Next 2 Weeks",
-    tags: ["Editing", "Documentary", "YouTube"],
-    matchScore: 78,
-  },
-];
+import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
+import { PostOpportunityModal } from "@/components/opportunities/PostOpportunityModal";
 
 export function Opportunities() {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      AnalyticsAI.trackEvent(profile.id, "page_view", "opportunities");
+    }
+  }, [profile]);
+
+  useEffect(() => {
+    async function loadOpp() {
+      setLoading(true);
+      try {
+        const { data, error } = await supabase
+          .from("opportunities")
+          .select("*, profiles!opportunities_creator_id_fkey(*)")
+          .order("created_at", { ascending: false });
+        if (error) throw error;
+        setOpportunities(data || []);
+      } catch (err) {
+        console.error("Failed to load opportunities", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadOpp();
+  }, []);
+
+  const handleApply = async (oppId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!profile) return toast.error("Please sign in to apply");
+    try {
+      const { error } = await supabase
+        .from("opportunity_applications")
+        .insert({ opportunity_id: oppId, applicant_id: profile.id, status: "pending" });
+      if (error) {
+        if (error.code === "23505") toast.success("You already applied!");
+        else throw error;
+      } else {
+        toast.success("Application submitted!");
+        AnalyticsAI.trackEvent(profile.id, "apply_opportunity", oppId);
+      }
+    } catch (err) {
+      toast.error("Failed to apply");
+    }
+  };
 
   const filteredOpps =
     activeTab === "all"
-      ? DUMMY_OPPORTUNITIES
-      : DUMMY_OPPORTUNITIES.filter((o) => o.type.toLowerCase().includes(activeTab));
+      ? opportunities
+      : opportunities.filter(
+          (o) =>
+            (o.type || o.role_type).toLowerCase().includes(activeTab) ||
+            (o.role_type && o.role_type.toLowerCase().includes(activeTab)),
+        );
 
   return (
     <div className="flex flex-col min-h-[100dvh] pb-32 bg-[var(--color-background)]">
+      {isPostModalOpen && (
+        <PostOpportunityModal
+          isOpen={isPostModalOpen}
+          onClose={() => setIsPostModalOpen(false)}
+          onCreated={(newOpp) => setOpportunities([newOpp, ...opportunities])}
+        />
+      )}
       {/* Header */}
       <header className="sticky top-0 z-30 px-5 pt-4 pb-2 bg-[var(--color-background)]/90 backdrop-blur-xl border-b border-[var(--color-border)]">
         <div className="flex items-center justify-between mb-4">
@@ -76,7 +95,10 @@ export function Opportunities() {
             </button>
             <h1 className="text-xl font-bold text-white flex items-center gap-2">Opportunities</h1>
           </div>
-          <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]">
+          <button
+            onClick={() => setIsPostModalOpen(true)}
+            className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.3)] hover:scale-105 transition-transform"
+          >
             <Briefcase size={18} />
           </button>
         </div>
@@ -109,9 +131,9 @@ export function Opportunities() {
               {/* Colored left border indicator based on type */}
               <div
                 className={`absolute left-0 top-0 bottom-0 w-1 ${
-                  opp.type === "Gig"
+                  opp.type === "Gig" || opp.role_type === "Gig"
                     ? "bg-[#00E5FF]"
-                    : opp.type === "Collaboration"
+                    : opp.type === "Collaboration" || opp.role_type === "Collaboration"
                       ? "bg-[#8B5CF6]"
                       : "bg-[#FF416C]"
                 }`}
@@ -121,20 +143,15 @@ export function Opportunities() {
                 <div className="flex gap-2">
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                      opp.type === "Gig"
+                      opp.type === "Gig" || opp.role_type === "Gig"
                         ? "bg-[#00E5FF]/20 text-[#00E5FF]"
-                        : opp.type === "Collaboration"
+                        : opp.type === "Collaboration" || opp.role_type === "Collaboration"
                           ? "bg-[#8B5CF6]/20 text-[#8B5CF6]"
                           : "bg-[#FF416C]/20 text-[#FF416C]"
                     }`}
                   >
-                    {opp.type}
+                    {opp.type || opp.role_type}
                   </span>
-                  {opp.matchScore > 90 && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-green-500/20 text-green-400">
-                      Top Match
-                    </span>
-                  )}
                 </div>
                 <button className="text-[var(--color-text-muted)] hover:text-white transition">
                   <MoreHorizontal size={20} />
@@ -142,18 +159,20 @@ export function Opportunities() {
               </div>
 
               <div className="pl-2">
-                <h3 className="text-xl font-bold text-white mb-2 leading-tight">{opp.role}</h3>
+                <h3 className="text-xl font-bold text-white mb-2 leading-tight">{opp.title}</h3>
 
                 <div className="flex items-center gap-3 mb-4">
                   <Avatar
                     size={24}
                     profile={{
-                      id: opp.creator.id,
-                      display_name: opp.creator.name,
-                      avatar_url: opp.creator.avatar,
+                      id: opp.profiles?.id || "unknown",
+                      display_name: opp.profiles?.display_name || opp.profiles?.username || "User",
+                      avatar_url: opp.profiles?.avatar_url || "",
                     }}
                   />
-                  <span className="text-sm font-semibold text-white/90">{opp.creator.name}</span>
+                  <span className="text-sm font-semibold text-white/90">
+                    {opp.profiles?.display_name || opp.profiles?.username || "User"}
+                  </span>
                 </div>
 
                 <p className="text-[var(--color-text-muted)] text-sm mb-4 line-clamp-2 leading-relaxed">
@@ -161,7 +180,7 @@ export function Opportunities() {
                 </p>
 
                 <div className="flex flex-wrap gap-2 mb-5">
-                  {opp.tags.map((tag) => (
+                  {(opp.required_skills || []).map((tag: string) => (
                     <span
                       key={tag}
                       className="text-xs font-semibold px-2.5 py-1 bg-[var(--color-surface-3)] text-[var(--color-text-muted)] rounded-md"
@@ -173,12 +192,19 @@ export function Opportunities() {
 
                 <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-4 mt-2">
                   <div className="flex flex-col">
-                    <span className="text-white font-bold text-lg">{opp.budget}</span>
+                    <span className="text-white font-bold text-lg">
+                      {opp.budget || "Negotiable"}
+                    </span>
                     <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                      <MapPin size={10} /> {opp.location}
+                      <MapPin size={10} /> {opp.location_name || opp.location || "Remote"}
                     </span>
                   </div>
-                  <Button variant="primary" size="sm" className="px-5 font-bold">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    className="px-5 font-bold"
+                    onClick={(e) => handleApply(opp.id, e)}
+                  >
                     Apply
                   </Button>
                 </div>

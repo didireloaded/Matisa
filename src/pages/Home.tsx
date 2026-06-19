@@ -24,6 +24,10 @@ import type { Profile } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { LiveRoomsBanner } from "@/components/voice/LiveRoomsBanner";
+import { StoryService } from "@/services/stories";
+import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
+import { StoriesViewer } from "@/components/stories/StoriesViewer";
+import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
 
 interface Note {
   id: string;
@@ -31,7 +35,7 @@ interface Note {
   content: string;
   created_at: string;
   type?: "text" | "voice";
-  voice_url?: string;
+  audio_url?: string;
   duration_seconds?: number;
   waveform_data?: number[];
   profiles?: Profile;
@@ -46,6 +50,21 @@ function getUserById(id: string) {
 // ─────────────────────────────────────────────
 function StoriesSection() {
   const { profile } = useAuth();
+  const [stories, setStories] = useState<any[]>([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function loadStories() {
+      try {
+        const data = await StoryService.getFeedStories();
+        setStories(data || []);
+      } catch (err) {
+        console.error("Failed to load stories", err);
+      }
+    }
+    loadStories();
+  }, []);
 
   return (
     <div className="py-4">
@@ -58,35 +77,53 @@ function StoriesSection() {
           avatarProps={{
             profile: { id: "me", display_name: "Me", avatar_url: profile?.avatar_url || "" },
           }}
-          onClick={() => toast("Create story")}
-        />
-
-        {/* Your Story */}
-        <StoryRing
-          hasUnviewed={false}
-          label="Your Story"
-          avatarProps={{
-            profile: { id: "me", display_name: "Me", avatar_url: profile?.avatar_url || "" },
-          }}
-          onClick={() => toast("View your story")}
+          onClick={() => setIsCreateModalOpen(true)}
         />
 
         {/* Other Stories */}
-        {STORIES.map((story) => {
-          const user = getUserById(story.userId);
+        {stories.map((story, index) => {
+          const user = story.profiles;
           return (
             <StoryRing
               key={story.id}
-              hasUnviewed={story.hasNew}
-              label={user.name.split(" ")[0]}
+              hasUnviewed={true}
+              label={user?.display_name?.split(" ")[0] || "User"}
               avatarProps={{
-                profile: { id: user.id, display_name: user.name, avatar_url: user.avatar },
+                profile: {
+                  id: user?.id,
+                  display_name: user?.display_name,
+                  avatar_url: user?.avatar_url,
+                },
               }}
-              onClick={() => toast(`Opening story: ${user.name}`)}
+              onClick={() => setViewerIndex(index)}
             />
           );
         })}
       </div>
+
+      {isCreateModalOpen && (
+        <CreateStoryModal open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+      )}
+
+      {viewerIndex !== null && (
+        <StoriesViewer
+          stories={stories.map((s) => ({
+            id: s.id,
+            userId: s.user_id,
+            username: s.profiles?.display_name || "User",
+            userAvatar: s.profiles?.avatar_url || "",
+            mediaUrl: s.media_url,
+            mediaType: s.media_type as any,
+            content: { audioUrl: s.media_url }, // fallback for voice
+            timestamp: new Date(s.created_at).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }))}
+          initialIndex={viewerIndex}
+          onClose={() => setViewerIndex(null)}
+        />
+      )}
     </div>
   );
 }
@@ -94,8 +131,31 @@ function StoriesSection() {
 // ─────────────────────────────────────────────
 // COMPOSER
 // ─────────────────────────────────────────────
-function Composer() {
+function Composer({ onNoteCreated }: { onNoteCreated: () => void }) {
   const { profile } = useAuth();
+  const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [noteModalMode, setNoteModalMode] = useState<"text" | "voice">("text");
+
+  const handleSubmit = async () => {
+    if (!content.trim() || !profile || loading) return;
+    setLoading(true);
+    try {
+      const { error } = await supabase.from("notes").insert({
+        user_id: profile.id,
+        content: content.trim(),
+      });
+      if (error) throw error;
+      toast.success("Note dropped!");
+      setContent("");
+      onNoteCreated();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to post note");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Card variant="glass" className="mx-5 mb-6 p-4">
@@ -110,26 +170,78 @@ function Composer() {
         />
         <input
           type="text"
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
           placeholder="What's on your mind?"
           className="flex-1 bg-transparent text-white placeholder-[var(--color-text-muted)] focus:outline-none"
         />
-        <button className="w-10 h-10 rounded-full bg-[var(--color-primary)] flex items-center justify-center hover:bg-[var(--color-primary-light)] transition-colors">
+        <button
+          onClick={handleSubmit}
+          disabled={loading || !content.trim()}
+          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${loading || !content.trim() ? "bg-white/10" : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-light)]"}`}
+        >
           <Send size={18} className="text-white ml-1" />
         </button>
       </div>
       <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-4">
-        <ComposerAction icon={AlignLeft} label="Note" color="#A0AEC0" />
-        <ComposerAction icon={Mic} label="Voice Note" color="#8B5CF6" />
-        <ComposerAction icon={Video} label="Room" color="#EC4899" />
-        <ComposerAction icon={Calendar} label="Event" color="#00E5FF" />
+        <ComposerAction
+          icon={AlignLeft}
+          label="Note"
+          color="#A0AEC0"
+          onClick={() => {
+            setNoteModalMode("text");
+            setIsNoteModalOpen(true);
+          }}
+        />
+        <ComposerAction
+          icon={Mic}
+          label="Voice Note"
+          color="#8B5CF6"
+          onClick={() => {
+            setNoteModalMode("voice");
+            setIsNoteModalOpen(true);
+          }}
+        />
+        <ComposerAction
+          icon={Video}
+          label="Room"
+          color="#EC4899"
+          onClick={() => toast("Create room coming soon!")}
+        />
+        <ComposerAction
+          icon={Calendar}
+          label="Event"
+          color="#00E5FF"
+          onClick={() => toast("Create event coming soon!")}
+        />
       </div>
+
+      {isNoteModalOpen && (
+        <CreateNoteModal
+          open={isNoteModalOpen}
+          onClose={() => setIsNoteModalOpen(false)}
+          onSuccess={onNoteCreated}
+          initialMode={noteModalMode}
+        />
+      )}
     </Card>
   );
 }
 
-function ComposerAction({ icon: Icon, label, color }: { icon: any; label: string; color: string }) {
+function ComposerAction({
+  icon: Icon,
+  label,
+  color,
+  onClick,
+}: {
+  icon: any;
+  label: string;
+  color: string;
+  onClick?: () => void;
+}) {
   return (
-    <button className="flex flex-col items-center gap-1.5 group">
+    <button onClick={onClick} className="flex flex-col items-center gap-1.5 group">
       <div className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center transition-colors group-hover:bg-[var(--color-surface-3)]">
         <Icon size={18} style={{ color }} />
       </div>
@@ -192,9 +304,9 @@ function FeedCard({ note }: { note: Note }) {
         </button>
       </div>
 
-      {note.type === "voice" && note.voice_url ? (
+      {note.type === "voice" && note.audio_url ? (
         <VoicePlayer
-          audioUrl={note.voice_url}
+          audioUrl={note.audio_url}
           duration={note.duration_seconds ? `0:${note.duration_seconds}` : "0:18"}
           waveform={note.waveform_data}
         />
@@ -212,7 +324,7 @@ function FeedCard({ note }: { note: Note }) {
           <Heart size={18} className={reacted ? "fill-current" : ""} />
           <span className="text-[12px] font-bold">{reacted ? 25 : 24}</span>
         </motion.button>
-        <motion.button 
+        <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors"
@@ -220,7 +332,7 @@ function FeedCard({ note }: { note: Note }) {
           <MessageCircle size={18} />
           <span className="text-[12px] font-bold">Reply</span>
         </motion.button>
-        <motion.button 
+        <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-purple-400 transition-colors"
@@ -228,7 +340,7 @@ function FeedCard({ note }: { note: Note }) {
           <Mic size={18} />
           <span className="text-[12px] font-bold">Voice Reply</span>
         </motion.button>
-        <motion.button 
+        <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors ml-auto bg-surface-2 px-3 py-1.5 rounded-full"
@@ -244,6 +356,25 @@ function FeedCard({ note }: { note: Note }) {
 // NEW HOME UX SECTIONS
 // ─────────────────────────────────────────────
 function PeopleToMeetSection() {
+  const { profile } = useAuth();
+  const [people, setPeople] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (!profile) return;
+    async function loadPeople() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, display_name, username, avatar_url, follower_count")
+        .neq("id", profile!.id)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (data) setPeople(data);
+    }
+    loadPeople();
+  }, [profile]);
+
+  if (people.length === 0) return null;
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between px-5 mb-3">
@@ -251,7 +382,7 @@ function PeopleToMeetSection() {
         <button className="text-[var(--color-primary)] text-xs font-semibold">See all</button>
       </div>
       <div className="flex gap-4 overflow-x-auto no-scrollbar px-5 pb-2">
-        {USERS.slice(1, 4).map((user) => (
+        {people.map((user) => (
           <Card
             key={user.id}
             variant="glass"
@@ -259,11 +390,17 @@ function PeopleToMeetSection() {
           >
             <Avatar
               size={60}
-              profile={{ id: user.id, display_name: user.name, avatar_url: user.avatar }}
+              profile={{
+                id: user.id,
+                display_name: user.display_name || user.username,
+                avatar_url: user.avatar_url,
+              }}
             />
-            <h3 className="text-white font-bold text-sm mt-3">{user.name.split(" ")[0]}</h3>
+            <h3 className="text-white font-bold text-sm mt-3">
+              {user.display_name?.split(" ")[0] || user.username}
+            </h3>
             <p className="text-[var(--color-text-muted)] text-[11px] mt-1 mb-3">
-              3 mutual connections 🤝
+              {user.follower_count || 0} followers
             </p>
             <button className="w-full py-2 bg-primary/20 text-primary font-bold text-xs rounded-xl hover:bg-primary hover:text-white transition-colors">
               Wave
@@ -279,6 +416,22 @@ function PeopleToMeetSection() {
 
 function OpportunitiesSection() {
   const navigate = useNavigate();
+  const [opportunities, setOpportunities] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadOpp() {
+      const { data } = await supabase
+        .from("opportunities")
+        .select("id, type, role_type, location_name, location, title, description")
+        .order("created_at", { ascending: false })
+        .limit(3);
+      if (data) setOpportunities(data);
+    }
+    loadOpp();
+  }, []);
+
+  if (opportunities.length === 0) return null;
+
   return (
     <div className="mb-6">
       <div className="flex items-center justify-between px-5 mb-3">
@@ -291,26 +444,30 @@ function OpportunitiesSection() {
         </button>
       </div>
       <div className="px-5 flex flex-col gap-3">
-        <Card variant="glass" className="p-4 border-l-4 border-l-pink-500">
-          <div className="flex justify-between items-start mb-2">
-            <span className="text-pink-400 text-[10px] font-bold uppercase tracking-wider">
-              Collab Request
-            </span>
-            <span className="text-[var(--color-text-muted)] text-[10px]">Los Angeles</span>
-          </div>
-          <h3 className="text-white font-bold text-[15px] mb-1">Looking for a Videographer</h3>
-          <p className="text-[var(--color-text-muted)] text-xs mb-3">
-            Shooting a music video this weekend. Need someone with a drone.
-          </p>
-          <div className="flex gap-2">
-            <button className="flex-1 py-2 bg-primary text-white font-bold text-xs rounded-xl">
-              Apply
-            </button>
-            <button className="px-4 py-2 bg-secondary text-white font-bold text-xs rounded-xl">
-              Message
-            </button>
-          </div>
-        </Card>
+        {opportunities.map((opp) => (
+          <Card key={opp.id} variant="glass" className="p-4 border-l-4 border-l-pink-500">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-pink-400 text-[10px] font-bold uppercase tracking-wider">
+                {opp.type || opp.role_type}
+              </span>
+              <span className="text-[var(--color-text-muted)] text-[10px]">
+                {opp.location_name || opp.location || "Remote"}
+              </span>
+            </div>
+            <h3 className="text-white font-bold text-[15px] mb-1">{opp.title}</h3>
+            <p className="text-[var(--color-text-muted)] text-xs mb-3 line-clamp-2">
+              {opp.description}
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => navigate("/opportunities")}
+                className="flex-1 py-2 bg-primary text-white font-bold text-xs rounded-xl"
+              >
+                Apply
+              </button>
+            </div>
+          </Card>
+        ))}
       </div>
     </div>
   );
@@ -319,17 +476,28 @@ function OpportunitiesSection() {
 // ─────────────────────────────────────────────
 // HOME PAGE
 // ─────────────────────────────────────────────
+import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
+
 export function Home() {
   const { profile } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshNotes, setRefreshNotes] = useState(0);
+
+  useEffect(() => {
+    if (profile) {
+      AnalyticsAI.trackEvent(profile.id, "page_view", "home");
+    }
+  }, [profile]);
 
   useEffect(() => {
     async function fetchNotes() {
       try {
         const { data, error } = await supabase
           .from("notes")
-          .select("*, profiles(*)")
+          .select(
+            "id, user_id, content, created_at, type, audio_url, duration_seconds, waveform_data, profiles(id, username, display_name, avatar_url)",
+          )
           .gt("created_at", new Date(Date.now() - 86400000).toISOString())
           .order("created_at", { ascending: false });
 
@@ -342,14 +510,19 @@ export function Home() {
       }
     }
     fetchNotes();
-  }, [profile]);
+  }, [profile, refreshNotes]);
 
   return (
     <div className="flex flex-col min-h-[100dvh] pb-32 pt-2">
       {/* 1. Stories */}
       <StoriesSection />
 
-      {/* 2. Active Voice Rooms */}
+      {/* 2. Composer */}
+      <div className="z-10 relative">
+        <Composer onNoteCreated={() => setRefreshNotes((prev) => prev + 1)} />
+      </div>
+
+      {/* 3. Active Voice Rooms */}
       <LiveRoomsBanner />
 
       {/* 3. People To Meet (Discovery Injected) */}

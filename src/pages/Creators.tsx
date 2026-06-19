@@ -7,44 +7,24 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/Tabs";
 
-const DUMMY_CREATORS = [
-  {
-    id: "1",
-    name: "Sarah Chen",
-    role: "Vocalist",
-    location: "Los Angeles",
-    followers: "12K",
-    image: "https://i.pravatar.cc/150?u=user_2",
-  },
-  {
-    id: "2",
-    name: "Marcus J.",
-    role: "Producer",
-    location: "New York",
-    followers: "8.5K",
-    image: "https://i.pravatar.cc/150?u=user_3",
-  },
-  {
-    id: "3",
-    name: "Elena R.",
-    role: "Video Editor",
-    location: "London",
-    followers: "24K",
-    image: "https://i.pravatar.cc/150?u=user_4",
-  },
-  {
-    id: "4",
-    name: "David Kim",
-    role: "Guitarist",
-    location: "Seoul",
-    followers: "45K",
-    image: "https://i.pravatar.cc/150?u=user_5",
-  },
-];
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export function Creators() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("trending");
+  const [creators, setCreators] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetchCreators() {
+      const { data } = await supabase
+        .from("creator_profiles")
+        .select("id, bio, location, verified, profiles(display_name, avatar_url, followers_count)")
+        .limit(20);
+      if (data) setCreators(data);
+    }
+    fetchCreators();
+  }, []);
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)] pb-28">
@@ -119,38 +99,45 @@ export function Creators() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            {DUMMY_CREATORS.map((creator) => (
-              <Card
-                key={creator.id}
-                variant="outline"
-                className="p-4 flex flex-col items-center text-center"
-              >
-                <div className="relative mb-3">
-                  <Avatar
-                    size={72}
-                    profile={{
-                      id: creator.id,
-                      display_name: creator.name,
-                      avatar_url: creator.image,
-                    }}
-                  />
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[var(--color-surface-2)] border border-[var(--color-border)] px-2 py-0.5 rounded-full text-[9px] font-bold text-[var(--color-text-muted)] flex items-center gap-0.5 whitespace-nowrap shadow-sm">
-                    <Star size={8} className="text-[#F59E0B]" fill="currentColor" />{" "}
-                    {creator.followers}
+            {creators.map((creator) => {
+              const profile = creator.profiles;
+              return (
+                <Card
+                  key={creator.id}
+                  variant="outline"
+                  className="p-4 flex flex-col items-center text-center cursor-pointer hover:border-white/20 transition-colors"
+                  onClick={() => navigate(`/profile/${creator.id}`)}
+                >
+                  <div className="relative mb-3">
+                    <Avatar
+                      size={72}
+                      profile={{
+                        id: creator.id,
+                        display_name: profile?.display_name || "Creator",
+                        avatar_url: profile?.avatar_url,
+                      }}
+                    />
+                    <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[var(--color-surface-2)] border border-[var(--color-border)] px-2 py-0.5 rounded-full text-[9px] font-bold text-[var(--color-text-muted)] flex items-center gap-0.5 whitespace-nowrap shadow-sm">
+                      <Star size={8} className="text-[#F59E0B]" fill="currentColor" />{" "}
+                      {profile?.followers_count || 0}
+                    </div>
                   </div>
-                </div>
 
-                <h3 className="text-white font-bold text-sm truncate w-full mb-0.5">
-                  {creator.name}
-                </h3>
-                <p className="text-[var(--color-primary)] text-xs font-bold truncate w-full mb-1">
-                  {creator.role}
-                </p>
-                <p className="text-[var(--color-text-muted)] text-[10px] truncate w-full flex items-center justify-center gap-1">
-                  <MapPin size={10} /> {creator.location}
-                </p>
-              </Card>
-            ))}
+                  <h3 className="text-white font-bold text-sm truncate w-full mb-0.5 flex items-center justify-center gap-1">
+                    {profile?.display_name || "Creator"}
+                    {creator.verified && (
+                      <span className="text-[var(--color-primary)] ml-1">✓</span>
+                    )}
+                  </h3>
+                  <p className="text-[var(--color-primary)] text-xs font-bold truncate w-full mb-1">
+                    Creator
+                  </p>
+                  <p className="text-[var(--color-text-muted)] text-[10px] truncate w-full flex items-center justify-center gap-1">
+                    <MapPin size={10} /> {creator.location || "Global"}
+                  </p>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </div>

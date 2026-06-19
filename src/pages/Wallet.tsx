@@ -1,14 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ArrowLeft, Gem, CreditCard, History, ChevronRight, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function Wallet() {
   const navigate = useNavigate();
-  const [balance] = useState(1250);
+  const { profile } = useAuth();
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<"topup" | "history">("topup");
+
+  useEffect(() => {
+    if (!profile) return;
+    async function loadWallet() {
+      const { data } = await supabase
+        .from("wallets")
+        .select("balance")
+        .eq("user_id", profile!.id)
+        .single();
+      if (data) setBalance(data.balance);
+
+      const { data: txs } = await supabase
+        .from("transactions")
+        .select("*")
+        .or(`sender_id.eq.${profile!.id},receiver_id.eq.${profile!.id}`)
+        .order("created_at", { ascending: false });
+      if (txs) setTransactions(txs);
+    }
+    loadWallet();
+  }, [profile]);
 
   const PACKAGES = [
     { coins: 100, price: "$0.99", bonus: 0 },
@@ -39,13 +64,17 @@ export function Wallet() {
             className="relative overflow-hidden rounded-[24px] p-8 text-center bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] shadow-[0_10px_40px_rgba(142,45,226,0.3)]"
           >
             <div className="relative z-10 flex flex-col items-center">
-              <span className="text-white/80 font-medium tracking-wide uppercase text-sm mb-2">Available Balance</span>
+              <span className="text-white/80 font-medium tracking-wide uppercase text-sm mb-2">
+                Available Balance
+              </span>
               <div className="flex items-center justify-center gap-2">
                 <Gem size={40} className="text-white drop-shadow-md" strokeWidth={1.5} />
-                <span className="text-5xl font-black text-white tracking-tight">{balance.toLocaleString()}</span>
+                <span className="text-5xl font-black text-white tracking-tight">
+                  {balance.toLocaleString()}
+                </span>
               </div>
             </div>
-            
+
             {/* Decorative background elements */}
             <div className="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
             <div className="absolute bottom-0 left-0 -ml-10 -mb-10 w-32 h-32 rounded-full bg-white/10 blur-2xl" />
@@ -57,7 +86,9 @@ export function Wallet() {
           <button
             onClick={() => setActiveTab("topup")}
             className={`flex-1 py-4 text-sm font-bold border-b-2 transition-colors ${
-              activeTab === "topup" ? "border-[var(--color-primary)] text-white" : "border-transparent text-[var(--color-text-muted)]"
+              activeTab === "topup"
+                ? "border-[var(--color-primary)] text-white"
+                : "border-transparent text-[var(--color-text-muted)]"
             }`}
           >
             Top Up
@@ -65,7 +96,9 @@ export function Wallet() {
           <button
             onClick={() => setActiveTab("history")}
             className={`flex-1 py-4 text-sm font-bold border-b-2 transition-colors ${
-              activeTab === "history" ? "border-[var(--color-primary)] text-white" : "border-transparent text-[var(--color-text-muted)]"
+              activeTab === "history"
+                ? "border-[var(--color-primary)] text-white"
+                : "border-transparent text-[var(--color-text-muted)]"
             }`}
           >
             History
@@ -101,7 +134,9 @@ export function Wallet() {
                       <div className="flex flex-col items-start">
                         <span className="text-white font-bold text-lg">{pkg.coins} Coins</span>
                         {pkg.bonus > 0 && (
-                          <span className="text-xs font-bold text-[#32CD32] uppercase tracking-wider">+{pkg.bonus} Bonus</span>
+                          <span className="text-xs font-bold text-[#32CD32] uppercase tracking-wider">
+                            +{pkg.bonus} Bonus
+                          </span>
                         )}
                       </div>
                     </div>
@@ -118,13 +153,54 @@ export function Wallet() {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <PremiumEmptyState
-                  icon={History}
-                  title="No Transactions Yet"
-                  description="Your gifting and top-up history will appear here."
-                  action={{ label: "Get Coins", onClick: () => setActiveTab("topup") }}
-                  glowColor="secondary"
-                />
+                {transactions.length === 0 ? (
+                  <PremiumEmptyState
+                    icon={History}
+                    title="No Transactions Yet"
+                    description="Your gifting and top-up history will appear here."
+                    action={{ label: "Get Coins", onClick: () => setActiveTab("topup") }}
+                    glowColor="secondary"
+                  />
+                ) : (
+                  <div className="space-y-3">
+                    {transactions.map((tx) => {
+                      const isSender = tx.sender_id === profile?.id;
+                      const sign = isSender ? "-" : "+";
+                      const color = isSender ? "text-red-400" : "text-green-400";
+                      const label =
+                        tx.type === "gift" ? (isSender ? "Sent Gift" : "Received Gift") : "Top Up";
+
+                      return (
+                        <div
+                          key={tx.id}
+                          className="flex items-center justify-between p-4 bg-[var(--color-surface-2)] rounded-2xl border border-[var(--color-border)]"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-10 h-10 rounded-full flex items-center justify-center bg-white/5`}
+                            >
+                              {tx.type === "gift" ? (
+                                <Gift size={18} className="text-[var(--color-primary)]" />
+                              ) : (
+                                <CreditCard size={18} className="text-[var(--color-primary)]" />
+                              )}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-white font-bold text-sm">{label}</span>
+                              <span className="text-xs text-[var(--color-text-muted)] font-medium">
+                                {new Date(tx.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+                          <span className={`font-bold text-base ${color}`}>
+                            {sign}
+                            {tx.amount}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

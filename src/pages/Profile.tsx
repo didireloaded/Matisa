@@ -22,6 +22,8 @@ import { Avatar } from "@/components/common/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/card";
+import { MessageService } from "@/services/messages";
+import { toast } from "sonner";
 
 export function Profile() {
   const { id } = useParams();
@@ -30,6 +32,7 @@ export function Profile() {
 
   const [activeTab, setActiveTab] = useState("notes");
   const [userProfile, setUserProfile] = useState<any>(null);
+  const [crewProfile, setCrewProfile] = useState<any>(null);
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -42,11 +45,13 @@ export function Profile() {
         { id: "voice", label: "Voice" },
         { id: "rooms", label: "Rooms" },
         { id: "saved", label: "Saved" },
+        { id: "crew", label: "Crew" },
       ]
     : [
         { id: "notes", label: "Notes" },
         { id: "voice", label: "Voice" },
         { id: "rooms", label: "Rooms" },
+        { id: "crew", label: "Crew" },
       ];
 
   const { fetchSavedPosts } = useSaves();
@@ -68,7 +73,9 @@ export function Profile() {
       try {
         const { data: profileData } = await supabase
           .from("profiles")
-          .select("*")
+          .select(
+            "id, username, display_name, avatar_url, bio, location, follower_count, following_count",
+          )
           .eq("id", targetId)
           .single();
 
@@ -76,11 +83,21 @@ export function Profile() {
 
         const { data: postsData } = await supabase
           .from("posts")
-          .select("*")
+          .select(
+            "id, user_id, content, created_at, image_url, likes_count, comments_count, media, shares_count, is_public, updated_at",
+          )
           .eq("user_id", targetId)
           .order("created_at", { ascending: false });
 
-        if (postsData) setPosts(postsData as Post[]);
+        if (postsData) setPosts(postsData as any as Post[]);
+
+        const { data: crewData } = await supabase
+          .from("crew_profiles")
+          .select("id, categories, availability, hourly_rate, portfolio_url")
+          .eq("id", targetId)
+          .single();
+
+        if (crewData) setCrewProfile(crewData);
       } catch (err) {
         console.error("Error loading profile:", err);
       } finally {
@@ -160,7 +177,18 @@ export function Profile() {
                       variant="glass"
                       size="sm"
                       className="h-8 text-xs font-semibold px-4"
-                      onClick={() => navigate("/messages")}
+                      onClick={async () => {
+                        try {
+                          const convId = await MessageService.getOrCreateConversation(
+                            currentUser?.id as string,
+                            targetId as string,
+                          );
+                          if (convId) navigate(`/messages/${convId}`);
+                          else toast.error("Could not start conversation");
+                        } catch (err) {
+                          toast.error("Failed to start conversation");
+                        }
+                      }}
                     >
                       Message
                     </Button>
@@ -188,13 +216,17 @@ export function Profile() {
               <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
                 Available
               </span>
-              <span className="px-3 py-1 bg-[var(--color-surface-2)] text-[var(--color-text-muted)] rounded-full uppercase tracking-wider text-[10px] font-bold flex items-center gap-1">
-                <MapPin size={10} />
-                Windhoek
-              </span>
-              <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
-                Vocalist
-              </span>
+              {userProfile.location && (
+                <span className="px-3 py-1 bg-[var(--color-surface-2)] text-[var(--color-text-muted)] rounded-full uppercase tracking-wider text-[10px] font-bold flex items-center gap-1">
+                  <MapPin size={10} />
+                  {userProfile.location}
+                </span>
+              )}
+              {userProfile.role && (
+                <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
+                  {userProfile.role}
+                </span>
+              )}
             </div>
 
             {/* Voice Intro */}
@@ -251,7 +283,78 @@ export function Profile() {
 
           {/* Content Feed */}
           <div className="px-5">
-            {posts.length === 0 ? (
+            {activeTab === "crew" ? (
+              <div className="space-y-4">
+                {crewProfile ? (
+                  <Card variant="solid" className="p-5">
+                    <h3 className="text-white font-bold text-lg mb-2">Crew Details</h3>
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
+                          Categories
+                        </span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {crewProfile.categories?.map((cat: string) => (
+                            <span
+                              key={cat}
+                              className="px-2 py-1 bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs rounded-lg font-semibold"
+                            >
+                              {cat}
+                            </span>
+                          )) || <span className="text-white/50 text-sm">None set</span>}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
+                          Availability
+                        </span>
+                        <p className="text-white text-sm capitalize">
+                          {crewProfile.availability || "Not specified"}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
+                          Hourly Rate
+                        </span>
+                        <p className="text-white text-sm">
+                          {crewProfile.hourly_rate
+                            ? `$${crewProfile.hourly_rate}/hr`
+                            : "Negotiable"}
+                        </p>
+                      </div>
+                      {crewProfile.portfolio_url && (
+                        <div>
+                          <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
+                            Portfolio
+                          </span>
+                          <a
+                            href={crewProfile.portfolio_url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block text-[var(--color-primary)] text-sm underline truncate"
+                          >
+                            {crewProfile.portfolio_url}
+                          </a>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ) : (
+                  <Card
+                    variant="solid"
+                    className="p-8 flex flex-col items-center justify-center text-center"
+                  >
+                    <Grid3X3 className="text-[var(--color-text-muted)] mb-3" size={24} />
+                    <h3 className="text-white font-bold mb-1">No Crew Profile</h3>
+                    <p className="text-[var(--color-text-muted)] text-sm">
+                      {isOwnProfile
+                        ? "Set up your crew profile in settings to get hired."
+                        : "This user hasn't set up a crew profile."}
+                    </p>
+                  </Card>
+                )}
+              </div>
+            ) : posts.length === 0 ? (
               <Card
                 variant="solid"
                 className="p-8 flex flex-col items-center justify-center text-center"

@@ -7,9 +7,9 @@ export const SearchAI = {
   async search(query: string, userId?: string) {
     try {
       const { data, error } = await supabase.functions.invoke("semanticSearch", {
-        body: { query, type: 'all', limit: 10 },
+        body: { query, type: "all", limit: 10 },
       });
-      
+
       if (!error && data) {
         return {
           query,
@@ -19,7 +19,7 @@ export const SearchAI = {
           },
           results: data.users || [],
           opportunities: data.opportunities || [],
-          notes: data.notes || []
+          notes: data.notes || [],
         };
       }
     } catch (err) {
@@ -52,7 +52,10 @@ export const SearchAI = {
     }
 
     // Mock search against profiles using the expanded intent
-    const { data: profiles } = await supabase.from("profiles").select("*").limit(10);
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, username, display_name, avatar_url, bio")
+      .limit(10);
 
     return {
       query,

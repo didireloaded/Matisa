@@ -18,6 +18,7 @@ export function Messages() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function loadConversations() {
@@ -58,6 +59,31 @@ export function Messages() {
           })
           .filter(Boolean);
         setConversations(convs);
+
+        // Fetch unread counts
+        const convIds = convs.map((c) => c.id);
+        if (convIds.length > 0) {
+          const { data: msgs } = await supabase
+            .from("messages")
+            .select("id, conversation_id")
+            .in("conversation_id", convIds)
+            .neq("sender_id", profile.id);
+
+          const { data: reads } = await supabase
+            .from("message_reads")
+            .select("message_id")
+            .eq("user_id", profile.id);
+
+          const readMsgIds = new Set(reads?.map((r) => r.message_id) || []);
+          const counts: Record<string, number> = {};
+
+          msgs?.forEach((m) => {
+            if (!readMsgIds.has(m.id)) {
+              counts[m.conversation_id] = (counts[m.conversation_id] || 0) + 1;
+            }
+          });
+          setUnreadCounts(counts);
+        }
       }
       setLoading(false);
     }
@@ -124,7 +150,11 @@ export function Messages() {
             <EmptyState
               icon={MessageSquare}
               title={search ? "No matches found" : "No messages yet"}
-              description={search ? "Try a different search term." : "Start a conversation by reaching out to someone."}
+              description={
+                search
+                  ? "Try a different search term."
+                  : "Start a conversation by reaching out to someone."
+              }
               glowColor="primary"
             />
           </div>
@@ -135,7 +165,7 @@ export function Messages() {
               const name = conv.group_name || other?.display_name || "User";
               const avatar =
                 other?.avatar_url || `https://api.dicebear.com/7.x/avataaars/svg?seed=${other?.id}`;
-              const unread = i === 0 ? 2 : 0; // Dummy logic for visual demo
+              const unread = unreadCounts[conv.id] || 0;
 
               return (
                 <motion.div

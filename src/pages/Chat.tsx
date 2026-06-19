@@ -27,6 +27,7 @@ export function Chat() {
   const [messages, setMessages] = useState<any[]>([]);
   const [otherUser, setOtherUser] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!profile || !id) return;
@@ -69,6 +70,18 @@ export function Chat() {
       await MessageService.sendTextMessage(id, profile.id, content);
     } catch (err) {
       toast.error("Failed to send message");
+    }
+  };
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !profile || !id) return;
+
+    // For simplicity, treating all files as images here.
+    try {
+      await MessageService.sendMediaMessage(id, profile.id, file, "image");
+    } catch (err) {
+      toast.error("Failed to upload image");
     }
   };
 
@@ -157,7 +170,15 @@ export function Chat() {
                       : "bg-[var(--color-surface-2)] text-white rounded-2xl rounded-bl-sm border border-[var(--color-border)]"
                   }`}
                 >
-                  {isVoice ? (
+                  {msg.kind === "image" ? (
+                    <div className="w-48 h-48 rounded-lg overflow-hidden">
+                      <img
+                        src={msg.media_url}
+                        alt="Sent image"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : isVoice ? (
                     <div className="w-48">
                       <VoicePlayer
                         audioUrl={msg.media_url}
@@ -214,7 +235,17 @@ export function Chat() {
               </motion.button>
             ) : (
               <motion.div key="actions" className="flex items-center gap-1">
-                <button className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-3)] hover:text-white transition-colors">
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  accept="image/*"
+                  className="hidden"
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-3)] hover:text-white transition-colors"
+                >
                   <ImageIcon size={20} />
                 </button>
                 <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]">

@@ -38,7 +38,30 @@ export function Activity() {
       setLoading(false);
     }
 
-    setTimeout(loadNotifs, 400); // UI delay for skeleton
+    if (profile) {
+      loadNotifs();
+
+      const subscription = supabase
+        .channel(`public:notifications:recipient_id=eq.${profile.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "notifications",
+            filter: `recipient_id=eq.${profile.id}`,
+          },
+          (payload) => {
+            // Re-fetch to get joined profile data easily
+            loadNotifs();
+          },
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(subscription);
+      };
+    }
   }, [profile]);
 
   return (

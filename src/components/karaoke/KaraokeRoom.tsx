@@ -27,6 +27,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useVoice } from "@/contexts/VoiceContext";
 import { supabase } from "@/lib/supabase";
+import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
 
 // MOCK: In a real app, this would use LiveKit logic. For this UI overhaul, we're building the aesthetic.
 export function KaraokeRoom() {
@@ -40,32 +41,77 @@ export function KaraokeRoom() {
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isGiftingOpen, setIsGiftingOpen] = useState(false);
   const [floatingGifts, setFloatingGifts] = useState<{ id: string; gift: GiftItem }[]>([]);
+  const [audience, setAudience] = useState<any[]>([]);
+  const [walletBalance, setWalletBalance] = useState(0);
 
-  const handleSendGift = (gift: GiftItem) => {
-    // Add floating animation
-    const id = Math.random().toString(36).substr(2, 9);
-    setFloatingGifts((prev) => [...prev, { id, gift }]);
-    setTimeout(() => {
-      setFloatingGifts((prev) => prev.filter((g) => g.id !== id));
-    }, 2000);
+  const handleSendGift = async (gift: GiftItem) => {
+    if (!profile) return;
+    const recipientId = roomData?.profiles?.id;
+    if (!recipientId) return;
+
+    try {
+      const { data, error } = await supabase.rpc("send_gift", {
+        p_sender_id: profile.id,
+        p_receiver_id: recipientId,
+        p_amount: gift.cost,
+      });
+
+      if (error) throw error;
+
+      setWalletBalance((prev) => prev - gift.cost);
+      AnalyticsAI.trackEvent(profile.id, "send_gift", recipientId, {
+        amount: gift.cost,
+        gift_name: gift.name,
+      });
+
+      // Add floating animation
+      const id = Math.random().toString(36).substr(2, 9);
+      setFloatingGifts((prev) => [...prev, { id, gift }]);
+      setTimeout(() => {
+        setFloatingGifts((prev) => prev.filter((g) => g.id !== id));
+      }, 2000);
+    } catch (err) {
+      console.error("Failed to send gift:", err);
+    }
   };
 
   useEffect(() => {
     if (!roomId) return;
     async function loadRoom() {
+      if (profile) {
+        AnalyticsAI.trackEvent(profile.id, "join_room", roomId);
+
+        const { data: walletData } = await supabase
+          .from("wallets")
+          .select("balance")
+          .eq("user_id", profile.id)
+          .single();
+        if (walletData) setWalletBalance(walletData.balance);
+      }
+
       const { data } = await supabase
         .from("voice_rooms")
         .select("*, profiles(*)")
         .eq("id", roomId)
         .single();
-      
+
       if (data) {
         setRoomData(data);
         joinRoom(roomId as string, data.title);
       }
+
+      // Load participants
+      const { data: participantsData } = await supabase
+        .from("karaoke_participants")
+        .select("*, profiles(*)")
+        .eq("room_id", roomId);
+
+      if (participantsData) {
+        setAudience(participantsData);
+      }
     }
     loadRoom();
-  }, [roomId]);
+  }, [roomId, profile]);
 
   const handleLeave = () => {
     leaveRoom();
@@ -73,8 +119,10 @@ export function KaraokeRoom() {
   };
 
   const room = {
-    performers: roomData?.profiles ? [roomData.profiles] : [{ id: "speaker", display_name: "Loading...", avatar_url: "" }],
-    host: roomData?.profiles || { id: "host", display_name: "Loading...", avatar_url: "" }
+    performers: roomData?.profiles
+      ? [roomData.profiles]
+      : [{ id: "speaker", display_name: "Loading...", avatar_url: "" }],
+    host: roomData?.profiles || { id: "host", display_name: "Loading...", avatar_url: "" },
   };
 
   return (
@@ -95,7 +143,9 @@ export function KaraokeRoom() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="font-bold text-lg leading-tight">{roomData?.title || "Creator Lounge"}</h1>
+            <h1 className="font-bold text-lg leading-tight">
+              {roomData?.title || "Creator Lounge"}
+            </h1>
             <p className="text-[11px] font-bold text-[#00E5FF] uppercase tracking-wider flex items-center gap-1 mt-0.5">
               <span className="w-1.5 h-1.5 rounded-full bg-[#00E5FF] animate-pulse" /> Live Now
             </p>
@@ -156,7 +206,9 @@ export function KaraokeRoom() {
                   </p>
                   <div className="flex items-center justify-center gap-1 mt-1 bg-white/10 rounded-full px-2 py-0.5 border border-white/10">
                     <Star size={10} className="text-yellow-400 fill-current" />
-                    <span className="text-[10px] font-bold text-white tracking-widest uppercase">Performer</span>
+                    <span className="text-[10px] font-bold text-white tracking-widest uppercase">
+                      Performer
+                    </span>
                   </div>
                 </div>
               </motion.div>
@@ -166,21 +218,25 @@ export function KaraokeRoom() {
 
         {/* Audience Grid */}
         <div className="grid grid-cols-4 gap-4 max-w-[300px] mx-auto absolute bottom-24 w-full left-1/2 -translate-x-1/2">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5">
+          {audience.map((participant) => (
+            <div key={participant.id} className="flex flex-col items-center gap-1.5">
               <Avatar
                 size={48}
                 profile={{
-                  id: `${i}`,
-                  display_name: `User ${i}`,
-                  avatar_url: `https://i.pravatar.cc/150?u=${i}`,
+                  id: participant.profiles?.id || participant.user_id,
+                  display_name:
+                    participant.profiles?.display_name || participant.profiles?.username || "User",
+                  avatar_url: participant.profiles?.avatar_url || "",
                 }}
               />
               <span className="text-[10px] text-white/70 font-semibold truncate max-w-full">
-                User {i}
+                {participant.profiles?.display_name || participant.profiles?.username || "User"}
               </span>
             </div>
           ))}
+          {audience.length === 0 && (
+            <div className="col-span-4 text-center text-white/40 text-xs">No audience yet.</div>
+          )}
         </div>
       </div>
 
@@ -225,7 +281,7 @@ export function KaraokeRoom() {
         isOpen={isGiftingOpen}
         onClose={() => setIsGiftingOpen(false)}
         recipient={room.performers[0] || room.host}
-        balance={1250} // Mock balance
+        balance={walletBalance}
         onSendGift={handleSendGift}
       />
     </div>

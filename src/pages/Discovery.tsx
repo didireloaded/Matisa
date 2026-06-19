@@ -76,20 +76,22 @@ export function Discovery() {
           const [pRes, postRes] = await Promise.all([
             supabase
               .from("profiles")
-              .select("*")
+              .select("id, username, display_name, avatar_url, bio")
               .or(
                 `username.ilike.%${query.replace(/[,"%]/g, "")}%,display_name.ilike.%${query.replace(/[,"%]/g, "")}%`,
               )
               .limit(5),
             supabase
               .from("posts")
-              .select("*, profiles!posts_user_id_fkey(*)")
+              .select(
+                "id, user_id, content, created_at, image_url, likes_count, comments_count, media, shares_count, is_public, updated_at, profiles!posts_user_id_fkey(id, username, display_name, avatar_url)",
+              )
               .ilike("content", `%${query}%`)
               .order("created_at", { ascending: false })
               .limit(10),
           ]);
-          setSearchProfiles((pRes.data ?? []) as Profile[]);
-          setSearchPosts((postRes.data ?? []) as Post[]);
+          setSearchProfiles((pRes.data ?? []) as any as Profile[]);
+          setSearchPosts((postRes.data ?? []) as any as Post[]);
         }
       } catch (err) {
         console.error("Search error:", err);
