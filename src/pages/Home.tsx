@@ -24,6 +24,7 @@ import type { Profile } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { timeAgo } from "@/lib/utils";
+import { useNotes } from "@/hooks/useNotes";
 import { LiveRoomsBanner } from "@/components/voice/LiveRoomsBanner";
 import { StoryService } from "@/services/stories";
 import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
@@ -132,7 +133,7 @@ function StoriesSection() {
 // ─────────────────────────────────────────────
 // COMPOSER
 // ─────────────────────────────────────────────
-function Composer({ onNoteCreated }: { onNoteCreated: () => void }) {
+function Composer({ onSubmit, onNoteCreated }: { onSubmit: (c: string) => Promise<any>, onNoteCreated: () => void }) {
   const { profile } = useAuth();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -143,16 +144,11 @@ function Composer({ onNoteCreated }: { onNoteCreated: () => void }) {
     if (!content.trim() || !profile || loading) return;
     setLoading(true);
     try {
-      const { error } = await supabase.from("notes").insert({
-        user_id: profile.id,
-        content: content.trim(),
-      });
-      if (error) throw error;
+      await onSubmit(content.trim());
       toast.success("Note dropped!");
       setContent("");
-      onNoteCreated();
     } catch (err: any) {
-      toast.error(err.message || "Failed to post note");
+      // Error is handled in the hook
     } finally {
       setLoading(false);
     }
@@ -253,15 +249,32 @@ function ComposerAction({
   );
 }
 
-// ─────────────────────────────────────────────
-// FEED CARD
-// ─────────────────────────────────────────────
-function FeedCard({ note }: { note: Note }) {
-  const [reacted, setReacted] = useState(false);
+import { useNoteReaction } from "@/hooks/useNoteReaction";
+
+function FeedCard({ 
+  note, 
+  onDelete,
+  onEdit 
+}: { 
+  note: Note; 
+  onDelete?: (id: string) => void;
+  onEdit?: (id: string, newContent: string) => void;
+}) {
+  const { profile } = useAuth();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editContent, setEditContent] = useState(note.content);
+  
+  const { reacted, counts, toggleReaction } = useNoteReaction(
+    note.id, 
+    note.reaction_count || 0
+  );
+  const hasReacted = reacted === "heart";
   const timeString = new Date(note.created_at).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
+  const isOwner = profile?.id === note.user_id;
 
   return (
     <Card variant="glass" className="mx-5 mb-5 p-5">
@@ -287,25 +300,101 @@ function FeedCard({ note }: { note: Note }) {
             </span>
           </div>
         </div>
-        <button className="text-[var(--color-text-muted)] hover:text-white transition-colors">
-          <svg
-            width="20"
-            height="20"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="relative">
+          <button 
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="text-[var(--color-text-muted)] hover:text-white transition-colors p-2"
           >
-            <circle cx="12" cy="12" r="1" />
-            <circle cx="19" cy="12" r="1" />
-            <circle cx="5" cy="12" r="1" />
-          </svg>
-        </button>
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="1" />
+              <circle cx="19" cy="12" r="1" />
+              <circle cx="5" cy="12" r="1" />
+            </svg>
+          </button>
+          
+          <AnimatePresence>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="absolute right-0 top-full mt-1 w-32 bg-[#1A1A1A] border border-[#333] rounded-xl shadow-xl z-50 overflow-hidden"
+                >
+                  {isOwner && onEdit && (
+                    <button 
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setIsEditing(true);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      Edit Note
+                    </button>
+                  )}
+                  {isOwner && onDelete && (
+                    <button 
+                      onClick={() => {
+                        setMenuOpen(false);
+                        onDelete(note.id);
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-[#2A2A2A] transition-colors"
+                    >
+                      Delete Note
+                    </button>
+                  )}
+                  <button className="w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-[#2A2A2A] transition-colors">
+                    Report
+                  </button>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
 
-      {note.type === "voice" && note.audio_url ? (
+      {isEditing ? (
+        <div className="mt-3 mb-4">
+          <textarea
+            value={editContent}
+            onChange={(e) => setEditContent(e.target.value)}
+            className="w-full bg-[#1A1A1A] text-white border border-[#333] rounded-xl p-3 text-[15px] focus:outline-none focus:border-[var(--color-primary)] transition-colors"
+            rows={3}
+          />
+          <div className="flex justify-end gap-2 mt-2">
+            <button 
+              onClick={() => {
+                setIsEditing(false);
+                setEditContent(note.content);
+              }}
+              className="px-4 py-1.5 rounded-full text-sm font-bold text-white bg-[#2A2A2A] hover:bg-[#333] transition-colors"
+            >
+              Cancel
+            </button>
+            <button 
+              onClick={() => {
+                if (editContent.trim() && onEdit) {
+                  onEdit(note.id, editContent.trim());
+                  setIsEditing(false);
+                }
+              }}
+              className="px-4 py-1.5 rounded-full text-sm font-bold text-white bg-primary hover:bg-pink-600 transition-colors"
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      ) : note.type === "voice" && note.audio_url ? (
         <VoicePlayer
           audioUrl={note.audio_url}
           duration={note.duration_seconds ? `0:${note.duration_seconds}` : "0:18"}
@@ -319,34 +408,11 @@ function FeedCard({ note }: { note: Note }) {
         <motion.button
           whileHover={{ scale: 1.1 }}
           whileTap={{ scale: 0.9 }}
-          onClick={() => setReacted(!reacted)}
-          className={`flex items-center gap-1.5 ${reacted ? "text-pink-500" : "text-[var(--color-text-muted)]"} hover:text-pink-500 transition-colors`}
+          onClick={() => toggleReaction("heart")}
+          className={`flex items-center gap-1.5 ${hasReacted ? "text-pink-500" : "text-[var(--color-text-muted)]"} hover:text-pink-500 transition-colors`}
         >
-          <Heart size={18} className={reacted ? "fill-current" : ""} />
-          <span className="text-[12px] font-bold">{reacted ? 25 : 24}</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors"
-        >
-          <MessageCircle size={18} />
-          <span className="text-[12px] font-bold">Reply</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-purple-400 transition-colors"
-        >
-          <Mic size={18} />
-          <span className="text-[12px] font-bold">Voice Reply</span>
-        </motion.button>
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-1.5 text-[var(--color-text-muted)] hover:text-white transition-colors ml-auto bg-surface-2 px-3 py-1.5 rounded-full"
-        >
-          <span className="text-[12px] font-bold">Join Discussion</span>
+          <Heart size={18} className={hasReacted ? "fill-current" : ""} />
+          <span className="text-[12px] font-bold">{counts.heart}</span>
         </motion.button>
       </div>
     </Card>
@@ -423,7 +489,7 @@ function OpportunitiesSection() {
     async function loadOpp() {
       const { data } = await supabase
         .from("opportunities")
-        .select("id, type, role_type, location_name, location, title, description")
+        .select("id, type, role_needed, location_name, location, title, description")
         .order("created_at", { ascending: false })
         .limit(3);
       if (data) setOpportunities(data);
@@ -481,37 +547,13 @@ import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
 
 export function Home() {
   const { profile } = useAuth();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshNotes, setRefreshNotes] = useState(0);
+  const { notes, loading, createNote, deleteNote, editNote, refreshNotes } = useNotes();
 
   useEffect(() => {
     if (profile) {
       AnalyticsAI.trackEvent(profile.id, "page_view", "home");
     }
   }, [profile]);
-
-  useEffect(() => {
-    async function fetchNotes() {
-      try {
-        const { data, error } = await supabase
-          .from("notes")
-          .select(
-            "id, user_id, content, created_at, type, audio_url, duration_seconds, waveform_data, profiles(id, username, display_name, avatar_url)",
-          )
-          .gt("created_at", new Date(Date.now() - 86400000).toISOString())
-          .order("created_at", { ascending: false });
-
-        if (error) throw error;
-        setNotes((data as any[]) || []);
-      } catch (e) {
-        console.warn("Failed to fetch notes", e);
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchNotes();
-  }, [profile, refreshNotes]);
 
   return (
     <div className="flex flex-col min-h-[100dvh] pb-32 pt-2">
@@ -520,7 +562,10 @@ export function Home() {
 
       {/* 2. Composer */}
       <div className="z-10 relative">
-        <Composer onNoteCreated={() => setRefreshNotes((prev) => prev + 1)} />
+        <Composer 
+          onSubmit={(content) => createNote(content, "text")}
+          onNoteCreated={refreshNotes} 
+        />
       </div>
 
       {/* 3. Active Voice Rooms */}
@@ -569,7 +614,7 @@ export function Home() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <FeedCard note={note} />
+                <FeedCard note={note} onDelete={deleteNote} onEdit={editNote} />
               </motion.div>
             ))}
           </div>

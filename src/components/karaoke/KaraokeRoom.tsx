@@ -24,7 +24,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { KaraokeService } from "@/services/karaoke";
 import type { UserProfile } from "@/types";
 import { Avatar } from "@/components/common/Avatar";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { useVoice } from "@/contexts/VoiceContext";
 import { supabase } from "@/lib/supabase";
 import { AnalyticsAI } from "@/services/ai/AnalyticsAI";

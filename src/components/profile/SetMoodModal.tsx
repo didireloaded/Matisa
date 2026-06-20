@@ -47,8 +47,11 @@ export function SetMoodModal({ isOpen, onClose, currentMood }: SetMoodModalProps
       await supabase.from("profiles").update({ mood: null }).eq("id", user.id);
       onClose();
       window.location.reload();
-    } catch (err) {}
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error("Error clearing mood:", err);
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -67,11 +70,11 @@ export function SetMoodModal({ isOpen, onClose, currentMood }: SetMoodModalProps
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="w-full max-w-md bg-[#151515] rounded-t-3xl sm:rounded-3xl p-6 relative z-10 border border-white/10"
+            className="w-full max-w-md bg-[var(--color-surface-2)] rounded-t-3xl sm:rounded-3xl p-6 relative z-10 border border-[var(--color-border)]"
           >
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Smile className="text-[#FF9D2E]" /> Set Your Vibe
+                <Smile className="text-[var(--color-primary)]" /> Set Your Vibe
               </h2>
               <button onClick={onClose} className="p-2 bg-white/5 rounded-full text-white/50 hover:text-white">
                 <X size={20} />
@@ -84,7 +87,7 @@ export function SetMoodModal({ isOpen, onClose, currentMood }: SetMoodModalProps
                 value={moodText}
                 onChange={(e) => setMoodText(e.target.value.slice(0, 40))}
                 placeholder="What's your vibe right now? (e.g. 🎶 Jamming)"
-                className="w-full bg-[#0B0B0B] border border-white/10 rounded-2xl p-4 text-white placeholder-white/30 focus:outline-none focus:border-[#FF9D2E]"
+                className="w-full bg-[var(--color-background)] border border-[var(--color-border)] rounded-2xl p-4 text-white placeholder-white/30 focus:outline-none focus:border-[var(--color-primary)]"
                 maxLength={40}
               />
 

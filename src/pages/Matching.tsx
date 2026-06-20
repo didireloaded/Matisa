@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Heart, MessageCircle, Star, Music, Mic, Award } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 const DUMMY_PROFILES = [
   {

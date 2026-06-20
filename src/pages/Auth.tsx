@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { User, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 export function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,7 +23,13 @@ export function Auth() {
           email,
           password,
         });
-        if (error) throw error;
+        if (error) {
+          // If it's a generic "Invalid login credentials", give a hint
+          if (error.message === "Invalid login credentials") {
+            throw new Error("Invalid login credentials. Have you confirmed your email address?");
+          }
+          throw error;
+        }
         toast.success("Welcome back!");
         navigate("/");
       } else {
@@ -33,16 +39,14 @@ export function Auth() {
         });
         if (error) throw error;
 
-        if (data.user) {
-          const { error: profileError } = await supabase.from("profiles").upsert({
-            id: data.user.id,
-            username: email.split("@")[0],
-          });
-          if (profileError) console.error("Profile creation error:", profileError);
+        // If email confirmation is required, session will be null
+        if (data.user && !data.session) {
+          toast.success("Account created! Please check your email to confirm your account.");
+          // Do not navigate to / yet, since they can't log in
+        } else {
+          toast.success("Account created! Welcome to Matisa.");
+          navigate("/");
         }
-
-        toast.success("Account created! Welcome to Matisa.");
-        navigate("/");
       }
     } catch (error: any) {
       toast.error(error.message);

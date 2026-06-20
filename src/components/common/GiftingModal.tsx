@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Gem, Heart, Star, Sparkles, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/common/Avatar";
 import type { UserProfile } from "@/types";
 

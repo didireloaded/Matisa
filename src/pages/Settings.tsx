@@ -5,7 +5,7 @@ import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/common/Avatar";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 export function Settings() {
   const navigate = useNavigate();

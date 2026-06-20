@@ -20,7 +20,7 @@ import {
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/common/Avatar";
 import { Card } from "@/components/ui/card";
 

@@ -36,8 +36,34 @@ export function useNoteReaction(
       }
     }
     fetchReaction();
+
+    const channel = supabase
+      .channel(`public:note_reactions:${noteId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "note_reactions", filter: `note_id=eq.${noteId}` },
+        (payload) => {
+          const type = payload.new.reaction_type as ReactionType;
+          if (payload.new.user_id !== profile?.id) {
+            setCounts((prev) => ({ ...prev, [type]: prev[type] + 1 }));
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "DELETE", schema: "public", table: "note_reactions", filter: `note_id=eq.${noteId}` },
+        (payload) => {
+          const type = payload.old.reaction_type as ReactionType;
+          if (payload.old.user_id !== profile?.id && type) {
+            setCounts((prev) => ({ ...prev, [type]: Math.max(0, prev[type] - 1) }));
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       mounted = false;
+      supabase.removeChannel(channel);
     };
   }, [noteId, profile?.id]);
 
@@ -79,6 +105,25 @@ export function useNoteReaction(
           reaction_type: type,
         });
         Analytics.track("Note Reacted", { noteId, type });
+
+        // Fetch note author to send notification
+        const { data: noteData } = await supabase
+          .from("notes")
+          .select("user_id, content")
+          .eq("id", noteId)
+          .single();
+
+        if (noteData && noteData.user_id !== profile.id) {
+          // Direct insert since Activity reads from 'notifications' table
+          await supabase.from("notifications").insert({
+            recipient_id: noteData.user_id,
+            actor_id: profile.id,
+            type: "like",
+            related_id: noteId,
+            title: "New Reaction",
+            message: `Someone reacted to your note: "${noteData.content?.substring(0, 30) || 'voice note'}..."`,
+          });
+        }
       }
     } catch (err) {
       console.error("Failed to toggle reaction", err);

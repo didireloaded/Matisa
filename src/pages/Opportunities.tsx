@@ -34,7 +34,7 @@ export function Opportunities() {
       try {
         const { data, error } = await supabase
           .from("opportunities")
-          .select("*, profiles!opportunities_creator_id_fkey(*)")
+          .select("*, profiles(*)")
           .order("created_at", { ascending: false });
         if (error) throw error;
         setOpportunities(data || []);
@@ -71,8 +71,8 @@ export function Opportunities() {
       ? opportunities
       : opportunities.filter(
           (o) =>
-            (o.type || o.role_type).toLowerCase().includes(activeTab) ||
-            (o.role_type && o.role_type.toLowerCase().includes(activeTab)),
+            (o.type || o.role_needed).toLowerCase().includes(activeTab) ||
+            (o.role_needed && o.role_needed.toLowerCase().includes(activeTab)),
         );
 
   return (
@@ -150,9 +150,9 @@ export function Opportunities() {
               {/* Colored left border indicator based on type */}
               <div
                 className={`absolute left-0 top-0 bottom-0 w-1 ${
-                  opp.type === "Gig" || opp.role_type === "Gig"
+                  opp.type === "Gig" || opp.role_needed === "Gig"
                     ? "bg-[#00E5FF]"
-                    : opp.type === "Collaboration" || opp.role_type === "Collaboration"
+                    : opp.type === "Collaboration" || opp.role_needed === "Collaboration"
                       ? "bg-[#8B5CF6]"
                       : "bg-[#FF416C]"
                 }`}
@@ -162,14 +162,14 @@ export function Opportunities() {
                 <div className="flex gap-2">
                   <span
                     className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                      opp.type === "Gig" || opp.role_type === "Gig"
+                      opp.type === "Gig" || opp.role_needed === "Gig"
                         ? "bg-[#00E5FF]/20 text-[#00E5FF]"
-                        : opp.type === "Collaboration" || opp.role_type === "Collaboration"
+                        : opp.type === "Collaboration" || opp.role_needed === "Collaboration"
                           ? "bg-[#8B5CF6]/20 text-[#8B5CF6]"
                           : "bg-[#FF416C]/20 text-[#FF416C]"
                     }`}
                   >
-                    {opp.type || opp.role_type}
+                    {opp.type || opp.role_needed}
                   </span>
                 </div>
                 <button className="text-[var(--color-text-muted)] hover:text-white transition">

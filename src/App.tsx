@@ -32,7 +32,7 @@ const Wallet = lazy(() => import("./pages/Wallet").then((m) => ({ default: m.Wal
 function PageLoader() {
   return (
     <div className="flex h-[50vh] w-full items-center justify-center">
-      <Loader2 className="h-8 w-8 animate-spin text-[#C8521A]" />
+      <Loader2 className="h-8 w-8 animate-spin text-[var(--color-primary)]" />
     </div>
   );
 }
@@ -45,12 +45,12 @@ function ErrorFallback({
   resetErrorBoundary?: () => void;
 }) {
   return (
-    <div className="flex h-screen w-full flex-col items-center justify-center bg-[#0F0D0B] p-6 text-center text-[#F5F0EA]">
+    <div className="flex h-screen w-full flex-col items-center justify-center bg-[var(--color-background)] p-6 text-center text-white">
       <h2 className="mb-4 text-2xl font-bold text-red-500">Something went wrong</h2>
-      <p className="mb-6 text-sm text-[#8A7F74]">{error.message}</p>
+      <p className="mb-6 text-sm text-[var(--color-text-muted)]">{error.message}</p>
       <button
         onClick={resetErrorBoundary || (() => window.location.reload())}
-        className="rounded-full bg-[#C8521A] px-6 py-2 font-bold text-white transition hover:bg-[#E8A055]"
+        className="rounded-full bg-[var(--color-primary)] px-6 py-2 font-bold text-white transition hover:opacity-90"
       >
         Reload Page
       </button>

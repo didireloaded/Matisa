@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send } from "lucide-react";
 import { Button } from "@/components/common/Button";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { NoteService } from "@/services/NoteService";
 import { Avatar } from "@/components/common/Avatar";
 
 interface CreateNoteModalProps {
@@ -22,22 +23,23 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
   const charsLeft = charLimit - content.length;
   const isOverLimit = charsLeft < 0;
 
-  if (!profile) return null;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, []);
+
+  if (!profile || !mounted) return null;
 
   const handleSubmit = async () => {
     if (!content.trim() || isOverLimit || !profile) return;
 
     setLoading(true);
     try {
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 24);
+      const newNote = await NoteService.createNote(profile.id, content.trim());
 
-      const { error } = await supabase.from("notes").insert({
-        user_id: profile.id,
-        content: content.trim(),
-      });
-
-      if (error) throw error;
+      if (!newNote) throw new Error("Failed to create note in database.");
 
       toast.success("Note dropped! It'll disappear in 24h.");
       setContent("");
@@ -50,7 +52,7 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
@@ -114,6 +116,7 @@ export function CreateNoteModal({ open, onClose, onSuccess }: CreateNoteModalPro
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
