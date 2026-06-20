@@ -25,14 +25,20 @@ export function VoicePlayer({
     }
   }, [autoPlay]);
 
-  const togglePlayback = () => {
+  const togglePlayback = async () => {
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error("Audio playback failed:", err);
+        setIsPlaying(false);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {

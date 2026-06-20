@@ -1,5 +1,16 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, LogOut, Bell, Shield, Key, Moon, HelpCircle, Ghost, Gem, ChevronRight } from "lucide-react";
+import {
+  ArrowLeft,
+  LogOut,
+  Bell,
+  Shield,
+  Key,
+  Moon,
+  HelpCircle,
+  Ghost,
+  Gem,
+  ChevronRight,
+} from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
@@ -81,30 +92,6 @@ export function Settings() {
 
         {/* Preferences */}
         <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider px-2">
-            Wallet & Economics
-          </h3>
-          <Card
-            variant="solid"
-            className="overflow-hidden p-0 mb-6 cursor-pointer hover:bg-[var(--color-surface-3)] transition-colors"
-          >
-            <button
-              onClick={() => navigate("/wallet")}
-              className="w-full flex items-center justify-between p-4"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-[var(--color-primary)]/10 flex items-center justify-center">
-                  <Gem size={16} className="text-[var(--color-primary)]" />
-                </div>
-                <div className="flex flex-col items-start">
-                  <span className="font-bold text-white text-[15px]">My Wallet</span>
-                  <span className="text-[12px] font-medium text-[var(--color-text-muted)]">Manage your coins and gifts</span>
-                </div>
-              </div>
-              <ChevronRight size={20} className="text-[var(--color-text-muted)]" />
-            </button>
-          </Card>
-
           <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider px-2">
             Preferences
           </h3>

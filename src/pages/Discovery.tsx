@@ -14,8 +14,6 @@ import { Button } from "@/components/ui/button";
 
 const CATEGORIES = [
   { id: "People", label: "People" },
-  { id: "Creators", label: "Creators" },
-  { id: "Opportunities", label: "Opportunities" },
   { id: "Rooms", label: "Rooms" },
   { id: "Events", label: "Events" },
   { id: "Voice", label: "Voice" },
@@ -258,48 +256,6 @@ export function Discovery() {
               </div>
             )}
 
-            {activeCategory === "Creators" && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#A855F7]" />
-                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
-                    <Users className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Discover Creators</h3>
-                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
-                  Find talented musicians, producers, and artists in the community.
-                </p>
-                <button
-                  onClick={() => navigate("/creators")}
-                  className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
-                >
-                  Browse Creators
-                </button>
-              </div>
-            )}
-
-            {activeCategory === "Opportunities" && (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#FF416C]" />
-                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
-                    <Search className="w-8 h-8 text-white" />
-                  </div>
-                </div>
-                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Find Opportunities</h3>
-                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
-                  Explore gigs, collaborations, and jobs from the creative community.
-                </p>
-                <button
-                  onClick={() => navigate("/opportunities")}
-                  className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
-                >
-                  View Opportunities
-                </button>
-              </div>
-            )}
-
             {activeCategory === "Rooms" && (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <div className="relative mb-6">
@@ -323,7 +279,9 @@ export function Discovery() {
                     <MapPin className="w-8 h-8 text-white" />
                   </div>
                 </div>
-                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Upcoming Events</h3>
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">
+                  Upcoming Events
+                </h3>
                 <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
                   Events from creators and the community will show here.
                 </p>

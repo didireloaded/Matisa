@@ -3,6 +3,7 @@ import { Heart, MessageCircle, Bookmark, Send, Play, Pause } from "lucide-react"
 import { toast } from "sonner";
 import { Avatar } from "@/components/common/Avatar";
 import { useSaves } from "@/hooks/useSaves";
+import { useAuth } from "@/contexts/AuthContext";
 import type { Post } from "@/types";
 
 export function RichPostCard({
@@ -18,6 +19,7 @@ export function RichPostCard({
   const [likes, setLikes] = useState(post.likes_count ?? 0);
   const { toggleSave, checkIsSaved } = useSaves();
   const [isSaved, setIsSaved] = useState(false);
+  const { profile, requireAuth } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -30,6 +32,7 @@ export function RichPostCard({
   }, [post.id, checkIsSaved]);
 
   const handleLike = () => {
+    if (!profile) return requireAuth();
     const newLiked = !liked;
     setLiked(newLiked);
     setLikes((prev: number) => (newLiked ? prev + 1 : prev - 1));
@@ -37,10 +40,16 @@ export function RichPostCard({
   };
 
   const handleSave = async () => {
+    if (!profile) return requireAuth();
     const newSaved = !isSaved;
     setIsSaved(newSaved); // optimistic
     const success = await toggleSave(post.id, isSaved);
     if (!success) setIsSaved(!newSaved); // revert on failure
+  };
+
+  const handleComment = () => {
+    if (!profile) return requireAuth();
+    onComment();
   };
 
   // Audio Player State
@@ -68,16 +77,22 @@ export function RichPostCard({
     };
   }, [post]);
 
-  const toggleAudio = (e: React.MouseEvent) => {
+  const toggleAudio = async (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!audioRef.current) return;
 
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (err) {
+        console.error("Audio playback failed:", err);
+        setIsPlaying(false);
+      }
     }
-    setIsPlaying(!isPlaying);
   };
 
   const Waveform = () => (
@@ -181,7 +196,7 @@ export function RichPostCard({
           </button>
 
           <button
-            onClick={onComment}
+            onClick={handleComment}
             className="flex items-center gap-2 group active:scale-95 transition-transform"
           >
             <MessageCircle className="w-5 h-5 text-white/50 group-hover:text-white transition" />

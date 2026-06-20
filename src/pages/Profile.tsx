@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MessageService } from "@/services/messages";
 import { toast } from "sonner";
+import { EditProfileModal } from "@/components/profile/EditProfileModal";
 
 export function Profile() {
   const { id } = useParams();
@@ -121,7 +122,9 @@ export function Profile() {
             <div className="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] via-[#EC4899] to-[#FF416C]" />
             <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-background)] via-transparent to-transparent" />
             <div className="absolute bottom-6 left-0 right-0 text-center">
-              <h1 className="text-white text-3xl font-display font-bold tracking-tight mb-1">Matisa</h1>
+              <h1 className="text-white text-3xl font-display font-bold tracking-tight mb-1">
+                Matisa
+              </h1>
               <p className="text-white/70 text-sm font-medium">Namibia's Creative Platform</p>
             </div>
           </div>
@@ -206,11 +209,11 @@ export function Profile() {
 
               <div className="flex gap-2 mb-2">
                 {isOwnProfile ? (
-                  <Link to="/settings">
+                  <EditProfileModal>
                     <Button variant="glass" size="sm" className="h-8 text-xs font-semibold px-4">
                       Edit Profile
                     </Button>
-                  </Link>
+                  </EditProfileModal>
                 ) : (
                   <>
                     <FollowButton userId={targetId as string} />

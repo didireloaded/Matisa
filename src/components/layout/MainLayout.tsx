@@ -14,6 +14,7 @@ import { CreateLiveStreamModal } from "@/components/live/CreateLiveStreamModal";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { toast } from "sonner";
 import { FloatingVoicePlayer } from "@/components/voice/FloatingVoicePlayer";
+import { AuthRequiredModal } from "@/components/auth/AuthRequiredModal";
 
 // ─────────────────────────────────────────────
 // TOP BAR
@@ -45,7 +46,10 @@ function TopBar() {
 
       {/* Right actions */}
       <div className="flex items-center gap-5">
-        <button className="text-white hover:text-[var(--color-primary-light)] transition-colors">
+        <button
+          onClick={() => navigate("/discovery")}
+          className="text-white hover:text-[var(--color-primary-light)] transition-colors"
+        >
           <Search size={22} strokeWidth={2} />
         </button>
         <button
@@ -113,13 +117,21 @@ function BottomNav({ onCompose }: { onCompose: () => void }) {
   return (
     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-md px-6 pb-safe pt-2 bg-gradient-to-t from-[var(--color-background)] via-[var(--color-background)] to-transparent z-40 pointer-events-none">
       <div className="flex items-center justify-between px-6 h-[64px] rounded-[32px] glass-panel border border-[var(--color-border)] pointer-events-auto shadow-2xl shadow-black/50 mb-4 relative">
-        {NAV_ITEMS.slice(0, 2).map((item) => <NavItem key={item.id} item={item} path={path} navigate={navigate} />)}
-        
+        {NAV_ITEMS.slice(0, 2).map((item) => (
+          <NavItem key={item.id} item={item} path={path} navigate={navigate} />
+        ))}
+
         <div className="relative -top-5">
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.9 }}
-            animate={{ boxShadow: ["0 0 20px rgba(255,157,46,0.4)", "0 0 30px rgba(255,157,46,0.6)", "0 0 20px rgba(255,157,46,0.4)"] }}
+            animate={{
+              boxShadow: [
+                "0 0 20px rgba(255,157,46,0.4)",
+                "0 0 30px rgba(255,157,46,0.6)",
+                "0 0 20px rgba(255,157,46,0.4)",
+              ],
+            }}
             transition={{ boxShadow: { duration: 2, repeat: Infinity, ease: "easeInOut" } }}
             onClick={onCompose}
             className="flex items-center justify-center w-14 h-14 rounded-full bg-[var(--color-primary)] text-white transition-colors hover:bg-orange-400"
@@ -128,7 +140,9 @@ function BottomNav({ onCompose }: { onCompose: () => void }) {
           </motion.button>
         </div>
 
-        {NAV_ITEMS.slice(2).map((item) => <NavItem key={item.id} item={item} path={path} navigate={navigate} />)}
+        {NAV_ITEMS.slice(2).map((item) => (
+          <NavItem key={item.id} item={item} path={path} navigate={navigate} />
+        ))}
       </div>
     </div>
   );
@@ -152,10 +166,9 @@ export function MainLayout() {
   const [showCreateVoice, setShowCreateVoice] = useState(false);
   const [showCreateLive, setShowCreateLive] = useState(false);
   const [showCreateEvent, setShowCreateEvent] = useState(false);
-  const [showCreateOpp, setShowCreateOpp] = useState(false);
 
   const location = useLocation();
-  const { session, loading } = useAuth();
+  const { session, loading, showAuthModal, setShowAuthModal } = useAuth();
   const path = location.pathname;
 
   const [pull, setPull] = useState(0);
@@ -268,9 +281,7 @@ export function MainLayout() {
           else if (action === "voice") setTimeout(() => setShowCreateVoice(true), 300);
           else if (action === "live") setTimeout(() => setShowCreateLive(true), 300);
           else if (action === "event") setTimeout(() => setShowCreateEvent(true), 300);
-          else if (action === "question")
-            setTimeout(() => setShowCreateNote(true), 300); // reuse note for now
-          else if (action === "opportunity") setTimeout(() => setShowCreateOpp(true), 300);
+          else if (action === "question") setTimeout(() => setShowCreateNote(true), 300); // reuse note for now
         }}
       />
 
@@ -291,6 +302,8 @@ export function MainLayout() {
       <CreateStoryModal open={showCreateStory} onClose={() => setShowCreateStory(false)} />
       <CreateVoicePostModal open={showCreateVoice} onClose={() => setShowCreateVoice(false)} />
       <CreateLiveStreamModal open={showCreateLive} onClose={() => setShowCreateLive(false)} />
+
+      <AuthRequiredModal open={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   );
 }

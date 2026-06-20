@@ -22,13 +22,7 @@ const KaraokeRoom = lazy(() =>
   import("./components/karaoke/KaraokeRoom").then((m) => ({ default: m.KaraokeRoom })),
 );
 const Auth = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Auth })));
-const Matching = lazy(() => import("./pages/Matching").then((m) => ({ default: m.Matching })));
-const Creators = lazy(() => import("./pages/Creators").then((m) => ({ default: m.Creators })));
 const Settings = lazy(() => import("./pages/Settings").then((m) => ({ default: m.Settings })));
-const Opportunities = lazy(() =>
-  import("./pages/Opportunities").then((m) => ({ default: m.Opportunities })),
-);
-const Wallet = lazy(() => import("./pages/Wallet").then((m) => ({ default: m.Wallet })));
 
 function PageLoader() {
   return (
@@ -77,11 +71,7 @@ function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/profile/:id" element={<Profile />} />
                   <Route path="/messages" element={<Messages />} />
-                  <Route path="/matching" element={<Matching />} />
-                  <Route path="/creators" element={<Creators />} />
                   <Route path="/settings" element={<Settings />} />
-                  <Route path="/opportunities" element={<Opportunities />} />
-                  <Route path="/wallet" element={<Wallet />} />
                 </Route>
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/chat/:id" element={<Chat />} />

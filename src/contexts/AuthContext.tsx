@@ -12,6 +12,9 @@ interface AuthCtx {
   needsOnboarding: boolean;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
+  showAuthModal: boolean;
+  setShowAuthModal: (v: boolean) => void;
+  requireAuth: () => void;
 }
 
 const Ctx = createContext<AuthCtx | null>(null);
@@ -21,6 +24,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const requireAuth = () => setShowAuthModal(true);
 
   const fetchProfile = async (userId: string) => {
     // Simple select — no joins to tables that may not exist yet
@@ -125,6 +130,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         needsOnboarding,
         refreshProfile,
         signOut,
+        showAuthModal,
+        setShowAuthModal,
+        requireAuth,
       }}
     >
       {children}

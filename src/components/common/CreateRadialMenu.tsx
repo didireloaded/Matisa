@@ -7,7 +7,7 @@ interface CreateRadialMenuProps {
   onSelect?: (action: string) => void;
 }
 
-import { HelpCircle, Briefcase } from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 const CREATE_ITEMS = [
   { id: "voice", label: "Voice", icon: Mic, color: "#2D7DD2", angle: -150 },
@@ -15,7 +15,6 @@ const CREATE_ITEMS = [
   { id: "room", label: "Room", icon: Radio, color: "#FF6B6B", angle: -30 },
   { id: "event", label: "Event", icon: CalendarDays, color: "#22c55e", angle: 30 },
   { id: "question", label: "Ask", icon: HelpCircle, color: "#A855F7", angle: 90 },
-  { id: "opportunity", label: "Post", icon: Briefcase, color: "#F43F5E", angle: 150 },
 ];
 
 export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenuProps) {
@@ -26,7 +25,7 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-40"
+          className="fixed inset-0 z-50"
         >
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
           <div className="absolute bottom-[80px] left-1/2 -translate-x-1/2">
