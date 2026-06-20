@@ -10,6 +10,7 @@ import {
   Send,
   Image as ImageIcon,
   Smile,
+  MessageCircle,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -28,6 +29,30 @@ export function Chat() {
   const [otherUser, setOtherUser] = useState<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Fallback when no conversation is selected
+  if (!id) {
+    return (
+      <div className="flex flex-col h-[100dvh] bg-[var(--color-background)] items-center justify-center px-6">
+        <div className="relative mb-6">
+          <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#8B5CF6]" />
+          <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+            <MessageCircle className="w-8 h-8 text-white" />
+          </div>
+        </div>
+        <h3 className="text-xl font-bold text-white mb-2 tracking-tight">No Chat Selected</h3>
+        <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-8 leading-relaxed text-center">
+          Select a conversation from your messages to start chatting.
+        </p>
+        <button
+          onClick={() => navigate("/messages")}
+          className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+        >
+          Go to Messages
+        </button>
+      </div>
+    );
+  }
 
   useEffect(() => {
     if (!profile || !id) return;

@@ -23,6 +23,7 @@ import { VoicePlayer } from "@/components/ui/VoicePlayer";
 import type { Profile } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { timeAgo } from "@/lib/utils";
 import { LiveRoomsBanner } from "@/components/voice/LiveRoomsBanner";
 import { StoryService } from "@/services/stories";
 import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
@@ -279,7 +280,7 @@ function FeedCard({ note }: { note: Note }) {
               <span className="text-white text-[15px] font-bold">
                 {note.profiles?.display_name || note.profiles?.username || "User"}
               </span>
-              <span className="text-[var(--color-text-muted)] text-[12px] font-medium">2m ago</span>
+              <span className="text-[var(--color-text-muted)] text-[12px] font-medium">{timeAgo(note.created_at)}</span>
             </div>
             <span className="text-[var(--color-text-muted)] text-[12px]">
               @{note.profiles?.username || "user"}
@@ -549,7 +550,14 @@ export function Home() {
             glowColor="primary"
             action={{
               label: "Ask a Question",
-              onClick: () => toast.success("Opening composer..."),
+              onClick: () => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+                // Focus the composer input after scrolling
+                setTimeout(() => {
+                  const input = document.querySelector<HTMLInputElement>('input[placeholder="What\'s on your mind?"]');
+                  input?.focus();
+                }, 500);
+              },
             }}
           />
         ) : (

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/Tabs";
 import { Avatar } from "@/components/common/Avatar";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 
 const CATEGORIES = [
   { id: "People", label: "People" },
@@ -235,26 +235,121 @@ export function Discovery() {
               </div>
             </div>
 
-            <div>
-              <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
-                Trending Creators
-              </h3>
-              <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className="flex flex-col items-center gap-2">
-                    <Avatar
-                      size={64}
-                      profile={{
-                        id: `${i}`,
-                        display_name: `User ${i}`,
-                        avatar_url: `https://i.pravatar.cc/150?u=${i}`,
-                      }}
-                    />
-                    <span className="text-xs text-white font-bold">Creator {i}</span>
-                  </div>
-                ))}
+            {activeCategory === "People" && (
+              <div>
+                <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+                  Trending Creators
+                </h3>
+                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="flex flex-col items-center gap-2">
+                      <Avatar
+                        size={64}
+                        profile={{
+                          id: `${i}`,
+                          display_name: `User ${i}`,
+                          avatar_url: `https://i.pravatar.cc/150?u=${i}`,
+                        }}
+                      />
+                      <span className="text-xs text-white font-bold">Creator {i}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
+
+            {activeCategory === "Creators" && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#A855F7]" />
+                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+                    <Users className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Discover Creators</h3>
+                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
+                  Find talented musicians, producers, and artists in the community.
+                </p>
+                <button
+                  onClick={() => navigate("/creators")}
+                  className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+                >
+                  Browse Creators
+                </button>
+              </div>
+            )}
+
+            {activeCategory === "Opportunities" && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#FF416C]" />
+                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+                    <Search className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Find Opportunities</h3>
+                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
+                  Explore gigs, collaborations, and jobs from the creative community.
+                </p>
+                <button
+                  onClick={() => navigate("/opportunities")}
+                  className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+                >
+                  View Opportunities
+                </button>
+              </div>
+            )}
+
+            {activeCategory === "Rooms" && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#00E5FF]" />
+                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+                    <Mic className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Voice Rooms</h3>
+                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
+                  Live voice rooms and audio sessions will appear here.
+                </p>
+              </div>
+            )}
+
+            {activeCategory === "Events" && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#F59E0B]" />
+                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+                    <MapPin className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Upcoming Events</h3>
+                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
+                  Events from creators and the community will show here.
+                </p>
+                <button
+                  onClick={() => navigate("/events")}
+                  className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
+                >
+                  View Events
+                </button>
+              </div>
+            )}
+
+            {activeCategory === "Voice" && (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="relative mb-6">
+                  <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#8B5CF6]" />
+                  <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+                    <Mic className="w-8 h-8 text-white" />
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Voice Notes</h3>
+                <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-6 leading-relaxed">
+                  Discover voice notes and audio content from the community.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

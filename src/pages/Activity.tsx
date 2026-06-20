@@ -26,21 +26,29 @@ export function Activity() {
 
   useEffect(() => {
     async function loadNotifs() {
-      if (!profile) return;
-      const { data } = await supabase
-        .from("notifications")
-        .select("*, profiles:actor_id(*)")
-        .eq("recipient_id", profile.id)
-        .order("created_at", { ascending: false })
-        .limit(30);
+      if (!profile) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from("notifications")
+          .select("*, profiles:actor_id(*)")
+          .eq("recipient_id", profile.id)
+          .order("created_at", { ascending: false })
+          .limit(30);
 
-      if (data) setNotifications(data as AppNotification[]);
-      setLoading(false);
+        if (data) setNotifications(data as AppNotification[]);
+      } catch (err) {
+        console.error("Failed to load notifications", err);
+      } finally {
+        setLoading(false);
+      }
     }
 
-    if (profile) {
-      loadNotifs();
+    loadNotifs();
 
+    if (profile) {
       const subscription = supabase
         .channel(`public:notifications:recipient_id=eq.${profile.id}`)
         .on(

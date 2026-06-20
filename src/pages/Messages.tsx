@@ -22,11 +22,15 @@ export function Messages() {
 
   useEffect(() => {
     async function loadConversations() {
-      if (!profile) return;
-      const { data } = await supabase
-        .from("conversation_participants")
-        .select(
-          `
+      if (!profile) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const { data } = await supabase
+          .from("conversation_participants")
+          .select(
+            `
           conversation_id, 
           conversations (
             *,
@@ -41,51 +45,55 @@ export function Messages() {
             )
           )
         `,
-        )
-        .eq("user_id", profile.id);
+          )
+          .eq("user_id", profile.id);
 
-      if (data) {
-        const convs = data
-          .map((d) => {
-            const conv = d.conversations as any;
-            if (!conv) return null;
-            const otherParticipant = conv.conversation_participants?.find(
-              (p: any) => p.user_id !== profile.id,
-            );
-            return {
-              ...conv,
-              otherProfile: otherParticipant?.profiles || null,
-            };
-          })
-          .filter(Boolean);
-        setConversations(convs);
+        if (data) {
+          const convs = data
+            .map((d) => {
+              const conv = d.conversations as any;
+              if (!conv) return null;
+              const otherParticipant = conv.conversation_participants?.find(
+                (p: any) => p.user_id !== profile.id,
+              );
+              return {
+                ...conv,
+                otherProfile: otherParticipant?.profiles || null,
+              };
+            })
+            .filter(Boolean);
+          setConversations(convs);
 
-        // Fetch unread counts
-        const convIds = convs.map((c) => c.id);
-        if (convIds.length > 0) {
-          const { data: msgs } = await supabase
-            .from("messages")
-            .select("id, conversation_id")
-            .in("conversation_id", convIds)
-            .neq("sender_id", profile.id);
+          // Fetch unread counts
+          const convIds = convs.map((c) => c.id);
+          if (convIds.length > 0) {
+            const { data: msgs } = await supabase
+              .from("messages")
+              .select("id, conversation_id")
+              .in("conversation_id", convIds)
+              .neq("sender_id", profile.id);
 
-          const { data: reads } = await supabase
-            .from("message_reads")
-            .select("message_id")
-            .eq("user_id", profile.id);
+            const { data: reads } = await supabase
+              .from("message_reads")
+              .select("message_id")
+              .eq("user_id", profile.id);
 
-          const readMsgIds = new Set(reads?.map((r) => r.message_id) || []);
-          const counts: Record<string, number> = {};
+            const readMsgIds = new Set(reads?.map((r) => r.message_id) || []);
+            const counts: Record<string, number> = {};
 
-          msgs?.forEach((m) => {
-            if (!readMsgIds.has(m.id)) {
-              counts[m.conversation_id] = (counts[m.conversation_id] || 0) + 1;
-            }
-          });
-          setUnreadCounts(counts);
+            msgs?.forEach((m) => {
+              if (!readMsgIds.has(m.id)) {
+                counts[m.conversation_id] = (counts[m.conversation_id] || 0) + 1;
+              }
+            });
+            setUnreadCounts(counts);
+          }
         }
+      } catch (err) {
+        console.error("Failed to load conversations", err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     loadConversations();
   }, [profile]);
@@ -114,7 +122,7 @@ export function Messages() {
           onChange={setActiveTab}
           tabs={[
             { id: "all", label: "All" },
-            { id: "primary", label: "Primary", badge: 2 },
+            { id: "primary", label: "Primary", badge: Object.values(unreadCounts).reduce((a, b) => a + b, 0) },
             { id: "requests", label: "Requests" },
           ]}
         />

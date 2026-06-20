@@ -18,10 +18,11 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 
 export function Events() {
   const navigate = useNavigate();
@@ -88,126 +89,151 @@ export function Events() {
       </div>
 
       <div className="flex-1 px-5 space-y-6">
-        {/* Featured Carousel */}
-        <div>
-          <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
-            Featured
-          </h2>
-          <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
-            {events.slice(0, 3).map((event) => (
-              <motion.div
-                key={`feat_${event.id}`}
-                whileTap={{ scale: 0.98 }}
-                className="relative min-w-[280px] h-[320px] rounded-[24px] overflow-hidden shrink-0 group cursor-pointer"
-                onClick={() => {}}
-              >
-                <img
-                  src={
-                    event.cover_image ||
-                    "https://images.unsplash.com/photo-1540039155732-d674d6e3f670?q=80&w=1000&auto=format&fit=crop"
-                  }
-                  alt={event.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
-
-                <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
-                  <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-                    <span className="text-white text-xs font-bold">
-                      {new Date(event.start_time).toLocaleDateString([], {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-white font-bold text-xl mb-1 leading-tight">{event.title}</h3>
-                  <div className="flex items-center gap-3 text-white/80 text-xs font-medium mb-3">
-                    <span className="flex items-center gap-1">
-                      <MapPin size={12} /> {event.location_name || event.location_type}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-white font-bold text-lg">
-                      {event.is_paid ? "Paid" : "Free"}
-                    </span>
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      className="bg-white text-black hover:bg-white/90 font-bold px-4"
-                      onClick={(e) => handleRSVP(event.id, e)}
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+          </div>
+        ) : events.length === 0 ? (
+          <div className="mt-8">
+            <PremiumEmptyState
+              icon={Calendar}
+              title="No Events Yet"
+              description="Events near you and from creators you follow will appear here."
+              glowColor="accent1"
+              action={{
+                label: "Create an Event",
+                onClick: () => toast.info("Event creation coming soon!"),
+              }}
+            />
+          </div>
+        ) : (
+          <>
+            {/* Featured Carousel */}
+            {events.slice(0, 3).length > 0 && (
+              <div>
+                <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
+                  Featured
+                </h2>
+                <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
+                  {events.slice(0, 3).map((event) => (
+                    <motion.div
+                      key={`feat_${event.id}`}
+                      whileTap={{ scale: 0.98 }}
+                      className="relative min-w-[280px] h-[320px] rounded-[24px] overflow-hidden shrink-0 group cursor-pointer"
+                      onClick={() => {}}
                     >
-                      RSVP
-                    </Button>
-                  </div>
+                      <img
+                        src={
+                          event.cover_image ||
+                          "https://images.unsplash.com/photo-1540039155732-d674d6e3f670?q=80&w=1000&auto=format&fit=crop"
+                        }
+                        alt={event.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
+
+                      <div className="absolute top-4 left-4 right-4 flex justify-between items-start">
+                        <div className="bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+                          <span className="text-white text-xs font-bold">
+                            {new Date(event.start_time).toLocaleDateString([], {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="absolute bottom-4 left-4 right-4">
+                        <h3 className="text-white font-bold text-xl mb-1 leading-tight">{event.title}</h3>
+                        <div className="flex items-center gap-3 text-white/80 text-xs font-medium mb-3">
+                          <span className="flex items-center gap-1">
+                            <MapPin size={12} /> {event.location_name || event.location_type}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-white font-bold text-lg">
+                            {event.is_paid ? "Paid" : "Free"}
+                          </span>
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="bg-white text-black hover:bg-white/90 font-bold px-4"
+                            onClick={(e) => handleRSVP(event.id, e)}
+                          >
+                            RSVP
+                          </Button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
                 </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
+              </div>
+            )}
 
-        {/* List View */}
-        <div>
-          <div className="flex justify-between items-center mb-3">
-            <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
-              Discover More
-            </h2>
-          </div>
-
-          <div className="space-y-4">
-            {events.slice(3).map((event) => (
-              <Card
-                key={`list_${event.id}`}
-                variant="outline"
-                className="flex gap-4 p-3 pr-4 overflow-hidden group cursor-pointer hover:bg-[var(--color-surface-3)] transition"
-              >
-                <div className="relative w-24 h-24 rounded-2xl overflow-hidden shrink-0">
-                  <img
-                    src={
-                      event.cover_image ||
-                      "https://images.unsplash.com/photo-1540039155732-d674d6e3f670?q=80&w=1000&auto=format&fit=crop"
-                    }
-                    alt={event.title}
-                    className="w-full h-full object-cover"
-                  />
+            {/* List View */}
+            {events.slice(3).length > 0 && (
+              <div>
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
+                    Discover More
+                  </h2>
                 </div>
 
-                <div className="flex-1 py-1 flex flex-col justify-between min-w-0">
-                  <div>
-                    <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
-                      {event.title}
-                    </h3>
-                    <p className="text-[var(--color-primary)] text-xs font-bold mb-1">
-                      {new Date(event.start_time).toLocaleDateString([], {
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </p>
-                    <p className="text-[var(--color-text-muted)] text-[11px] truncate flex items-center gap-1">
-                      <MapPin size={10} /> {event.location_name || event.location_type}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-white font-bold text-sm">
-                      {event.is_paid ? "Paid" : "Free"}
-                    </span>
-                    <Button
-                      variant="glass"
-                      size="sm"
-                      className="h-7 px-3 text-[10px]"
-                      onClick={(e) => handleRSVP(event.id, e)}
+                <div className="space-y-4">
+                  {events.slice(3).map((event) => (
+                    <Card
+                      key={`list_${event.id}`}
+                      variant="outline"
+                      className="flex gap-4 p-3 pr-4 overflow-hidden group cursor-pointer hover:bg-[var(--color-surface-3)] transition"
                     >
-                      RSVP
-                    </Button>
-                  </div>
+                      <div className="relative w-24 h-24 rounded-2xl overflow-hidden shrink-0">
+                        <img
+                          src={
+                            event.cover_image ||
+                            "https://images.unsplash.com/photo-1540039155732-d674d6e3f670?q=80&w=1000&auto=format&fit=crop"
+                          }
+                          alt={event.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="flex-1 py-1 flex flex-col justify-between min-w-0">
+                        <div>
+                          <h3 className="text-white font-bold text-base leading-tight truncate mb-1">
+                            {event.title}
+                          </h3>
+                          <p className="text-[var(--color-primary)] text-xs font-bold mb-1">
+                            {new Date(event.start_time).toLocaleDateString([], {
+                              month: "short",
+                              day: "numeric",
+                            })}
+                          </p>
+                          <p className="text-[var(--color-text-muted)] text-[11px] truncate flex items-center gap-1">
+                            <MapPin size={10} /> {event.location_name || event.location_type}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-white font-bold text-sm">
+                            {event.is_paid ? "Paid" : "Free"}
+                          </span>
+                          <Button
+                            variant="glass"
+                            size="sm"
+                            className="h-7 px-3 text-[10px]"
+                            onClick={(e) => handleRSVP(event.id, e)}
+                          >
+                            RSVP
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
                 </div>
-              </Card>
-            ))}
-          </div>
-        </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

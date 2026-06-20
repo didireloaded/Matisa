@@ -5,13 +5,14 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/common/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
 import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
 import { PostOpportunityModal } from "@/components/opportunities/PostOpportunityModal";
+import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 
 export function Opportunities() {
   const navigate = useNavigate();
@@ -118,7 +119,25 @@ export function Opportunities() {
 
       {/* List */}
       <div className="p-5 flex flex-col gap-4">
-        {filteredOpps.map((opp, i) => (
+        {loading ? (
+          <div className="flex justify-center py-20">
+            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+          </div>
+        ) : filteredOpps.length === 0 ? (
+          <div className="mt-8">
+            <PremiumEmptyState
+              icon={Briefcase}
+              title={activeTab === "all" ? "No Opportunities Yet" : `No ${activeTab}s found`}
+              description="Be the first to post an opportunity for the Namibian creative community."
+              glowColor="accent3"
+              action={{
+                label: "Post Opportunity",
+                onClick: () => setIsPostModalOpen(true),
+              }}
+            />
+          </div>
+        ) : (
+          filteredOpps.map((opp, i) => (
           <motion.div
             key={opp.id}
             initial={{ opacity: 0, y: 20 }}
@@ -211,7 +230,8 @@ export function Opportunities() {
               </div>
             </Card>
           </motion.div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );

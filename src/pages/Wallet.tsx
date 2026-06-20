@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { ArrowLeft, Gem, CreditCard, History, ChevronRight, Gift } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
@@ -73,6 +73,11 @@ export function Wallet() {
                   {balance.toLocaleString()}
                 </span>
               </div>
+              {balance === 0 && (
+                <p className="text-white/60 text-xs mt-3 font-medium">
+                  Top up to start gifting your favorite creators ✨
+                </p>
+              )}
             </div>
 
             {/* Decorative background elements */}

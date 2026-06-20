@@ -20,7 +20,7 @@ import { FollowButton } from "@/components/common/FollowButton";
 import { VoicePlayer } from "@/components/ui/VoicePlayer";
 import { Avatar } from "@/components/common/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { MessageService } from "@/services/messages";
 import { toast } from "sonner";
@@ -115,21 +115,62 @@ export function Profile() {
           <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-4" />
         </div>
       ) : !userProfile ? (
-        <div className="flex-1 flex flex-col items-center justify-center px-6 mt-10">
-          <PremiumEmptyState
-            icon={!targetId ? SettingsIcon : MessageSquare}
-            title={!targetId ? "Sign In Required" : "User Not Found"}
-            description={
-              !targetId
-                ? "Create an account to set up your profile."
-                : "This account does not exist."
-            }
-            action={{
-              label: !targetId ? "Sign In" : "Go Home",
-              onClick: () => navigate(!targetId ? "/auth" : "/"),
-            }}
-            glowColor="primary"
-          />
+        <div className="flex-1 flex flex-col bg-[var(--color-background)]">
+          {/* Gradient header */}
+          <div className="relative h-48 overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] via-[#EC4899] to-[#FF416C]" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-background)] via-transparent to-transparent" />
+            <div className="absolute bottom-6 left-0 right-0 text-center">
+              <h1 className="text-white text-3xl font-display font-bold tracking-tight mb-1">Matisa</h1>
+              <p className="text-white/70 text-sm font-medium">Namibia's Creative Platform</p>
+            </div>
+          </div>
+
+          <div className="px-6 -mt-2 flex flex-col items-center text-center">
+            {/* Icon */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#8B5CF6]" />
+              <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
+                <SettingsIcon className="w-8 h-8 text-white" />
+              </div>
+            </div>
+
+            <h2 className="text-xl font-bold text-white mb-2 tracking-tight">
+              {!targetId ? "Join the Community" : "User Not Found"}
+            </h2>
+            <p className="text-sm text-[var(--color-text-muted)] max-w-[280px] mb-8 leading-relaxed">
+              {!targetId
+                ? "Sign in to create your profile, connect with creators, and share your talent."
+                : "This account doesn't exist or has been removed."}
+            </p>
+
+            {/* Feature highlights */}
+            {!targetId && (
+              <div className="w-full space-y-3 mb-8">
+                {[
+                  { icon: "🎤", label: "Share voice notes & stories" },
+                  { icon: "🤝", label: "Connect with Namibian creators" },
+                  { icon: "💼", label: "Find gigs & opportunities" },
+                  { icon: "🎵", label: "Join live voice rooms" },
+                ].map((feature) => (
+                  <div
+                    key={feature.label}
+                    className="flex items-center gap-3 p-3 bg-[var(--color-surface-2)] rounded-2xl border border-[var(--color-border)]"
+                  >
+                    <span className="text-xl">{feature.icon}</span>
+                    <span className="text-sm text-white/80 font-medium">{feature.label}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            <button
+              onClick={() => navigate(!targetId ? "/auth" : "/")}
+              className="w-full max-w-[280px] px-6 py-3.5 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
+            >
+              {!targetId ? "Sign In / Create Account" : "Go Home"}
+            </button>
+          </div>
         </div>
       ) : (
         <>
