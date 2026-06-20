@@ -2,8 +2,8 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Briefcase, MapPin, DollarSign } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { OpportunityService } from "@/services/OpportunityService";
 import { toast } from "sonner";
 
 interface Props {
@@ -30,27 +30,23 @@ export function PostOpportunityModal({ isOpen, onClose, onCreated }: Props) {
 
     setLoading(true);
     try {
-      const newOpp = {
+      const newOppData = {
         creator_id: profile.id,
         title,
         description,
         type: type.toLowerCase(),
         role_type: type,
-        location_name: location,
+        location: location,
         budget_type: budget ? "paid" : "tbd",
         budget_amount: budget ? parseFloat(budget) : null,
       };
 
-      const { data, error } = await supabase
-        .from("opportunities")
-        .insert(newOpp)
-        .select("*, profiles!opportunities_creator_id_fkey(*)")
-        .single();
+      const createdOpp = await OpportunityService.createOpportunity(newOppData as any);
 
-      if (error) throw error;
+      if (!createdOpp) throw new Error("Failed to post opportunity");
 
       toast.success("Opportunity posted!");
-      onCreated(data);
+      onCreated(createdOpp);
       onClose();
     } catch (err: any) {
       console.error(err);

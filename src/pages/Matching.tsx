@@ -1,35 +1,39 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Heart, MessageCircle, Star, Music, Mic, Award } from "lucide-react";
 import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/button";
 
-const DUMMY_PROFILES = [
-  {
-    id: "1",
-    name: "Alex Rivera",
-    role: "Producer / Beatmaker",
-    image: "https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=800&h=1000&fit=crop",
-    bio: "Looking for vocalists for my upcoming synthwave EP. I have a studio in downtown LA.",
-    tags: ["Synthwave", "Ableton", "Mixing"],
-    distance: "2 miles away",
-  },
-  {
-    id: "2",
-    name: "Sarah Chen",
-    role: "Vocalist / Songwriter",
-    image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&h=1000&fit=crop",
-    bio: "R&B and Neo-soul singer looking for producers to collaborate with. Let's make magic.",
-    tags: ["R&B", "Vocals", "Topline"],
-    distance: "5 miles away",
-  },
-];
+import { MatchingService, MatchingProfile } from "@/services/MatchingService";
+import { useAuth } from "@/contexts/AuthContext";
 
 export function Matching() {
-  const [profiles, setProfiles] = useState(DUMMY_PROFILES);
+  const { profile } = useAuth();
+  const [profiles, setProfiles] = useState<MatchingProfile[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleSwipe = (direction: "left" | "right") => {
+  const fetchProfiles = async () => {
+    if (!profile) return;
+    setLoading(true);
+    const data = await MatchingService.getPotentialMatches(profile.id);
+    setProfiles(data);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchProfiles();
+  }, [profile]);
+
+  const handleSwipe = async (direction: "left" | "right") => {
+    if (profiles.length === 0 || !profile) return;
+    const swipeeId = profiles[0].id;
+    const isRightSwipe = direction === "right";
+
+    // Optimistic UI update
     setProfiles((prev) => prev.slice(1));
+
+    // Record in DB
+    await MatchingService.recordSwipe(profile.id, swipeeId, isRightSwipe);
   };
 
   if (profiles.length === 0) {
@@ -42,8 +46,8 @@ export function Matching() {
         <p className="text-[var(--color-text-muted)] mb-8">
           We're searching for more creators in your area.
         </p>
-        <Button variant="outline" onClick={() => setProfiles(DUMMY_PROFILES)}>
-          Refresh Matches
+        <Button variant="outline" onClick={fetchProfiles} disabled={loading}>
+          {loading ? "Searching..." : "Refresh Matches"}
         </Button>
       </div>
     );

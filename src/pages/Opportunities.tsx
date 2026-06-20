@@ -10,7 +10,8 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
-import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
+import { Analytics } from "@/services/analytics";
+import { OpportunityService, Opportunity } from "@/services/OpportunityService";
 import { PostOpportunityModal } from "@/components/opportunities/PostOpportunityModal";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 
@@ -18,13 +19,13 @@ export function Opportunities() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
-  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isPostModalOpen, setIsPostModalOpen] = useState(false);
 
   useEffect(() => {
     if (profile) {
-      AnalyticsAI.trackEvent(profile.id, "page_view", "opportunities");
+      Analytics.track("page_view", { page: "opportunities" });
     }
   }, [profile]);
 
@@ -32,12 +33,8 @@ export function Opportunities() {
     async function loadOpp() {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("opportunities")
-          .select("*, profiles(*)")
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        setOpportunities(data || []);
+        const opps = await OpportunityService.getOpportunities();
+        setOpportunities(opps);
       } catch (err) {
         console.error("Failed to load opportunities", err);
       } finally {
@@ -51,15 +48,16 @@ export function Opportunities() {
     e.stopPropagation();
     if (!profile) return toast.error("Please sign in to apply");
     try {
-      const { error } = await supabase
-        .from("opportunity_applications")
-        .insert({ opportunity_id: oppId, applicant_id: profile.id, status: "pending" });
-      if (error) {
-        if (error.code === "23505") toast.success("You already applied!");
-        else throw error;
+      const { success, error } = await OpportunityService.applyToOpportunity(oppId, profile.id);
+
+      if (!success) {
+        if (error === "already_applied") {
+          toast.success("You already applied!");
+        } else {
+          toast.error("Failed to apply");
+        }
       } else {
         toast.success("Application submitted!");
-        AnalyticsAI.trackEvent(profile.id, "apply_opportunity", oppId);
       }
     } catch (err) {
       toast.error("Failed to apply");
@@ -138,98 +136,99 @@ export function Opportunities() {
           </div>
         ) : (
           filteredOpps.map((opp, i) => (
-          <motion.div
-            key={opp.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            transition={{ delay: i * 0.05, type: "spring", stiffness: 400, damping: 25 }}
-          >
-            <Card variant="solid" className={`p-5 relative overflow-hidden`}>
-              {/* Colored left border indicator based on type */}
-              <div
-                className={`absolute left-0 top-0 bottom-0 w-1 ${
-                  opp.type === "Gig" || opp.role_needed === "Gig"
-                    ? "bg-[#00E5FF]"
-                    : opp.type === "Collaboration" || opp.role_needed === "Collaboration"
-                      ? "bg-[#8B5CF6]"
-                      : "bg-[#FF416C]"
-                }`}
-              />
+            <motion.div
+              key={opp.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              transition={{ delay: i * 0.05, type: "spring", stiffness: 400, damping: 25 }}
+            >
+              <Card variant="solid" className={`p-5 relative overflow-hidden`}>
+                {/* Colored left border indicator based on type */}
+                <div
+                  className={`absolute left-0 top-0 bottom-0 w-1 ${
+                    opp.type === "Gig" || opp.role_needed === "Gig"
+                      ? "bg-[#00E5FF]"
+                      : opp.type === "Collaboration" || opp.role_needed === "Collaboration"
+                        ? "bg-[#8B5CF6]"
+                        : "bg-[#FF416C]"
+                  }`}
+                />
 
-              <div className="flex justify-between items-start mb-4 pl-2">
-                <div className="flex gap-2">
-                  <span
-                    className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
-                      opp.type === "Gig" || opp.role_needed === "Gig"
-                        ? "bg-[#00E5FF]/20 text-[#00E5FF]"
-                        : opp.type === "Collaboration" || opp.role_needed === "Collaboration"
-                          ? "bg-[#8B5CF6]/20 text-[#8B5CF6]"
-                          : "bg-[#FF416C]/20 text-[#FF416C]"
-                    }`}
-                  >
-                    {opp.type || opp.role_needed}
-                  </span>
-                </div>
-                <button className="text-[var(--color-text-muted)] hover:text-white transition">
-                  <MoreHorizontal size={20} />
-                </button>
-              </div>
-
-              <div className="pl-2">
-                <h3 className="text-xl font-bold text-white mb-2 leading-tight">{opp.title}</h3>
-
-                <div className="flex items-center gap-3 mb-4">
-                  <Avatar
-                    size={24}
-                    profile={{
-                      id: opp.profiles?.id || "unknown",
-                      display_name: opp.profiles?.display_name || opp.profiles?.username || "User",
-                      avatar_url: opp.profiles?.avatar_url || "",
-                    }}
-                  />
-                  <span className="text-sm font-semibold text-white/90">
-                    {opp.profiles?.display_name || opp.profiles?.username || "User"}
-                  </span>
-                </div>
-
-                <p className="text-[var(--color-text-muted)] text-sm mb-4 line-clamp-2 leading-relaxed">
-                  {opp.description}
-                </p>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {(opp.required_skills || []).map((tag: string) => (
+                <div className="flex justify-between items-start mb-4 pl-2">
+                  <div className="flex gap-2">
                     <span
-                      key={tag}
-                      className="text-xs font-semibold px-2.5 py-1 bg-[var(--color-surface-3)] text-[var(--color-text-muted)] rounded-md"
+                      className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                        opp.type === "Gig" || opp.role_needed === "Gig"
+                          ? "bg-[#00E5FF]/20 text-[#00E5FF]"
+                          : opp.type === "Collaboration" || opp.role_needed === "Collaboration"
+                            ? "bg-[#8B5CF6]/20 text-[#8B5CF6]"
+                            : "bg-[#FF416C]/20 text-[#FF416C]"
+                      }`}
                     >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-4 mt-2">
-                  <div className="flex flex-col">
-                    <span className="text-white font-bold text-lg">
-                      {opp.budget || "Negotiable"}
-                    </span>
-                    <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1 mt-0.5">
-                      <MapPin size={10} /> {opp.location_name || opp.location || "Remote"}
+                      {opp.type || opp.role_needed}
                     </span>
                   </div>
-                  <Button
-                    variant="primary"
-                    size="sm"
-                    className="px-5 font-bold"
-                    onClick={(e) => handleApply(opp.id, e)}
-                  >
-                    Apply
-                  </Button>
+                  <button className="text-[var(--color-text-muted)] hover:text-white transition">
+                    <MoreHorizontal size={20} />
+                  </button>
                 </div>
-              </div>
-            </Card>
-          </motion.div>
+
+                <div className="pl-2">
+                  <h3 className="text-xl font-bold text-white mb-2 leading-tight">{opp.title}</h3>
+
+                  <div className="flex items-center gap-3 mb-4">
+                    <Avatar
+                      size={24}
+                      profile={{
+                        id: opp.profiles?.id || "unknown",
+                        display_name:
+                          opp.profiles?.display_name || opp.profiles?.username || "User",
+                        avatar_url: opp.profiles?.avatar_url || "",
+                      }}
+                    />
+                    <span className="text-sm font-semibold text-white/90">
+                      {opp.profiles?.display_name || opp.profiles?.username || "User"}
+                    </span>
+                  </div>
+
+                  <p className="text-[var(--color-text-muted)] text-sm mb-4 line-clamp-2 leading-relaxed">
+                    {opp.description}
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mb-5">
+                    {(opp.required_skills || []).map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="text-xs font-semibold px-2.5 py-1 bg-[var(--color-surface-3)] text-[var(--color-text-muted)] rounded-md"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-4 mt-2">
+                    <div className="flex flex-col">
+                      <span className="text-white font-bold text-lg">
+                        {opp.budget || "Negotiable"}
+                      </span>
+                      <span className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest flex items-center gap-1 mt-0.5">
+                        <MapPin size={10} /> {opp.location_name || opp.location || "Remote"}
+                      </span>
+                    </div>
+                    <Button
+                      variant="primary"
+                      size="sm"
+                      className="px-5 font-bold"
+                      onClick={(e) => handleApply(opp.id, e)}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
           ))
         )}
       </div>
