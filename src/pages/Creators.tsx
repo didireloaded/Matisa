@@ -7,30 +7,60 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/Tabs";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
-import { supabase } from "@/lib/supabase";
+import { CreatorService, CreatorProfile } from "@/services/CreatorService";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export function Creators() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("trending");
-  const [creators, setCreators] = useState<any[]>([]);
+  const [creators, setCreators] = useState<CreatorProfile[]>([]);
+  const [spotlight, setSpotlight] = useState<CreatorProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
-    async function fetchCreators() {
+    async function loadData() {
       try {
-        const { data } = await supabase
-          .from("creator_profiles")
-          .select("id, bio, location, verified, profiles(display_name, avatar_url, followers_count)")
-          .limit(20);
-        if (data) setCreators(data);
+        setLoading(true);
+        const [spotlightData, trendingData] = await Promise.all([
+          CreatorService.getSpotlightCreator(),
+          CreatorService.getTrendingCreators(20)
+        ]);
+        setSpotlight(spotlightData);
+        setCreators(trendingData);
       } catch (err) {
         console.error("Failed to load creators", err);
+        toast.error("Failed to load creators directory.");
       } finally {
         setLoading(false);
       }
     }
-    fetchCreators();
+    loadData();
   }, []);
+
+  const handleBecomeCreator = async () => {
+    if (!user) {
+      toast.error("Please log in to become a creator");
+      return;
+    }
+    
+    setIsApplying(true);
+    try {
+      const success = await CreatorService.becomeCreator(user.id);
+      if (success) {
+        toast.success("Welcome to the Creator Program!");
+        // We could optimistically update local state if we want, but it's okay for now.
+      } else {
+        toast.error("Failed to enroll. Please try again later.");
+      }
+    } catch (err) {
+      toast.error("An error occurred while enrolling.");
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)] pb-28">
@@ -65,9 +95,9 @@ export function Creators() {
           <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
             Spotlight
           </h2>
-          <div className="relative w-full h-[200px] rounded-[24px] overflow-hidden group cursor-pointer">
+          <div className="relative w-full h-[200px] rounded-[24px] overflow-hidden group cursor-pointer" onClick={() => spotlight && navigate(`/profile/${spotlight.id}`)}>
             <img
-              src="https://images.unsplash.com/photo-1516280440502-861f23fb0477?w=800&q=80"
+              src={spotlight?.profiles?.cover_url || spotlight?.profiles?.avatar_url || "https://images.unsplash.com/photo-1516280440502-861f23fb0477?w=800&q=80"}
               alt="Spotlight"
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
               onError={(e) => {
@@ -81,21 +111,29 @@ export function Creators() {
             <div className="absolute top-4 left-4 bg-[#FF416C]/20 text-[#FF416C] px-3 py-1 rounded-full border border-[#FF416C]/30 flex items-center gap-1 backdrop-blur-md">
               <Star size={12} fill="currentColor" />
               <span className="text-xs font-bold uppercase tracking-wider">
-                Creator of the Week
+                {spotlight ? "Creator of the Week" : "Become a Creator"}
               </span>
             </div>
 
             <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
               <div>
                 <h3 className="text-white font-bold text-2xl mb-1 leading-tight">
-                  The Midnight Project
+                  {spotlight?.profiles?.display_name || "Join the Spotlight"}
                 </h3>
                 <p className="text-white/80 text-sm font-medium flex items-center gap-1.5">
-                  <Music size={14} /> Electronic Duo
+                  <Music size={14} /> {spotlight?.profiles?.bio ? (spotlight.profiles.bio.length > 30 ? spotlight.profiles.bio.substring(0, 30) + "..." : spotlight.profiles.bio) : "Showcase your talent"}
                 </p>
               </div>
-              <Button variant="primary" className="h-10 px-5 rounded-full font-bold">
-                Become a Creator
+              <Button 
+                variant="primary" 
+                className="h-10 px-5 rounded-full font-bold"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleBecomeCreator();
+                }}
+                disabled={isApplying}
+              >
+                {isApplying ? "Enrolling..." : "Become a Creator"}
               </Button>
             </div>
           </div>
@@ -121,7 +159,7 @@ export function Creators() {
               glowColor="secondary"
               action={{
                 label: "Become a Creator",
-                onClick: () => {},
+                onClick: handleBecomeCreator,
               }}
             />
           ) : (

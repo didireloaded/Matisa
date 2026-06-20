@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ErrorBoundary } from "react-error-boundary";
 import { Analytics } from "@vercel/analytics/react";
 import { HelmetProvider } from "react-helmet-async";
+import { Toaster } from "sonner";
 import { Providers } from "./components/providers";
 import { MainLayout } from "./components/layout/MainLayout";
 import { Loader2 } from "lucide-react";
@@ -89,6 +90,7 @@ function App() {
             </Suspense>
           </BrowserRouter>
           <Analytics />
+          <Toaster position="bottom-center" theme="dark" richColors />
         </Providers>
       </ErrorBoundary>
     </HelmetProvider>
