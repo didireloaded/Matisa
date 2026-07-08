@@ -1,111 +1,69 @@
-/**
- * Accessible button component with ARIA attributes
- */
+import { ButtonHTMLAttributes, forwardRef } from "react";
+import { motion, HTMLMotionProps } from "framer-motion";
+import { Loader2 } from "lucide-react";
 
-import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
-import { cva, type VariantProps } from 'class-variance-authority';
-import { cn } from '@/lib/utils';
-
-const buttonVariants = cva(
-  'inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
-  {
-    variants: {
-      variant: {
-        default: 'bg-[#C8521A] text-white hover:bg-[#E8A055]',
-        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/90',
-        outline:
-          'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
-        link: 'text-primary underline-offset-4 hover:underline',
-      },
-      size: {
-        default: 'h-10 px-4 py-2',
-        sm: 'h-9 rounded-full px-3',
-        lg: 'h-11 rounded-full px-8',
-        icon: 'h-10 w-10',
-      },
-    },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
-    },
-  },
-);
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean;
+export interface ButtonProps extends Omit<HTMLMotionProps<"button">, "ref"> {
+  variant?: "primary" | "secondary" | "outline" | "ghost" | "glass";
+  size?: "sm" | "md" | "lg" | "icon";
   isLoading?: boolean;
-  aria?: {
-    label?: string;
-    describedBy?: string;
-    expanded?: boolean;
-    pressed?: boolean;
-  };
+  fullWidth?: boolean;
 }
 
-const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
-      className,
-      variant,
-      size,
-      asChild = false,
-      isLoading = false,
-      aria,
-      disabled,
       children,
+      variant = "primary",
+      size = "md",
+      isLoading = false,
+      fullWidth = false,
+      className = "",
+      disabled,
       ...props
     },
     ref,
   ) => {
-    const Comp = asChild ? Slot : 'button';
+    const baseStyles =
+      "inline-flex items-center justify-center font-bold transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none";
+
+    const variants = {
+      primary: "bg-[var(--color-primary)] text-white hover:bg-[var(--color-primary-light)]",
+      secondary: "bg-[var(--color-surface-3)] text-white hover:bg-[var(--color-surface-2)]",
+      outline:
+        "border-2 border-[var(--color-border)] text-white hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]",
+      ghost: "text-white hover:bg-[var(--color-surface-3)]",
+      glass: "bg-white/5 backdrop-blur-md text-white border border-white/10 hover:bg-white/10",
+    };
+
+    const sizes = {
+      sm: "h-9 px-4 text-xs rounded-full",
+      md: "h-12 px-6 text-sm rounded-full",
+      lg: "h-14 px-8 text-base rounded-full",
+      icon: "h-12 w-12 rounded-full",
+    };
+
+    const classes = [
+      baseStyles,
+      variants[variant],
+      sizes[size],
+      fullWidth ? "w-full" : "",
+      className,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+      <motion.button
         ref={ref}
+        whileTap={!disabled && !isLoading ? { scale: 0.96 } : {}}
+        className={classes}
         disabled={disabled || isLoading}
-        aria-label={aria?.label}
-        aria-describedby={aria?.describedBy}
-        aria-expanded={aria?.expanded}
-        aria-pressed={aria?.pressed}
-        aria-busy={isLoading}
         {...props}
       >
-        {isLoading ? (
-          <>
-            <svg
-              className="mr-2 h-4 w-4 animate-spin"
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <circle
-                className="opacity-25"
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="4"
-              />
-              <path
-                className="opacity-75"
-                fill="currentColor"
-                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-              />
-            </svg>
-            Loading...
-          </>
-        ) : (
-          children
-        )}
-      </Comp>
+        {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : children}
+      </motion.button>
     );
   },
 );
-Button.displayName = 'Button';
 
-export { Button, buttonVariants };
+Button.displayName = "Button";
