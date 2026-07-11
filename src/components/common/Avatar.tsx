@@ -20,7 +20,7 @@ export function pickGradient(seed: string) {
 }
 
 interface AvatarProps {
-  profile: Pick<Profile, "id" | "display_name" | "avatar_url"> | Partial<Profile>;
+  profile?: Pick<Profile, "id" | "display_name" | "avatar_url"> | Partial<Profile> | any;
   size?: number;
   ring?: boolean;
   showStatus?: boolean;
@@ -41,8 +41,8 @@ export function Avatar({
   badge,
 }: AvatarProps) {
   const [imgError, setImgError] = useState(false);
-  const grad = pickGradient(profile.id || "");
-  const letter = (profile.display_name || "?")[0].toUpperCase();
+  const grad = pickGradient(profile?.id || "");
+  const letter = (profile?.display_name || "?")[0].toUpperCase();
   const fontSize = Math.floor(size * 0.38);
 
   const inner =

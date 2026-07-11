@@ -10,12 +10,7 @@ export interface Note {
   audio_url?: string;
   duration_seconds?: number;
   waveform_data?: number[];
-  profiles?: {
-    id: string;
-    username: string;
-    display_name: string;
-    avatar_url: string;
-  };
+  profiles?: any;
   reaction_count?: number;
   reply_count?: number;
 }
@@ -28,10 +23,7 @@ export const NoteService = {
     try {
       const { data, error } = await supabase
         .from("notes")
-        .select(`
-          *,
-          profiles!notes_user_id_fkey(id, username, display_name, avatar_url)
-        `)
+        .select(`*, profiles!notes_user_id_fkey(id, username, display_name, avatar_url)`)
         .order("created_at", { ascending: false })
         .limit(limit);
 
@@ -44,34 +36,60 @@ export const NoteService = {
   },
 
   /**
+   * Fetches notes for a specific user
+   */
+  async getUserNotes(userId: string): Promise<Note[]> {
+    try {
+      const { data, error } = await supabase
+        .from("notes")
+        .select(`*, profiles!notes_user_id_fkey(id, username, display_name, avatar_url)`)
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    } catch (err) {
+      console.error("Failed to fetch user notes:", err);
+      return [];
+    }
+  },
+
+  /**
    * Creates a new note
    */
   async createNote(
     userId: string,
     content: string,
     type: "text" | "voice" = "text",
-    audioUrl?: string,
+    audioUrlOrVoiceMeta?: any,
     durationSeconds?: number,
-    waveformData?: number[]
+    waveformData?: number[],
   ): Promise<Note | null> {
     try {
+      const voiceMeta =
+        typeof audioUrlOrVoiceMeta === "object"
+          ? audioUrlOrVoiceMeta
+          : {
+              audio_url: audioUrlOrVoiceMeta,
+              duration_seconds: durationSeconds,
+              waveform_data: waveformData,
+            };
+
       const { data, error } = await supabase
         .from("notes")
         .insert({
           user_id: userId,
           content,
           type,
-          audio_url: audioUrl,
-          duration_seconds: durationSeconds,
-          waveform_data: waveformData,
+          ...voiceMeta,
         })
         .select(`*, profiles!notes_user_id_fkey(id, username, display_name, avatar_url)`)
         .single();
 
       if (error) throw error;
-      
+
       // Track analytics
-      AnalyticsAI.trackEvent(userId, "note_created", { type });
+      AnalyticsAI.trackEvent(userId, "note_created", data?.id || "", { type });
 
       return data;
     } catch (err) {
@@ -92,7 +110,7 @@ export const NoteService = {
 
       if (error) throw error;
 
-      AnalyticsAI.trackEvent(userId, "note_deleted", { noteId });
+      AnalyticsAI.trackEvent(userId, "note_deleted", noteId);
       return true;
     } catch (err) {
       console.error("Failed to delete note:", err);
@@ -114,7 +132,7 @@ export const NoteService = {
 
       if (error) throw error;
 
-      AnalyticsAI.trackEvent(userId, "note_edited", { noteId });
+      AnalyticsAI.trackEvent(userId, "note_edited", noteId);
       return data;
     } catch (err) {
       console.error("Failed to edit note:", err);
@@ -128,22 +146,18 @@ export const NoteService = {
   subscribeToNotes(callback: (payload: any) => void) {
     const channel = supabase
       .channel("public:notes")
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "notes" },
-        (payload) => callback(payload)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "notes" }, (payload) =>
+        callback(payload),
       )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "notes" },
-        (payload) => callback(payload)
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "notes" }, (payload) =>
+        callback(payload),
       )
       .subscribe();
-      
+
     return channel;
   },
 
   unsubscribe(channel: any) {
     if (channel) supabase.removeChannel(channel);
-  }
+  },
 };

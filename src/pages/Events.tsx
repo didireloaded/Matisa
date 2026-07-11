@@ -18,7 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -144,7 +144,9 @@ export function Events() {
                       </div>
 
                       <div className="absolute bottom-4 left-4 right-4">
-                        <h3 className="text-white font-bold text-xl mb-1 leading-tight">{event.title}</h3>
+                        <h3 className="text-white font-bold text-xl mb-1 leading-tight">
+                          {event.title}
+                        </h3>
                         <div className="flex items-center gap-3 text-white/80 text-xs font-medium mb-3">
                           <span className="flex items-center gap-1">
                             <MapPin size={12} /> {event.location_name || event.location_type}

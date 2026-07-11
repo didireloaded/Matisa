@@ -20,7 +20,7 @@ import {
   Plus,
 } from "lucide-react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/common/Avatar";
 import { Card } from "@/components/ui/card";
 
@@ -116,10 +116,7 @@ export function Onboarding() {
     try {
       setVoiceUrl(url);
 
-      await supabase
-        .from("profiles")
-        .update({ voice_intro_url: url })
-        .eq("id", profile.id);
+      await supabase.from("profiles").update({ voice_intro_url: url }).eq("id", profile.id);
     } catch (err: any) {
       toast.error("Failed to save voice intro: " + err.message);
     }

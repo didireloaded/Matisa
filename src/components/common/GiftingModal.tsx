@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X, Gem, Heart, Star, Sparkles, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/common/Avatar";
 import type { UserProfile } from "@/types";
 
@@ -23,15 +23,63 @@ export interface GiftItem {
 }
 
 const GIFTS: GiftItem[] = [
-  { id: "rose", name: "Rose", cost: 10, icon: Heart, color: "text-rose-500", bgGlow: "shadow-[0_0_15px_rgba(244,63,94,0.4)]" },
-  { id: "star", name: "Star", cost: 50, icon: Star, color: "text-yellow-400", bgGlow: "shadow-[0_0_15px_rgba(250,204,21,0.4)]" },
-  { id: "diamond", name: "Diamond", cost: 100, icon: Gem, color: "text-cyan-400", bgGlow: "shadow-[0_0_15px_rgba(34,211,238,0.4)]" },
-  { id: "crown", name: "Crown", cost: 500, icon: Sparkles, color: "text-amber-500", bgGlow: "shadow-[0_0_15px_rgba(245,158,11,0.4)]" },
-  { id: "rocket", name: "Rocket", cost: 1000, icon: Sparkles, color: "text-purple-500", bgGlow: "shadow-[0_0_15px_rgba(168,85,247,0.4)]" },
-  { id: "matisa_box", name: "Matisa Box", cost: 5000, icon: Gift, color: "text-[var(--color-primary)]", bgGlow: "shadow-[0_0_15px_rgba(255,157,46,0.5)]" },
+  {
+    id: "rose",
+    name: "Rose",
+    cost: 10,
+    icon: Heart,
+    color: "text-rose-500",
+    bgGlow: "shadow-[0_0_15px_rgba(244,63,94,0.4)]",
+  },
+  {
+    id: "star",
+    name: "Star",
+    cost: 50,
+    icon: Star,
+    color: "text-yellow-400",
+    bgGlow: "shadow-[0_0_15px_rgba(250,204,21,0.4)]",
+  },
+  {
+    id: "diamond",
+    name: "Diamond",
+    cost: 100,
+    icon: Gem,
+    color: "text-cyan-400",
+    bgGlow: "shadow-[0_0_15px_rgba(34,211,238,0.4)]",
+  },
+  {
+    id: "crown",
+    name: "Crown",
+    cost: 500,
+    icon: Sparkles,
+    color: "text-amber-500",
+    bgGlow: "shadow-[0_0_15px_rgba(245,158,11,0.4)]",
+  },
+  {
+    id: "rocket",
+    name: "Rocket",
+    cost: 1000,
+    icon: Sparkles,
+    color: "text-purple-500",
+    bgGlow: "shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+  },
+  {
+    id: "matisa_box",
+    name: "Matisa Box",
+    cost: 5000,
+    icon: Gift,
+    color: "text-[var(--color-primary)]",
+    bgGlow: "shadow-[0_0_15px_rgba(255,157,46,0.5)]",
+  },
 ];
 
-export function GiftingModal({ isOpen, onClose, recipient, onSendGift, balance }: GiftingModalProps) {
+export function GiftingModal({
+  isOpen,
+  onClose,
+  recipient,
+  onSendGift,
+  balance,
+}: GiftingModalProps) {
   const [selectedGift, setSelectedGift] = useState<GiftItem | null>(null);
 
   if (!isOpen) return null;
@@ -85,11 +133,15 @@ export function GiftingModal({ isOpen, onClose, recipient, onSendGift, balance }
           <div className="flex items-center gap-3 p-4 bg-[var(--color-surface-2)] rounded-2xl mb-6">
             <Avatar size={48} profile={recipient} />
             <div className="flex-1 min-w-0">
-              <p className="text-[13px] text-[var(--color-text-muted)] font-medium uppercase tracking-wider mb-0.5">Sending to</p>
+              <p className="text-[13px] text-[var(--color-text-muted)] font-medium uppercase tracking-wider mb-0.5">
+                Sending to
+              </p>
               <h3 className="text-white font-bold text-base truncate">{recipient.display_name}</h3>
             </div>
             <div className="flex flex-col items-end">
-              <p className="text-[13px] text-[var(--color-text-muted)] font-medium mb-0.5">Balance</p>
+              <p className="text-[13px] text-[var(--color-text-muted)] font-medium mb-0.5">
+                Balance
+              </p>
               <div className="flex items-center gap-1">
                 <Gem size={14} className="text-[var(--color-primary)]" />
                 <span className="text-white font-bold text-base">{balance}</span>
@@ -116,19 +168,26 @@ export function GiftingModal({ isOpen, onClose, recipient, onSendGift, balance }
                   aria-label={`Select ${gift.name} gift costing ${gift.cost} coins`}
                 >
                   <Icon size={32} className={`mb-2 ${gift.color}`} strokeWidth={1.5} />
-                  <span className={`text-[13px] font-bold ${isSelected ? "text-white" : "text-white/80"}`}>
+                  <span
+                    className={`text-[13px] font-bold ${isSelected ? "text-white" : "text-white/80"}`}
+                  >
                     {gift.name}
                   </span>
                   <div className="flex items-center gap-1 mt-1">
-                    <Gem size={10} className={canAfford ? "text-[var(--color-primary)]" : "text-white/40"} />
-                    <span className={`text-[11px] font-bold ${canAfford ? "text-white/60" : "text-white/40"}`}>
+                    <Gem
+                      size={10}
+                      className={canAfford ? "text-[var(--color-primary)]" : "text-white/40"}
+                    />
+                    <span
+                      className={`text-[11px] font-bold ${canAfford ? "text-white/60" : "text-white/40"}`}
+                    >
                       {gift.cost}
                     </span>
                   </div>
-                  
+
                   {/* Selected indicator */}
                   {isSelected && (
-                    <motion.div 
+                    <motion.div
                       layoutId="gift-outline"
                       className="absolute inset-0 border-2 border-[var(--color-primary)] rounded-2xl"
                       initial={false}

@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/Tabs";
 import { Avatar } from "@/components/common/Avatar";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 const CATEGORIES = [
   { id: "People", label: "People" },

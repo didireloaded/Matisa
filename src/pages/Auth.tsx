@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { User, LogIn } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 export function Auth() {
   const [isLogin, setIsLogin] = useState(true);

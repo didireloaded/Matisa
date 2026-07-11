@@ -20,7 +20,7 @@ import { FollowButton } from "@/components/common/FollowButton";
 import { VoicePlayer } from "@/components/ui/VoicePlayer";
 import { Avatar } from "@/components/common/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/card";
 import { MessageService } from "@/services/messages";
 import { toast } from "sonner";

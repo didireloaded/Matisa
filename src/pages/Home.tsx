@@ -31,17 +31,7 @@ import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
 import { StoriesViewer } from "@/components/stories/StoriesViewer";
 import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
 
-interface Note {
-  id: string;
-  user_id: string;
-  content: string;
-  created_at: string;
-  type?: "text" | "voice";
-  audio_url?: string;
-  duration_seconds?: number;
-  waveform_data?: number[];
-  profiles?: Profile;
-}
+import type { Note } from "@/services/NoteService";
 
 function getUserById(id: string) {
   return USERS.find((u) => u.id === id) || USERS[0];
@@ -133,7 +123,13 @@ function StoriesSection() {
 // ─────────────────────────────────────────────
 // COMPOSER
 // ─────────────────────────────────────────────
-function Composer({ onSubmit, onNoteCreated }: { onSubmit: (c: string) => Promise<any>, onNoteCreated: () => void }) {
+function Composer({
+  onSubmit,
+  onNoteCreated,
+}: {
+  onSubmit: (c: string) => Promise<any>;
+  onNoteCreated: () => void;
+}) {
   const { profile } = useAuth();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -251,12 +247,12 @@ function ComposerAction({
 
 import { useNoteReaction } from "@/hooks/useNoteReaction";
 
-function FeedCard({ 
-  note, 
+function FeedCard({
+  note,
   onDelete,
-  onEdit 
-}: { 
-  note: Note; 
+  onEdit,
+}: {
+  note: Note;
   onDelete?: (id: string) => void;
   onEdit?: (id: string, newContent: string) => void;
 }) {
@@ -264,11 +260,8 @@ function FeedCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
-  
-  const { reacted, counts, toggleReaction } = useNoteReaction(
-    note.id, 
-    note.reaction_count || 0
-  );
+
+  const { reacted, counts, toggleReaction } = useNoteReaction(note.id, note.reaction_count || 0);
   const hasReacted = reacted === "heart";
   const timeString = new Date(note.created_at).toLocaleTimeString([], {
     hour: "2-digit",
@@ -293,7 +286,9 @@ function FeedCard({
               <span className="text-white text-[15px] font-bold">
                 {note.profiles?.display_name || note.profiles?.username || "User"}
               </span>
-              <span className="text-[var(--color-text-muted)] text-[12px] font-medium">{timeAgo(note.created_at)}</span>
+              <span className="text-[var(--color-text-muted)] text-[12px] font-medium">
+                {timeAgo(note.created_at)}
+              </span>
             </div>
             <span className="text-[var(--color-text-muted)] text-[12px]">
               @{note.profiles?.username || "user"}
@@ -301,7 +296,7 @@ function FeedCard({
           </div>
         </div>
         <div className="relative">
-          <button 
+          <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="text-[var(--color-text-muted)] hover:text-white transition-colors p-2"
           >
@@ -320,19 +315,19 @@ function FeedCard({
               <circle cx="5" cy="12" r="1" />
             </svg>
           </button>
-          
+
           <AnimatePresence>
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.95 }}
                   className="absolute right-0 top-full mt-1 w-32 bg-[#1A1A1A] border border-[#333] rounded-xl shadow-xl z-50 overflow-hidden"
                 >
                   {isOwner && onEdit && (
-                    <button 
+                    <button
                       onClick={() => {
                         setMenuOpen(false);
                         setIsEditing(true);
@@ -343,7 +338,7 @@ function FeedCard({
                     </button>
                   )}
                   {isOwner && onDelete && (
-                    <button 
+                    <button
                       onClick={() => {
                         setMenuOpen(false);
                         onDelete(note.id);
@@ -372,7 +367,7 @@ function FeedCard({
             rows={3}
           />
           <div className="flex justify-end gap-2 mt-2">
-            <button 
+            <button
               onClick={() => {
                 setIsEditing(false);
                 setEditContent(note.content);
@@ -381,7 +376,7 @@ function FeedCard({
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={() => {
                 if (editContent.trim() && onEdit) {
                   onEdit(note.id, editContent.trim());
@@ -562,9 +557,9 @@ export function Home() {
 
       {/* 2. Composer */}
       <div className="z-10 relative">
-        <Composer 
+        <Composer
           onSubmit={(content) => createNote(content, "text")}
-          onNoteCreated={refreshNotes} 
+          onNoteCreated={refreshNotes}
         />
       </div>
 
@@ -599,7 +594,9 @@ export function Home() {
                 window.scrollTo({ top: 0, behavior: "smooth" });
                 // Focus the composer input after scrolling
                 setTimeout(() => {
-                  const input = document.querySelector<HTMLInputElement>('input[placeholder="What\'s on your mind?"]');
+                  const input = document.querySelector<HTMLInputElement>(
+                    'input[placeholder="What\'s on your mind?"]',
+                  );
                   input?.focus();
                 }, 500);
               },

@@ -6,30 +6,30 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #08080c;
-  --color-foreground: #ffffff;
+  --color-background: #0b0b0b;
+  --color-foreground: #f5f0ea;
   
-  --color-surface: #11111a;
-  --color-surface-2: #181824;
-  --color-surface-3: #222230;
+  --color-surface: #151515;
+  --color-surface-2: #1a1a1a;
+  --color-surface-3: #222222;
 
-  --color-primary: #8b5cf6;
-  --color-primary-light: #a855f7;
-  --color-primary-dark: #6d28d9;
+  --color-primary: #ff9d2e;
+  --color-primary-light: #ffb65f;
+  --color-primary-dark: #ff6b35;
 
-  --color-secondary: #ec4899;
+  --color-secondary: #a855f7;
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
 
-  --color-text: #ffffff;
-  --color-text-muted: #9ca3af;
-  --color-text-dark: #6b7280;
+  --color-text: #f5f0ea;
+  --color-text-muted: #7a7169;
+  --color-text-dark: rgba(255, 255, 255, 0.3);
 
   --color-border: rgba(255, 255, 255, 0.05);
   --color-border-hover: rgba(255, 255, 255, 0.1);
 
-  --font-sans: 'Geist Variable', 'DM Sans', sans-serif;
+  --font-sans: 'DM Sans', 'Geist Variable', sans-serif;
   --font-heading: 'Syne', sans-serif;
 
   --radius-sm: 12px;
@@ -64,7 +64,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
     scrollbar-width: none;
 }
 
-::selection { background-color: var(--color-primary); color: white; }
+::selection { background-color: rgba(200, 82, 26, 0.35); color: #f5f0ea; }
 
 /* Custom Animations */
 @keyframes slide-up {
@@ -90,7 +90,7 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
 }
 
 .story-ring {
-  background: conic-gradient(from 120deg, var(--color-primary), var(--color-secondary), var(--color-primary-light), var(--color-primary));
+  background: conic-gradient(from 120deg, #ff9d2e, #a855f7, #ff6b35, #ff9d2e);
   padding: 2.5px;
   border-radius: 9999px;
 }
@@ -108,6 +108,31 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   margin: 6px auto 0;
   border-radius: 999px;
   background: var(--color-primary);
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+.radar-ring::before,
+.radar-ring::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: rgba(255, 157, 46, 0.45);
+  animation: pulse-ring 2.6s ease-out infinite;
+}
+
+.radar-ring::after {
+  animation-delay: 1.3s;
 }
 
 @layer base {

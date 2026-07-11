@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Plus, Edit3, Image, Mic, AlignLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/common/Avatar";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { useNotes } from "@/hooks/useNotes";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,7 +19,10 @@ function FeedCard({ note }: { note: any }) {
           <div className="flex items-center gap-2">
             <span className="text-white font-bold text-sm">{note.profiles?.display_name}</span>
             <span className="text-[var(--color-text-muted)] text-xs">
-              {new Date(note.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(note.created_at).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
             </span>
           </div>
           <p className="text-white text-sm mt-1">{note.content}</p>
@@ -55,10 +58,7 @@ export function Notes() {
         {/* Composer */}
         <Card variant="solid" className="p-4">
           <div className="flex gap-3 mb-3">
-            <Avatar
-              size={40}
-              profile={profile}
-            />
+            <Avatar size={40} profile={profile || undefined} />
             <textarea
               value={content}
               onChange={(e) => setContent(e.target.value)}
@@ -76,9 +76,9 @@ export function Notes() {
                 <Mic size={18} />
               </button>
             </div>
-            <Button 
-              variant="primary" 
-              size="sm" 
+            <Button
+              variant="primary"
+              size="sm"
               className="font-bold px-5"
               onClick={handlePost}
               disabled={submitting || !content.trim()}
@@ -90,7 +90,7 @@ export function Notes() {
 
         {loading ? (
           <div className="flex justify-center py-10">
-             <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
+            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
           </div>
         ) : notes.length === 0 ? (
           <div className="mt-8">
@@ -103,7 +103,7 @@ export function Notes() {
           </div>
         ) : (
           <div className="mt-6">
-            {notes.map(note => (
+            {notes.map((note) => (
               <FeedCard key={note.id} note={note} />
             ))}
           </div>

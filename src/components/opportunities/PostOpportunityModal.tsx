@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Briefcase, MapPin, DollarSign } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/contexts/AuthContext";
 import { OpportunityService } from "@/services/OpportunityService";
 import { toast } from "sonner";
