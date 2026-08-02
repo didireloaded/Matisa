@@ -86,11 +86,16 @@ export function MainLayout() {
   const [showCreateVoice, setShowCreateVoice] = useState(false);
 
   const location = useLocation();
-  const { session, loading, showAuthModal, setShowAuthModal } = useAuth();
+  const { session, loading, needsOnboarding, showAuthModal, setShowAuthModal } = useAuth();
   const path = location.pathname;
 
   const isGuest = localStorage.getItem("guestMode") === "true";
+
   if (!loading && !session && !isGuest) return <Navigate to="/auth" replace />;
+
+  if (!loading && session && needsOnboarding && path !== "/onboarding") {
+    return <Navigate to="/onboarding" replace />;
+  }
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[var(--color-background)]">
