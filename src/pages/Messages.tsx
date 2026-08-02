@@ -189,7 +189,6 @@ export function Messages() {
                   <Link to={`/chat/${conv.id}`} className="flex items-center gap-4 py-3 group">
                     <Avatar
                       size={56}
-                      isOnline={i % 3 === 0}
                       profile={{
                         id: other?.id || "unknown",
                         display_name: name,
@@ -215,16 +214,7 @@ export function Messages() {
                         <p
                           className={`text-sm truncate pr-4 flex items-center gap-1.5 ${unread > 0 ? "text-white font-medium" : "text-[var(--color-text-muted)]"}`}
                         >
-                          {i === 1 ? (
-                            <>
-                              <Mic size={14} className="text-[var(--color-primary)]" />
-                              <span className="text-[var(--color-primary)] font-medium">
-                                Sent a voice note
-                              </span>
-                            </>
-                          ) : (
-                            conv.last_message?.content || "Started a conversation"
-                          )}
+                          {conv.last_message?.content || "Started a conversation"}
                         </p>
                         {unread > 0 && (
                           <div className="w-5 h-5 rounded-full bg-[var(--color-primary)] flex items-center justify-center shrink-0 shadow-[0_0_12px_rgba(139,92,246,0.5)]">

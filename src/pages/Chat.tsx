@@ -126,7 +126,6 @@ export function Chat() {
           <div className="flex items-center gap-3 cursor-pointer">
             <Avatar
               size={44}
-              isOnline={true}
               profile={{
                 id: otherUser?.id || "unknown",
                 display_name: otherUser?.display_name || "Loading...",

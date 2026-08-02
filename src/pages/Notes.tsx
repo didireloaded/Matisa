@@ -8,6 +8,7 @@ import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { useNotes } from "@/hooks/useNotes";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
 
 function FeedCard({ note }: { note: any }) {
   // Simple version of FeedCard for Notes page, ideally this would be imported
@@ -34,9 +35,11 @@ function FeedCard({ note }: { note: any }) {
 
 export function Notes() {
   const { profile } = useAuth();
-  const { notes, loading, createNote } = useNotes();
+  const { notes, loading, createNote, refreshNotes } = useNotes();
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"text" | "voice">("text");
 
   const handlePost = async () => {
     if (!content.trim() || !profile) return;
@@ -45,6 +48,7 @@ export function Notes() {
     if (newNote) {
       toast.success("Note posted");
       setContent("");
+      refreshNotes();
     }
     setSubmitting(false);
   };
@@ -69,11 +73,15 @@ export function Notes() {
           </div>
           <div className="flex justify-between items-center pt-3 border-t border-[var(--color-border)]">
             <div className="flex gap-2 text-[var(--color-text-muted)]">
-              <button className="p-2 rounded-full hover:bg-[var(--color-surface-3)] transition">
-                <Image size={18} />
-              </button>
-              <button className="p-2 rounded-full hover:bg-[var(--color-surface-3)] transition">
+              <button
+                onClick={() => {
+                  setModalMode("voice");
+                  setIsModalOpen(true);
+                }}
+                className="p-2 rounded-full hover:bg-[var(--color-surface-3)] hover:text-white transition flex items-center gap-1.5 text-xs font-semibold"
+              >
                 <Mic size={18} />
+                <span>Voice Note</span>
               </button>
             </div>
             <Button
@@ -110,10 +118,15 @@ export function Notes() {
         )}
       </div>
 
-      {/* FAB */}
-      <button className="fixed bottom-[88px] right-5 w-14 h-14 bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform z-40">
-        <Plus size={24} />
-      </button>
+      <CreateNoteModal
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSuccess={() => {
+          setIsModalOpen(false);
+          refreshNotes();
+        }}
+        initialMode={modalMode}
+      />
     </div>
   );
 }
