@@ -8,7 +8,7 @@ import type { Post, Profile } from "@/types";
 import { SearchAI } from "@/services/ai";
 import { Input } from "@/components/ui/input";
 import { Tabs } from "@/components/ui/Tabs";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/Button";
 

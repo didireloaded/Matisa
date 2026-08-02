@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Search, Bell } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
-import { CreateNoteModal } from "@/components/feed/CreateNoteModal";
+import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
 import { CreateVoiceRoomModal } from "@/components/karaoke/CreateVoiceRoomModal";
 import { CreateRadialMenu } from "@/components/common/CreateRadialMenu";
 import { CreateStoryModal } from "@/components/stories/CreateStoryModal";

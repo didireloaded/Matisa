@@ -23,7 +23,7 @@ import { GiftingModal, type GiftItem } from "@/components/common/GiftingModal";
 import { useAuth } from "../../contexts/AuthContext";
 import { KaraokeService } from "@/services/karaoke";
 import type { UserProfile } from "@/types";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { useVoice } from "@/contexts/VoiceContext";
 import { supabase } from "@/lib/supabase";

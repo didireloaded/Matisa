@@ -10,7 +10,7 @@ import { DiscoveryAI } from "@/services/ai";
 import type { Conversation } from "@/types";
 import { Tabs } from "@/components/ui/Tabs";
 import { Input } from "@/components/ui/input";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 
 export function Messages() {
   const { profile } = useAuth();
@@ -122,7 +122,11 @@ export function Messages() {
           onChange={setActiveTab}
           tabs={[
             { id: "all", label: "All" },
-            { id: "primary", label: "Primary", badge: Object.values(unreadCounts).reduce((a, b) => a + b, 0) },
+            {
+              id: "primary",
+              label: "Primary",
+              badge: Object.values(unreadCounts).reduce((a, b) => a + b, 0),
+            },
             { id: "requests", label: "Requests" },
           ]}
         />

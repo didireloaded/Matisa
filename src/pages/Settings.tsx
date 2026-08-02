@@ -15,7 +15,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 
 export function Settings() {

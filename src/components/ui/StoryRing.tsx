@@ -1,6 +1,6 @@
 import { HTMLAttributes } from "react";
 import { motion } from "framer-motion";
-import { Avatar } from "../common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import type { ComponentProps } from "react";
 type AvatarProps = ComponentProps<typeof Avatar>;
 

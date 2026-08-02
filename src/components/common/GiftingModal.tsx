@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, Gem, Heart, Star, Sparkles, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import type { UserProfile } from "@/types";
 
 interface GiftingModalProps {

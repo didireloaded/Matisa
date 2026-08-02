@@ -15,7 +15,7 @@ import {
 import { USERS, STORIES } from "@/data/dummy";
 import { supabase } from "@/lib/supabase";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { StoryRing } from "@/components/ui/StoryRing";
 import { Card } from "@/components/ui/card";
 import { Tabs } from "@/components/ui/Tabs";
@@ -391,6 +391,7 @@ function FeedCard({
         </div>
       ) : note.type === "voice" && note.audio_url ? (
         <VoicePlayer
+          id={`home-voice-${note.id}`}
           audioUrl={note.audio_url}
           duration={note.duration_seconds ? `0:${note.duration_seconds}` : "0:18"}
           waveform={note.waveform_data}

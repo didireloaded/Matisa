@@ -18,7 +18,7 @@ import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { useSaves } from "@/hooks/useSaves";
 import { FollowButton } from "@/components/common/FollowButton";
 import { VoicePlayer } from "@/components/ui/VoicePlayer";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/card";
@@ -277,6 +277,7 @@ export function Profile() {
             {userProfile.voice_intro_url && (
               <div className="mb-6">
                 <VoicePlayer
+                  id="profile-voice-intro"
                   audioUrl={userProfile.voice_intro_url}
                   duration="0:30"
                   waveform={[4, 8, 12, 16, 12, 8, 14, 10, 6, 12, 18]}

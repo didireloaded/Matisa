@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Heart, MessageCircle, Bookmark, Send, Play, Pause } from "lucide-react";
 import { toast } from "sonner";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { useSaves } from "@/hooks/useSaves";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Post } from "@/types";

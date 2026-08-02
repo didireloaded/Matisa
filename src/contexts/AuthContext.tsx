@@ -44,11 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Needs onboarding if username isn't set yet
       setNeedsOnboarding(!data.username);
     } else {
-      console.log(
-        "[AuthContext] Profile missing. Attempting to create default profile for:",
-        userId,
-      );
-      // Create a default profile to prevent the app from hanging
+      // Profile missing. Attempting to create default profile
       const defaultUsername = `user_${userId.substring(0, 8)}`;
       const { data: newProfile, error: insertError } = await supabase
         .from("profiles")

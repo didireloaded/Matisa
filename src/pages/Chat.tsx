@@ -17,7 +17,7 @@ import { toast } from "sonner";
 import { useAuth } from "../contexts/AuthContext";
 import { MessageService } from "../services/messages";
 import { VoicePlayer } from "@/components/ui/VoicePlayer";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Input } from "@/components/ui/input";
 
 export function Chat() {
@@ -207,6 +207,7 @@ export function Chat() {
                   ) : isVoice ? (
                     <div className="w-48">
                       <VoicePlayer
+                        id={`chat-voice-${msg.id}`}
                         audioUrl={msg.media_url}
                         duration="0:12"
                         waveform={[4, 8, 12, 24, 18, 12, 8, 20, 30, 15, 10, 5]}

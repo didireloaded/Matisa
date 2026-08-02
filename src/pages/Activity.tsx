@@ -7,7 +7,7 @@ import { PremiumEmptyState as EmptyState } from "@/components/common/PremiumEmpt
 import { timeAgo } from "@/lib/utils";
 import type { AppNotification } from "@/types";
 import { DiscoveryAI } from "@/services/ai";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Tabs } from "@/components/ui/Tabs";
 
 const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Mic, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { useVoice } from "@/contexts/VoiceContext";
 
 interface VoiceRoom {
@@ -30,21 +30,21 @@ export function LiveRoomsBanner() {
         .eq("status", "active")
         .eq("is_private", false)
         .order("started_at", { ascending: false });
-        
+
       if (!error && data) {
         setRooms(data as VoiceRoom[]);
       }
     }
-    
+
     fetchRooms();
-    
+
     const channel = supabase
       .channel("public:voice_rooms")
       .on("postgres_changes", { event: "*", schema: "public", table: "voice_rooms" }, () => {
         fetchRooms();
       })
       .subscribe();
-      
+
     return () => {
       supabase.removeChannel(channel);
     };
@@ -58,7 +58,7 @@ export function LiveRoomsBanner() {
         <span className="w-2 h-2 rounded-full bg-[#00E5FF] animate-pulse" />
         <h3 className="text-xs font-bold text-white uppercase tracking-wider">Live Voice Rooms</h3>
       </div>
-      
+
       <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
         {rooms.map((room) => {
           const isActive = activeRoomId === room.id;
@@ -68,8 +68,8 @@ export function LiveRoomsBanner() {
               whileTap={{ scale: 0.95 }}
               onClick={() => navigate(`/room/${room.id}`)}
               className={`flex-shrink-0 w-[240px] p-3 rounded-2xl border cursor-pointer transition-colors ${
-                isActive 
-                  ? "bg-[#00E5FF]/10 border-[#00E5FF]/30" 
+                isActive
+                  ? "bg-[#00E5FF]/10 border-[#00E5FF]/30"
                   : "bg-[#151515] border-white/5 hover:border-white/10"
               }`}
             >
@@ -82,7 +82,9 @@ export function LiveRoomsBanner() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-bold text-white truncate">{room.title}</h4>
-                  <p className="text-[10px] text-white/50 truncate">by {room.profiles?.display_name || "Anonymous"}</p>
+                  <p className="text-[10px] text-white/50 truncate">
+                    by {room.profiles?.display_name || "Anonymous"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center justify-between mt-2 pt-2 border-t border-white/5">

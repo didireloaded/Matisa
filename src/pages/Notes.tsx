@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Plus, Edit3, Image, Mic, AlignLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import { Avatar } from "@/components/common/Avatar";
+import { Avatar } from "@/components/ui/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { useNotes } from "@/hooks/useNotes";
