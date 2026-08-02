@@ -1,15 +1,29 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { EventService } from "./EventService";
 import type { EventRepository } from "../repositories/EventRepository";
-import type { MatisaEvent, CreateEventInput, UpdateEventInput } from "../types";
+import type {
+  MatisaEvent,
+  CreateEventInput,
+  UpdateEventInput,
+  EventTicketRecord,
+  EventInviteRecord,
+} from "../types";
 
 describe("EventService Domain & Lifecycle Tests (Phase 1)", () => {
   let service: EventService;
   let mockRepo: unknown;
   let fakeEvents: Record<string, MatisaEvent>;
+  let fakeTickets: Record<string, EventTicketRecord>;
+  let fakeInvites: Record<string, EventInviteRecord>;
+  let fakeBans: Set<string>;
+  let attendeeCount: number;
 
   beforeEach(() => {
     fakeEvents = {};
+    fakeTickets = {};
+    fakeInvites = {};
+    fakeBans = new Set();
+    attendeeCount = 0;
 
     mockRepo = {
       createDraft: vi.fn(async (hostId: string, input: CreateEventInput) => {
@@ -27,6 +41,7 @@ describe("EventService Domain & Lifecycle Tests (Phase 1)", () => {
           start_at: input.start_at,
           end_at: input.end_at,
           timezone: input.timezone || "UTC",
+          max_attendees: input.max_attendees,
           price_minor: input.price_minor || 0,
           currency: input.currency || "NAD",
           chat_enabled: input.chat_enabled ?? true,
@@ -89,6 +104,35 @@ describe("EventService Domain & Lifecycle Tests (Phase 1)", () => {
           user_id: targetUserId,
           role,
           created_at: new Date().toISOString(),
+        };
+      }),
+
+      countActiveAttendees: vi.fn(async () => attendeeCount),
+
+      findBan: vi.fn(async (eventId: string, userId: string) => {
+        return fakeBans.has(`${eventId}:${userId}`) ? { id: "ban_1" } : null;
+      }),
+
+      findInvite: vi.fn(async (eventId: string, userId: string) => {
+        return fakeInvites[`${eventId}:${userId}`] || null;
+      }),
+
+      findValidTicket: vi.fn(async (eventId: string, userId: string) => {
+        return fakeTickets[`${eventId}:${userId}`] || null;
+      }),
+
+      upsertAttendance: vi.fn(async (eventId: string, userId: string, role: any) => {
+        attendeeCount += 1;
+        return {
+          id: `attendee_${attendeeCount}`,
+          event_id: eventId,
+          user_id: userId,
+          role,
+          status: "checked_in",
+          joined_at: new Date().toISOString(),
+          checked_in_at: new Date().toISOString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
       }),
     };
@@ -232,6 +276,122 @@ describe("EventService Domain & Lifecycle Tests (Phase 1)", () => {
       await expect(
         service.assignHostRole(draft.id, "user_3", "user_4", "moderator"),
       ).rejects.toThrow("Unauthorized: Only the primary event host can assign roles.");
+    });
+  });
+
+  describe("evaluateJoinAccess", () => {
+    it("requires authentication before joining", async () => {
+      const decision = await service.evaluateJoinAccess("event_1", null);
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe("authentication_required");
+    });
+
+    it("denies paid ticket access until a verified ticket exists", async () => {
+      const futureDate = new Date(Date.now() + 3600 * 1000).toISOString();
+      const draft = await service.createDraft("host_1", {
+        title: "Paid Workshop",
+        access_model: "paid_ticket",
+        price_minor: 5000,
+        start_at: futureDate,
+      });
+      await service.publishEvent(draft.id, "host_1");
+
+      const decision = await service.evaluateJoinAccess(draft.id, "buyer_1");
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe("ticket_required");
+    });
+
+    it("allows paid ticket access only when a paid or used ticket exists", async () => {
+      const futureDate = new Date(Date.now() + 3600 * 1000).toISOString();
+      const draft = await service.createDraft("host_1", {
+        title: "Paid Class",
+        access_model: "paid_ticket",
+        price_minor: 7500,
+        start_at: futureDate,
+      });
+      await service.publishEvent(draft.id, "host_1");
+      fakeTickets[`${draft.id}:buyer_1`] = {
+        id: "ticket_1",
+        event_id: draft.id,
+        buyer_id: "buyer_1",
+        ticket_status: "paid",
+        amount_paid_minor: 7500,
+        currency: "NAD",
+        purchased_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const decision = await service.evaluateJoinAccess(draft.id, "buyer_1");
+
+      expect(decision.allowed).toBe(true);
+      expect(decision.ticket?.ticket_status).toBe("paid");
+    });
+
+    it("requires an invite for invite-only events", async () => {
+      const futureDate = new Date(Date.now() + 3600 * 1000).toISOString();
+      const draft = await service.createDraft("host_1", {
+        title: "Private Conversation",
+        access_model: "invite_only",
+        visibility: "private",
+        start_at: futureDate,
+      });
+      await service.publishEvent(draft.id, "host_1");
+
+      const blocked = await service.evaluateJoinAccess(draft.id, "listener_1");
+      expect(blocked.allowed).toBe(false);
+      expect(blocked.reason).toBe("invite_required");
+
+      fakeInvites[`${draft.id}:listener_1`] = {
+        id: "invite_1",
+        event_id: draft.id,
+        invited_user_id: "listener_1",
+        invited_by: "host_1",
+        created_at: new Date().toISOString(),
+      };
+      const allowed = await service.evaluateJoinAccess(draft.id, "listener_1");
+      expect(allowed.allowed).toBe(true);
+    });
+
+    it("denies banned attendees even when the event is public", async () => {
+      const futureDate = new Date(Date.now() + 3600 * 1000).toISOString();
+      const draft = await service.createDraft("host_1", {
+        title: "Public Audio",
+        start_at: futureDate,
+      });
+      await service.publishEvent(draft.id, "host_1");
+      fakeBans.add(`${draft.id}:listener_1`);
+
+      const decision = await service.evaluateJoinAccess(draft.id, "listener_1");
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe("banned");
+    });
+
+    it("enforces capacity for attendees", async () => {
+      const futureDate = new Date(Date.now() + 3600 * 1000).toISOString();
+      const draft = await service.createDraft("host_1", {
+        title: "Small Room",
+        max_attendees: 1,
+        start_at: futureDate,
+      });
+      await service.publishEvent(draft.id, "host_1");
+      attendeeCount = 1;
+
+      const decision = await service.evaluateJoinAccess(draft.id, "listener_1");
+
+      expect(decision.allowed).toBe(false);
+      expect(decision.reason).toBe("capacity_full");
+    });
+
+    it("allows the host to enter before the event is public", async () => {
+      const draft = await service.createDraft("host_1", { title: "Host Setup" });
+
+      const decision = await service.evaluateJoinAccess(draft.id, "host_1");
+
+      expect(decision.allowed).toBe(true);
+      expect(decision.role).toBe("host");
     });
   });
 });

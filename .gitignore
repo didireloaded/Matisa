@@ -40,3 +40,5 @@ supabase/.env
 # Build Artifacts
 dev-dist/
 .vite/
+coverage/
+test-results/

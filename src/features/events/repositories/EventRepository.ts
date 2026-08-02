@@ -5,6 +5,9 @@ import type {
   UpdateEventInput,
   EventHostRecord,
   EventRole,
+  EventAttendeeRecord,
+  EventInviteRecord,
+  EventTicketRecord,
 } from "../types";
 
 export class EventRepository {
@@ -168,6 +171,95 @@ export class EventRepository {
     }
 
     return data as EventHostRecord;
+  }
+
+  async countActiveAttendees(eventId: string): Promise<number> {
+    const { count, error } = await supabase
+      .from("event_attendees")
+      .select("id", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .in("status", ["registered", "checked_in"]);
+
+    if (error) {
+      throw new Error(`Failed to count attendees for event ${eventId}: ${error.message}`);
+    }
+
+    return count ?? 0;
+  }
+
+  async findBan(eventId: string, userId: string) {
+    const { data, error } = await supabase
+      .from("event_bans")
+      .select("id")
+      .eq("event_id", eventId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to check event ban: ${error.message}`);
+    }
+
+    return data;
+  }
+
+  async findInvite(eventId: string, userId: string): Promise<EventInviteRecord | null> {
+    const { data, error } = await supabase
+      .from("event_invites")
+      .select("*")
+      .eq("event_id", eventId)
+      .eq("invited_user_id", userId)
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to check event invite: ${error.message}`);
+    }
+
+    return data as EventInviteRecord | null;
+  }
+
+  async findValidTicket(eventId: string, userId: string): Promise<EventTicketRecord | null> {
+    const { data, error } = await supabase
+      .from("event_tickets")
+      .select("*")
+      .eq("event_id", eventId)
+      .eq("buyer_id", userId)
+      .in("ticket_status", ["paid", "used"])
+      .maybeSingle();
+
+    if (error) {
+      throw new Error(`Failed to check event ticket: ${error.message}`);
+    }
+
+    return data as EventTicketRecord | null;
+  }
+
+  async upsertAttendance(
+    eventId: string,
+    userId: string,
+    role = "attendee",
+  ): Promise<EventAttendeeRecord> {
+    const { data, error } = await supabase
+      .from("event_attendees")
+      .upsert(
+        {
+          event_id: eventId,
+          user_id: userId,
+          role,
+          status: "checked_in",
+          checked_in_at: new Date().toISOString(),
+          joined_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "event_id,user_id" },
+      )
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to record event attendance: ${error.message}`);
+    }
+
+    return data as EventAttendeeRecord;
   }
 }
 

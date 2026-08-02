@@ -6,6 +6,8 @@ import type {
   UpdateEventInput,
   EventRole,
   EventHostRecord,
+  EventAccessDecision,
+  EventJoinRole,
 } from "../types";
 
 export class EventService {
@@ -116,6 +118,64 @@ export class EventService {
     }
 
     return this.repo.addHostRole(eventId, targetUserId, role);
+  }
+
+  async evaluateJoinAccess(eventId: string, userId: string | null): Promise<EventAccessDecision> {
+    if (!userId) {
+      return { allowed: false, reason: "authentication_required" };
+    }
+
+    const event = await this.repo.findById(eventId);
+    if (!event) {
+      return { allowed: false, reason: "event_not_found" };
+    }
+
+    const hostRecord = event.hosts?.find((host) => host.user_id === userId);
+    const isHost = event.host_id === userId || event.created_by === userId || Boolean(hostRecord);
+    const role = (hostRecord?.role ?? (isHost ? "host" : "attendee")) as EventJoinRole;
+
+    if (!isHost && !["scheduled", "live"].includes(event.status)) {
+      return { allowed: false, reason: "event_not_open" };
+    }
+
+    if (!isHost && (await this.repo.findBan(eventId, userId))) {
+      return { allowed: false, reason: "banned" };
+    }
+
+    if (!isHost && ["free_private", "invite_only"].includes(event.access_model)) {
+      const invite = await this.repo.findInvite(eventId, userId);
+      if (!invite) {
+        return { allowed: false, reason: "invite_required" };
+      }
+    }
+
+    let ticket = undefined;
+    if (!isHost && event.access_model === "paid_ticket") {
+      const validTicket = await this.repo.findValidTicket(eventId, userId);
+      if (!validTicket) {
+        return { allowed: false, reason: "ticket_required" };
+      }
+      ticket = validTicket;
+    }
+
+    if (!isHost && event.max_attendees) {
+      const attendeeCount = await this.repo.countActiveAttendees(eventId);
+      if (attendeeCount >= event.max_attendees) {
+        return { allowed: false, reason: "capacity_full" };
+      }
+    }
+
+    return { allowed: true, reason: "allowed", role, ticket };
+  }
+
+  async joinEvent(eventId: string, userId: string | null) {
+    const decision = await this.evaluateJoinAccess(eventId, userId);
+    if (!decision.allowed || !userId) {
+      throw new Error(`Event access denied: ${decision.reason}.`);
+    }
+
+    const attendance = await this.repo.upsertAttendance(eventId, userId, decision.role);
+    return { decision, attendance };
   }
 }
 

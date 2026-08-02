@@ -79,6 +79,27 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
 }
 .animate-fade-in { animation: fade-in 0.22s ease; }
 
+@keyframes create-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(38px) scale(0.62);
+    filter: blur(4px);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(-4px) scale(1.06);
+    filter: blur(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.animate-create-pop {
+  animation: create-pop 0.42s cubic-bezier(.2,1.3,.32,1) both;
+}
+
 @keyframes shimmer {
   0%   { background-position: -400px 0; }
   100% { background-position:  400px 0; }
@@ -139,11 +160,31 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   * {
     border-color: var(--color-border);
     -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
+  }
+
+  body {
+    user-select: text;
+  }
+
+  button,
+  [role="button"] {
     user-select: none;
   }
-  input, textarea {
-    user-select: auto;
+
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 

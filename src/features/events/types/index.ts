@@ -17,6 +17,19 @@ export type ReplayPolicy = "none" | "host_only" | "ticket_holders" | "free_publi
 
 export type StageRequestStatus = "pending" | "approved" | "rejected" | "cancelled";
 
+export type EventAttendeeStatus = "registered" | "checked_in" | "left" | "removed";
+
+export type EventTicketStatus =
+  | "pending"
+  | "paid"
+  | "cancelled"
+  | "refunded"
+  | "partially_refunded"
+  | "disputed"
+  | "used";
+
+export type EventJoinRole = "host" | "cohost" | "moderator" | "speaker" | "attendee";
+
 export interface RefundPolicy {
   allow_refunds: boolean;
   refund_window_hours?: number;
@@ -88,6 +101,59 @@ export interface EventStageRequestRecord {
   status: StageRequestStatus;
   created_at: string;
   updated_at: string;
+}
+
+export interface EventAttendeeRecord {
+  id: string;
+  event_id: string;
+  user_id: string;
+  status: EventAttendeeStatus;
+  role: EventJoinRole;
+  joined_at?: string;
+  checked_in_at?: string;
+  left_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventInviteRecord {
+  id: string;
+  event_id: string;
+  invited_user_id: string;
+  invited_by: string;
+  accepted_at?: string;
+  declined_at?: string;
+  created_at: string;
+}
+
+export interface EventTicketRecord {
+  id: string;
+  event_id: string;
+  buyer_id: string;
+  payment_id?: string;
+  ticket_status: EventTicketStatus;
+  amount_paid_minor: number;
+  currency: string;
+  purchased_at?: string;
+  checked_in_at?: string;
+  refunded_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EventAccessDecision {
+  allowed: boolean;
+  reason:
+    | "allowed"
+    | "authentication_required"
+    | "event_not_found"
+    | "event_not_open"
+    | "banned"
+    | "invite_required"
+    | "ticket_required"
+    | "capacity_full";
+  role?: EventJoinRole;
+  ticket?: EventTicketRecord;
 }
 
 export interface CreateEventInput {

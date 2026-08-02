@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Mic, Square, Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,25 +20,39 @@ export function CreateVoicePostModal({ open, onClose }: CreateVoicePostModalProp
   const [title, setTitle] = useState("");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<BlobPart[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current?.state === "recording") {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (!open) {
       // Cleanup on close
-      if (isRecording) stopRecording();
+      stopRecording();
       setAudioBlob(null);
       setRecordingTime(0);
       setTitle("");
     }
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
+      streamRef.current?.getTracks().forEach((track) => track.stop());
     };
-  }, [open]);
+  }, [open, stopRecording]);
 
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
@@ -50,8 +64,8 @@ export function CreateVoicePostModal({ open, onClose }: CreateVoicePostModalProp
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
-        // Stop all tracks
-        stream.getTracks().forEach((track) => track.stop());
+        streamRef.current?.getTracks().forEach((track) => track.stop());
+        streamRef.current = null;
       };
 
       mediaRecorder.start();
@@ -63,14 +77,6 @@ export function CreateVoicePostModal({ open, onClose }: CreateVoicePostModalProp
     } catch (err) {
       toast.error("Could not access microphone");
       console.error(err);
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
-      if (timerRef.current) clearInterval(timerRef.current);
     }
   };
 

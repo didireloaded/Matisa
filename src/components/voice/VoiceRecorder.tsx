@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Square, Play, Pause, Trash2, Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { supabase } from "../../lib/supabase";
@@ -28,6 +28,7 @@ export function VoiceRecorder({
   const [isPublishing, setIsPublishing] = useState(false);
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -35,11 +36,29 @@ export function VoiceRecorder({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
 
+  const stopStream = useCallback(() => {
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+  }, []);
+
+  const stopTimer = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      stopTimer();
       if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
-      if (audioContextRef.current) audioContextRef.current.close();
+      void audioContextRef.current?.close();
+      stopStream();
+    };
+  }, [stopStream, stopTimer]);
+
+  useEffect(() => {
+    return () => {
       if (audioUrl) URL.revokeObjectURL(audioUrl);
     };
   }, [audioUrl]);
@@ -69,7 +88,11 @@ export function VoiceRecorder({
 
   const startRecording = async () => {
     try {
+      if (!navigator.mediaDevices?.getUserMedia) {
+        throw new Error("Microphone recording is not supported in this browser.");
+      }
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
       audioContextRef.current = new AudioContext();
       const source = audioContextRef.current.createMediaStreamSource(stream);
       analyserRef.current = audioContextRef.current.createAnalyser();
@@ -86,12 +109,11 @@ export function VoiceRecorder({
       mediaRecorderRef.current.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         setAudioBlob(blob);
-        const url = URL.revokeObjectURL(audioUrl || "");
+        if (audioUrl) URL.revokeObjectURL(audioUrl);
         setAudioUrl(URL.createObjectURL(blob));
         if (onRecordingComplete) onRecordingComplete(blob, recordingTime, waveform);
 
-        // Stop all tracks
-        stream.getTracks().forEach((track) => track.stop());
+        stopStream();
         if (animationFrameRef.current) cancelAnimationFrame(animationFrameRef.current);
       };
 
@@ -104,7 +126,7 @@ export function VoiceRecorder({
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
           if (prev >= maxDurationSeconds - 1) {
-            stopRecording();
+            mediaRecorderRef.current?.stop();
             return maxDurationSeconds;
           }
           return prev + 1;
@@ -112,7 +134,11 @@ export function VoiceRecorder({
       }, 1000);
     } catch (error) {
       console.error("Error accessing microphone", error);
-      alert("Microphone access is required to record voice notes.");
+      alert(
+        error instanceof Error
+          ? error.message
+          : "Microphone access is required to record voice notes.",
+      );
     }
   };
 
@@ -121,7 +147,7 @@ export function VoiceRecorder({
       mediaRecorderRef.current.stop();
       setIsRecording(false);
       setIsPaused(false);
-      if (timerRef.current) clearInterval(timerRef.current);
+      stopTimer();
     }
   };
 
@@ -164,10 +190,13 @@ export function VoiceRecorder({
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
-    setIsPlaying(!isPlaying);
   };
 
   const formatTime = (seconds: number) => {

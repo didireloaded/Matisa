@@ -43,16 +43,20 @@ export function VoiceNotePlayer({
     if (!audioRef.current) return;
     if (isPlaying) {
       audioRef.current.pause();
+      setIsPlaying(false);
     } else {
-      audioRef.current.play();
+      audioRef.current
+        .play()
+        .then(() => setIsPlaying(true))
+        .catch(() => setIsPlaying(false));
     }
-    setIsPlaying(!isPlaying);
   };
 
   const handleTimeUpdate = () => {
     if (!audioRef.current) return;
     const current = audioRef.current.currentTime;
-    setProgress((current / durationSeconds) * 100);
+    const duration = audioRef.current.duration || durationSeconds || 1;
+    setProgress((current / duration) * 100);
   };
 
   const handleEnded = () => {
