@@ -46,13 +46,11 @@ export function Profile() {
         { id: "voice", label: "Voice" },
         { id: "rooms", label: "Rooms" },
         { id: "saved", label: "Saved" },
-        { id: "crew", label: "Crew" },
       ]
     : [
         { id: "notes", label: "Notes" },
         { id: "voice", label: "Voice" },
         { id: "rooms", label: "Rooms" },
-        { id: "crew", label: "Crew" },
       ];
 
   const { fetchSavedPosts } = useSaves();
@@ -284,16 +282,6 @@ export function Profile() {
                 />
               </div>
             )}
-
-            {/* Active Rooms */}
-            <div className="flex gap-3 overflow-x-auto no-scrollbar pb-2 mb-4">
-              <div className="bg-[var(--color-surface-2)] border border-[var(--color-border)] rounded-2xl px-4 py-2.5 flex items-center gap-2 shrink-0">
-                <div className="w-2 h-2 rounded-full bg-[var(--color-primary)] animate-pulse" />
-                <span className="text-xs text-[var(--color-primary)] font-bold tracking-wide">
-                  In Room: Creator Chat
-                </span>
-              </div>
-            </div>
 
             {/* Connections */}
             <div className="flex items-center gap-6 mb-6 pt-4 border-t border-[var(--color-border)]">

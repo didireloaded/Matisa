@@ -142,20 +142,7 @@ export function Chat() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => toast.info("Video calling coming soon")}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:text-white transition-colors"
-          >
-            <Video size={22} />
-          </button>
-          <button
-            onClick={() => toast.info("Audio calling coming soon")}
-            className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:text-white transition-colors"
-          >
-            <Phone size={22} />
-          </button>
-        </div>
+        <div className="flex items-center gap-2"></div>
       </div>
 
       {/* MESSAGE LIST */}

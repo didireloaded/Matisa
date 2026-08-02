@@ -27,9 +27,21 @@ export function Discovery() {
   const [activeCategory, setActiveCategory] = useState("People");
 
   const [searchProfiles, setSearchProfiles] = useState<Profile[]>([]);
+  const [trendingProfiles, setTrendingProfiles] = useState<Profile[]>([]);
   const [searchPosts, setSearchPosts] = useState<Post[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [loadingDisc, setLoadingDisc] = useState(false);
+
+  useEffect(() => {
+    async function loadTrending() {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url, bio")
+        .limit(10);
+      if (data) setTrendingProfiles(data as Profile[]);
+    }
+    loadTrending();
+  }, []);
 
   useEffect(() => {
     setLoadingDisc(true);
@@ -233,23 +245,29 @@ export function Discovery() {
               </div>
             </div>
 
-            {activeCategory === "People" && (
+            {activeCategory === "People" && trendingProfiles.length > 0 && (
               <div>
                 <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
                   Trending Creators
                 </h3>
                 <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-                  {[1, 2, 3, 4].map((i) => (
-                    <div key={i} className="flex flex-col items-center gap-2">
+                  {trendingProfiles.map((p) => (
+                    <div
+                      key={p.id}
+                      onClick={() => navigate(`/profile/${p.id}`)}
+                      className="flex flex-col items-center gap-2 cursor-pointer"
+                    >
                       <Avatar
                         size={64}
                         profile={{
-                          id: `${i}`,
-                          display_name: `User ${i}`,
-                          avatar_url: `https://i.pravatar.cc/150?u=${i}`,
+                          id: p.id,
+                          display_name: p.display_name || p.username,
+                          avatar_url: p.avatar_url || "",
                         }}
                       />
-                      <span className="text-xs text-white font-bold">Creator {i}</span>
+                      <span className="text-xs text-white font-bold max-w-[70px] truncate text-center">
+                        {p.display_name?.split(" ")[0] || p.username}
+                      </span>
                     </div>
                   ))}
                 </div>

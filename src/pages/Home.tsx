@@ -12,13 +12,11 @@ import {
   Calendar,
   Plus,
 } from "lucide-react";
-import { USERS, STORIES } from "@/data/dummy";
 import { supabase } from "@/lib/supabase";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { Avatar } from "@/components/ui/Avatar";
 import { StoryRing } from "@/components/ui/StoryRing";
 import { Card } from "@/components/ui/card";
-import { Tabs } from "@/components/ui/Tabs";
 import { VoicePlayer } from "@/components/ui/VoicePlayer";
 import type { Profile } from "@/types";
 import { useAuth } from "@/contexts/AuthContext";
@@ -30,13 +28,7 @@ import { StoryService } from "@/services/stories";
 import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
 import { StoriesViewer } from "@/components/stories/StoriesViewer";
 import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
-
 import type { Note } from "@/services/NoteService";
-
-function getUserById(id: string) {
-  return USERS.find((u) => u.id === id) || USERS[0];
-}
-
 // ─────────────────────────────────────────────
 // STORIES SECTION
 // ─────────────────────────────────────────────
@@ -130,6 +122,7 @@ function Composer({
   onSubmit: (c: string) => Promise<any>;
   onNoteCreated: () => void;
 }) {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
@@ -198,15 +191,19 @@ function Composer({
         />
         <ComposerAction
           icon={Video}
-          label="Room"
+          label="Story"
           color="#EC4899"
-          onClick={() => toast("Create room coming soon!")}
+          onClick={() => {
+            setNoteModalMode("text");
+            setIsNoteModalOpen(false);
+            // Trigger story modal or radial menu
+          }}
         />
         <ComposerAction
           icon={Calendar}
           label="Event"
           color="#00E5FF"
-          onClick={() => toast("Create event coming soon!")}
+          onClick={() => navigate("/events")}
         />
       </div>
 
@@ -475,67 +472,6 @@ function PeopleToMeetSection() {
   );
 }
 
-// We've moved ActiveRoomsSection to a dedicated component: LiveRoomsBanner
-
-function OpportunitiesSection() {
-  const navigate = useNavigate();
-  const [opportunities, setOpportunities] = useState<any[]>([]);
-
-  useEffect(() => {
-    async function loadOpp() {
-      const { data } = await supabase
-        .from("opportunities")
-        .select("id, type, role_needed, location_name, location, title, description")
-        .order("created_at", { ascending: false })
-        .limit(3);
-      if (data) setOpportunities(data);
-    }
-    loadOpp();
-  }, []);
-
-  if (opportunities.length === 0) return null;
-
-  return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between px-5 mb-3">
-        <h2 className="text-white text-sm font-bold tracking-wide">OPPORTUNITIES</h2>
-        <button
-          onClick={() => navigate("/opportunities")}
-          className="text-[var(--color-primary)] text-xs font-semibold"
-        >
-          See all
-        </button>
-      </div>
-      <div className="px-5 flex flex-col gap-3">
-        {opportunities.map((opp) => (
-          <Card key={opp.id} variant="glass" className="p-4 border-l-4 border-l-pink-500">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-pink-400 text-[10px] font-bold uppercase tracking-wider">
-                {opp.type || opp.role_type}
-              </span>
-              <span className="text-[var(--color-text-muted)] text-[10px]">
-                {opp.location_name || opp.location || "Remote"}
-              </span>
-            </div>
-            <h3 className="text-white font-bold text-[15px] mb-1">{opp.title}</h3>
-            <p className="text-[var(--color-text-muted)] text-xs mb-3 line-clamp-2">
-              {opp.description}
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate("/opportunities")}
-                className="flex-1 py-2 bg-primary text-white font-bold text-xs rounded-xl"
-              >
-                Apply
-              </button>
-            </div>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────
 // HOME PAGE
 // ─────────────────────────────────────────────
@@ -570,10 +506,7 @@ export function Home() {
       {/* 3. People To Meet (Discovery Injected) */}
       <PeopleToMeetSection />
 
-      {/* 4. Creator Opportunities */}
-      <OpportunitiesSection />
-
-      {/* 5. Trending Notes (Conversations) */}
+      {/* 4. Trending Notes (Conversations) */}
       <div className="px-5 mb-3 mt-4">
         <h2 className="text-white text-sm font-bold tracking-wide">TRENDING CONVERSATIONS</h2>
       </div>

@@ -100,10 +100,6 @@ export function Events() {
               title="No Events Yet"
               description="Events near you and from creators you follow will appear here."
               glowColor="accent1"
-              action={{
-                label: "Create an Event",
-                onClick: () => toast.info("Event creation coming soon!"),
-              }}
             />
           </div>
         ) : (
