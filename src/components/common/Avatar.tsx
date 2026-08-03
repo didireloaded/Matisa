@@ -46,7 +46,7 @@ export function Avatar({
   const fontSize = Math.floor(size * 0.38);
 
   const inner =
-    profile.avatar_url && !imgError ? (
+    profile?.avatar_url && !imgError ? (
       <img
         src={profile.avatar_url}
         alt={profile.display_name || "avatar"}

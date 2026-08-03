@@ -9,6 +9,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
 import { CreateSheet } from "@/components/create/CreateSheet";
+import { NoteCard } from "@/components/feed/NoteCard";
 
 function FeedCard({ note }: { note: any }) {
   return (
@@ -130,9 +131,9 @@ export function Notes() {
             />
           </div>
         ) : (
-          <div className="mt-6">
+          <div className="mt-6 space-y-4">
             {notes.map((note) => (
-              <FeedCard key={note.id} note={note} />
+              <NoteCard key={note.id} note={note} onRefresh={refreshNotes} />
             ))}
           </div>
         )}
