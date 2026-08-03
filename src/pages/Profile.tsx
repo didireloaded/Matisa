@@ -11,8 +11,10 @@ import {
   FileText,
   Edit,
   Share2,
+  PhoneCall,
 } from "lucide-react";
 import { VoiceIntroPlayer } from "@/components/voice/VoiceIntroPlayer";
+import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +27,7 @@ export function Profile() {
   const navigate = useNavigate();
   const { profile: currentUser } = useAuth();
 
+  const [isVoicemailOpen, setIsVoicemailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"notes" | "voice" | "events" | "videos" | "saved">(
     "notes",
   );
@@ -189,10 +192,30 @@ export function Profile() {
                 >
                   <MessageCircle size={16} />
                 </button>
+                <button
+                  onClick={() => setIsVoicemailOpen(true)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-[#FF9D2E] hover:bg-white/10 transition border border-[#FF9D2E]/30 active:scale-95"
+                  aria-label="Leave Voicemail"
+                  title="Leave Voicemail"
+                >
+                  <PhoneCall size={15} />
+                </button>
               </>
             )}
           </div>
         </div>
+
+        {isVoicemailOpen && (
+          <VoiceNoteRecorderModal
+            open={isVoicemailOpen}
+            onClose={() => setIsVoicemailOpen(false)}
+            onPublished={() => {
+              toast.success(`Voicemail sent to @${profileData.username}!`);
+              setIsVoicemailOpen(false);
+            }}
+            mode="voicemail"
+          />
+        )}
 
         {/* Display Name & Handle */}
         <div>
