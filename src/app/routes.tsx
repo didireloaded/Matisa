@@ -46,13 +46,14 @@ export function AppRoutes() {
 
       <Route path="/auth" element={<Auth />} />
       <Route path="/onboarding" element={<Onboarding />} />
+      <Route path="/messages/new" element={<Chat />} />
       <Route path="/messages/:conversationId" element={<Chat />} />
       <Route path="/chat/:id" element={<Chat />} />
-      {/* Consolidated room routes — single canonical pattern */}
+      {/* Consolidated room routes — map all aliases cleanly */}
       <Route path="/rooms/:roomId" element={<KaraokeRoom />} />
-      <Route path="/room/:id" element={<Navigate to="/rooms/:id" replace />} />
-      <Route path="/karaoke/:roomId" element={<Navigate to="/rooms/:roomId" replace />} />
-      <Route path="/live/:sessionId" element={<KaraokeRoom />} />
+      <Route path="/room/:roomId" element={<KaraokeRoom />} />
+      <Route path="/karaoke/:roomId" element={<KaraokeRoom />} />
+      <Route path="/live/:roomId" element={<KaraokeRoom />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

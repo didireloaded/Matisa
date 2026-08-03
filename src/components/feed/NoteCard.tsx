@@ -206,7 +206,10 @@ export function NoteCard({ note }: NoteCardProps) {
     <div className="relative w-full rounded-[24px] glass-panel-elevated p-5 border border-white/15 bg-[#0A1628]/80 shadow-xl space-y-4">
       {/* Header: Author info, timestamp, follow button */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
+        <div
+          onClick={() => navigate(`/profile/${authorUsername}`)}
+          className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group hover:opacity-90 transition"
+        >
           <Avatar
             size={42}
             profile={{
@@ -217,7 +220,7 @@ export function NoteCard({ note }: NoteCardProps) {
           />
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm font-bold text-white tracking-wide truncate">
+              <span className="text-sm font-bold text-white tracking-wide truncate group-hover:text-[#39B7F2] transition">
                 {authorName}
               </span>
               <CheckCircle2 size={14} className="text-[#24A3C7] shrink-0" />

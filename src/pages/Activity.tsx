@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bell, Heart, MessageCircle, UserPlus, AtSign, Sparkles, PhoneCall } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { timeAgo } from "@/lib/utils";
@@ -8,12 +9,26 @@ import { Avatar } from "@/components/common/Avatar";
 import { USERS } from "@/data/dummy";
 
 export function Activity() {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<"all" | "mentions" | "reactions" | "voicemails">(
     "all",
   );
+
+  const handleNotificationClick = (notif: any) => {
+    const actor = notif.profiles || USERS[0];
+    if (notif.type === "follow") {
+      navigate(`/profile/${actor.username || actor.id}`);
+    } else if (notif.type === "voicemail" || notif.type === "message") {
+      navigate("/messages");
+    } else if (notif.type === "like" || notif.type === "comment") {
+      navigate("/notes");
+    } else {
+      navigate(`/profile/${actor.username || actor.id}`);
+    }
+  };
 
   useEffect(() => {
     async function loadNotifs() {
@@ -142,7 +157,8 @@ export function Activity() {
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.04 }}
-                className="flex items-center justify-between glass-panel p-3.5 rounded-[22px]"
+                onClick={() => handleNotificationClick(notif)}
+                className="flex items-center justify-between glass-panel p-3.5 rounded-[22px] cursor-pointer hover:bg-white/5 active:scale-[0.99] transition"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="relative">

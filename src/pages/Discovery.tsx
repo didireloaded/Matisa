@@ -275,7 +275,7 @@ export function Discovery() {
             {filteredRooms.map((room) => (
               <div
                 key={room.id}
-                onClick={() => navigate("/rooms")}
+                onClick={() => navigate(`/rooms/${room.id}`)}
                 className="p-4 rounded-[22px] glass-panel-elevated border border-[#24A3C7]/30 hover:border-[#24A3C7]/60 transition cursor-pointer active:scale-[0.98] flex items-center justify-between bg-gradient-to-r from-[#06101D] to-[#0D1F38]"
               >
                 <div className="flex items-center gap-3.5">
@@ -322,13 +322,18 @@ export function Discovery() {
                 key={user.id}
                 className="p-3.5 rounded-[20px] glass-panel border border-white/10 flex items-center justify-between hover:border-white/20 transition"
               >
-                <div className="flex items-center gap-3">
+                <div
+                  onClick={() => navigate(`/profile/${user.username}`)}
+                  className="flex items-center gap-3 cursor-pointer group hover:opacity-90 transition"
+                >
                   <Avatar
                     size={42}
                     profile={{ id: user.id, display_name: user.name, avatar_url: user.avatar }}
                   />
                   <div>
-                    <h3 className="text-sm font-bold text-white leading-tight">{user.name}</h3>
+                    <h3 className="text-sm font-bold text-white leading-tight group-hover:text-[#39B7F2] transition">
+                      {user.name}
+                    </h3>
                     <p className="text-xs text-white/50">
                       @{user.username} • {user.location}
                     </p>
