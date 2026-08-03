@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -36,6 +37,16 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
 
+  // Prevent background body scroll when open
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
+
   if (!open) return null;
 
   const handleCreateNote = async () => {
@@ -61,16 +72,16 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
         toast.error("Could not publish Note");
       }
     } catch (err) {
-      console.error("Failed to publish Note from CreateSheet:", err);
+      console.error("Error creating note:", err);
       toast.error("Failed to publish Note");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/70 backdrop-blur-sm">
         {/* Backdrop overlay touch to close */}
         <div className="absolute inset-0" onClick={onClose} />
 
@@ -79,7 +90,7 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative z-10 w-full max-w-[430px] max-h-[calc(100dvh-16px)] overflow-y-auto pb-[calc(24px+env(safe-area-inset-bottom))] rounded-t-[32px] glass-panel-elevated p-6 border-t border-white/20 shadow-2xl backdrop-blur-2xl bg-[#06101D]/95 text-white no-scrollbar"
+          className="relative z-10 w-full max-w-[430px] max-h-[calc(100dvh-12px)] overflow-y-auto overscroll-contain pb-[calc(24px+env(safe-area-inset-bottom))] rounded-t-[32px] glass-panel-elevated p-6 border-t border-white/20 shadow-2xl backdrop-blur-2xl bg-[#06101D]/95 text-white no-scrollbar"
         >
           {/* Centered Drag Handle */}
           <div className="flex justify-center mb-4">
@@ -367,7 +378,8 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
           )}
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 

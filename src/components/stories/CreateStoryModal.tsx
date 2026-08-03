@@ -1,4 +1,5 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Image as ImageIcon, Type, Music, Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -19,6 +20,16 @@ export function CreateStoryModal({ open, onClose }: CreateStoryModalProps) {
   const [textContent, setTextContent] = useState("");
   const [bgGradient, setBgGradient] = useState("linear-gradient(135deg, #FF6B6B, #556270)");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Prevent background body scroll when open
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   if (!open) return null;
 
@@ -68,14 +79,14 @@ export function CreateStoryModal({ open, onClose }: CreateStoryModalProps) {
     onClose();
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ y: "100%" }}
         animate={{ y: 0 }}
         exit={{ y: "100%" }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed inset-0 z-50 bg-[#0F0D0B] flex flex-col"
+        className="fixed inset-0 z-[120] bg-[#0F0D0B] flex flex-col"
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 z-10 absolute top-0 left-0 right-0 bg-gradient-to-b from-black/50 to-transparent">
@@ -182,6 +193,7 @@ export function CreateStoryModal({ open, onClose }: CreateStoryModalProps) {
           </button>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

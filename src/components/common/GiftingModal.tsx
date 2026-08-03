@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Gem, Heart, Star, Sparkles, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
@@ -61,16 +62,16 @@ const GIFTS: GiftItem[] = [
     name: "Rocket",
     cost: 1000,
     icon: Sparkles,
-    color: "text-purple-500",
-    bgGlow: "shadow-[0_0_15px_rgba(168,85,247,0.4)]",
+    color: "text-purple-400",
+    bgGlow: "shadow-[0_0_15px_rgba(192,132,252,0.4)]",
   },
   {
     id: "matisa_box",
     name: "Matisa Box",
-    cost: 5000,
+    cost: 2500,
     icon: Gift,
-    color: "text-[var(--color-primary)]",
-    bgGlow: "shadow-[0_0_15px_rgba(255,157,46,0.5)]",
+    color: "text-[#FF9D2E]",
+    bgGlow: "shadow-[0_0_20px_rgba(255,157,46,0.6)]",
   },
 ];
 
@@ -83,28 +84,39 @@ export function GiftingModal({
 }: GiftingModalProps) {
   const [selectedGift, setSelectedGift] = useState<GiftItem | null>(null);
 
+  // Prevent body scroll when open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const handleSend = () => {
     if (selectedGift) {
       if (balance >= selectedGift.cost) {
         onSendGift(selectedGift);
-        setSelectedGift(null);
+        toast.success(`Sent ${selectedGift.name} to @${recipient.username || "creator"}!`);
         onClose();
       } else {
-        // Here we'd typically trigger a top-up modal or navigation
         toast.error("Insufficient balance. Top up in Wallet.");
       }
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 sm:p-0"
+        className="fixed inset-0 z-[120] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 sm:p-0"
         onClick={onClose}
       >
         <motion.div
@@ -112,7 +124,7 @@ export function GiftingModal({
           animate={{ y: 0 }}
           exit={{ y: "100%" }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="w-full sm:max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-t-[32px] sm:rounded-[24px] p-6 pb-safe relative overflow-hidden"
+          className="w-full sm:max-w-md bg-[var(--color-surface)] border border-[var(--color-border)] rounded-t-[32px] sm:rounded-[24px] p-6 pb-[calc(24px+env(safe-area-inset-bottom))] max-h-[calc(100dvh-12px)] overflow-y-auto overscroll-contain relative"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
@@ -221,6 +233,7 @@ export function GiftingModal({
           </Button>
         </motion.div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

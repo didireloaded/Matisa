@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Mic,
@@ -55,6 +56,16 @@ export function VoiceNoteRecorderModal({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const [liveAmplitudes, setLiveAmplitudes] = useState<number[]>([]);
+
+  // Prevent background scrolling while open
+  useEffect(() => {
+    if (!open) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [open]);
 
   const stopAllMedia = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -245,9 +256,9 @@ export function VoiceNoteRecorderModal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/70 backdrop-blur-sm">
         <div className="absolute inset-0" onClick={onClose} />
 
         <motion.div
@@ -255,7 +266,7 @@ export function VoiceNoteRecorderModal({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative z-10 w-full max-w-[430px] rounded-t-[32px] glass-panel-elevated p-6 border-t border-white/20 shadow-2xl backdrop-blur-2xl bg-[#06101D]/95 text-white"
+          className="relative z-10 w-full max-w-[430px] max-h-[calc(100dvh-12px)] overflow-y-auto overscroll-contain rounded-t-[32px] glass-panel-elevated px-6 pt-6 pb-[calc(24px+env(safe-area-inset-bottom))] border-t border-white/20 shadow-2xl backdrop-blur-2xl bg-[#06101D]/95 text-white"
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
@@ -517,7 +528,8 @@ export function VoiceNoteRecorderModal({
           )}
         </motion.div>
       </div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
