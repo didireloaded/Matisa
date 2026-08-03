@@ -5,7 +5,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS postgis;
 
 -- 2. USERS & PROFILES
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.profiles (
     id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     full_name TEXT,
@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 3. FOLLOWS
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.follows (
     follower_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     following_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 4. COMMUNITIES
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.communities (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name TEXT NOT NULL,
     description TEXT,
@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS  (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.community_members (
     community_id UUID REFERENCES public.communities(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     role TEXT DEFAULT 'member' CHECK (role IN ('member', 'moderator', 'admin')),
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 5. EVENTS
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.events (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     title TEXT NOT NULL,
     description TEXT,
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS  (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.event_attendees (
     event_id UUID REFERENCES public.events(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     status TEXT DEFAULT 'interested' CHECK (status IN ('interested', 'going')),
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 6. POSTS & COMMENTS
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.posts (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     community_id UUID REFERENCES public.communities(id) ON DELETE CASCADE,
@@ -88,12 +88,14 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- STORAGE BUCKETS
-INSERT INTO storage.buckets (id, name, public) VALUES ('voice_notes', 'voice_notes', true);
+INSERT INTO storage.buckets (id, name, public) VALUES ('voice_notes', 'voice_notes', true) ON CONFLICT (id) DO NOTHING;
 
+DROP POLICY IF EXISTS "Public Access" ON storage.objects;
 CREATE POLICY "Public Access" ON storage.objects FOR SELECT USING (bucket_id = 'voice_notes');
+DROP POLICY IF EXISTS "Authenticated users can upload" ON storage.objects;
 CREATE POLICY "Authenticated users can upload" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'voice_notes' AND auth.role() = 'authenticated');
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.comments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
     author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -102,7 +104,7 @@ CREATE TABLE IF NOT EXISTS  (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.likes (
     post_id UUID REFERENCES public.posts(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -110,7 +112,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 7. STORIES
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.stories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     media_url TEXT NOT NULL,
@@ -119,7 +121,7 @@ CREATE TABLE IF NOT EXISTS  (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.story_views (
     story_id UUID REFERENCES public.stories(id) ON DELETE CASCADE,
     viewer_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     viewed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -127,7 +129,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 8. MESSAGING
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.conversations (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     is_group BOOLEAN DEFAULT FALSE,
     name TEXT, -- only for group chats
@@ -135,14 +137,14 @@ CREATE TABLE IF NOT EXISTS  (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.conversation_participants (
     conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     PRIMARY KEY (conversation_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.messages (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     conversation_id UUID REFERENCES public.conversations(id) ON DELETE CASCADE,
     sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -153,7 +155,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 9. NOTIFICATIONS
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     actor_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -192,39 +194,62 @@ ALTER TABLE public.event_attendees ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Public attendees viewable by everyone." ON public.event_attendees FOR SELECT USING (true);
 CREATE POLICY "Users can manage their attendance." ON public.event_attendees FOR ALL USING (auth.uid() = user_id);
 
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
+ALTER TABLE public.posts ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
 ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public posts viewable by everyone." ON public.posts;
 CREATE POLICY "Public posts viewable by everyone." ON public.posts FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage their posts." ON public.posts;
 CREATE POLICY "Users can manage their posts." ON public.posts FOR ALL USING (auth.uid() = user_id OR auth.uid() = author_id);
 
+ALTER TABLE public.comments ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
 ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public comments viewable by everyone." ON public.comments;
 CREATE POLICY "Public comments viewable by everyone." ON public.comments FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage their comments." ON public.comments;
 CREATE POLICY "Users can manage their comments." ON public.comments FOR ALL USING (auth.uid() = author_id);
 
 ALTER TABLE public.likes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public likes viewable by everyone." ON public.likes;
 CREATE POLICY "Public likes viewable by everyone." ON public.likes FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage their likes." ON public.likes;
 CREATE POLICY "Users can manage their likes." ON public.likes FOR ALL USING (auth.uid() = user_id);
 
+ALTER TABLE public.stories ADD COLUMN IF NOT EXISTS author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
 ALTER TABLE public.stories ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public stories viewable by everyone." ON public.stories;
 CREATE POLICY "Public stories viewable by everyone." ON public.stories FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage their stories." ON public.stories;
 CREATE POLICY "Users can manage their stories." ON public.stories FOR ALL USING (auth.uid() = author_id);
 
 ALTER TABLE public.story_views ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their story views." ON public.story_views;
 CREATE POLICY "Users can view their story views." ON public.story_views FOR SELECT USING (auth.uid() = viewer_id OR auth.uid() IN (SELECT author_id FROM public.stories WHERE id = story_id));
+DROP POLICY IF EXISTS "Users can record their view." ON public.story_views;
 CREATE POLICY "Users can record their view." ON public.story_views FOR INSERT WITH CHECK (auth.uid() = viewer_id);
 
 ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their conversations." ON public.conversations;
 CREATE POLICY "Users can view their conversations." ON public.conversations FOR SELECT USING (EXISTS (SELECT 1 FROM public.conversation_participants WHERE conversation_id = id AND user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can create conversations." ON public.conversations;
 CREATE POLICY "Users can create conversations." ON public.conversations FOR INSERT WITH CHECK (true);
 
 ALTER TABLE public.conversation_participants ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their conversation participants." ON public.conversation_participants;
 CREATE POLICY "Users can view their conversation participants." ON public.conversation_participants FOR SELECT USING (EXISTS (SELECT 1 FROM public.conversation_participants WHERE conversation_id = conversation_id AND user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can join conversations." ON public.conversation_participants;
 CREATE POLICY "Users can join conversations." ON public.conversation_participants FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+ALTER TABLE public.messages ADD COLUMN IF NOT EXISTS sender_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
 ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can view their messages." ON public.messages;
 CREATE POLICY "Users can view their messages." ON public.messages FOR SELECT USING (EXISTS (SELECT 1 FROM public.conversation_participants WHERE conversation_id = messages.conversation_id AND user_id = auth.uid()));
+DROP POLICY IF EXISTS "Users can send messages." ON public.messages;
 CREATE POLICY "Users can send messages." ON public.messages FOR INSERT WITH CHECK (auth.uid() = sender_id);
 
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Users can manage their notifications." ON public.notifications;
 CREATE POLICY "Users can manage their notifications." ON public.notifications FOR ALL USING (auth.uid() = user_id);
 
 -- Function to set updated_at
@@ -372,11 +397,24 @@ CREATE TABLE IF NOT EXISTS public.karaoke_queue (
 );
 
 -- 5. Realtime enabling for new tables
-ALTER PUBLICATION supabase_realtime ADD TABLE public.karaoke_rooms;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.karaoke_queue;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.likes;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'karaoke_rooms') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.karaoke_rooms;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'karaoke_queue') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.karaoke_queue;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'likes') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.likes;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'comments') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.comments;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'messages') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+  END IF;
+END $$;
 
 
 -- Phase 4 & Phase 3 Overhaul Migration Script
@@ -402,11 +440,19 @@ CREATE TABLE IF NOT EXISTS public.notes (
 );
 
 ALTER TABLE public.notes ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Public notes viewable by everyone." ON public.notes;
 CREATE POLICY "Public notes viewable by everyone." ON public.notes FOR SELECT USING (expires_at > NOW());
+DROP POLICY IF EXISTS "Users can insert their own notes." ON public.notes;
 CREATE POLICY "Users can insert their own notes." ON public.notes FOR INSERT WITH CHECK (auth.uid() = user_id);
+DROP POLICY IF EXISTS "Users can delete their own notes." ON public.notes;
 CREATE POLICY "Users can delete their own notes." ON public.notes FOR DELETE USING (auth.uid() = user_id);
 
-ALTER PUBLICATION supabase_realtime ADD TABLE public.notes;
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_publication_tables WHERE pubname = 'supabase_realtime' AND schemaname = 'public' AND tablename = 'notes') THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.notes;
+  END IF;
+END $$;
 
 -- 3. Create RPC for Top People Discovery
 CREATE OR REPLACE FUNCTION get_top_people(limit_count INT DEFAULT 100)
@@ -442,7 +488,7 @@ $$;
 -- This migration sets up the required tables for Voice Notes, Rooms, and Karaoke.
 
 -- 1. VOICE NOTES & STORIES
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_notes (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     audio_url TEXT NOT NULL,
@@ -452,7 +498,7 @@ CREATE TABLE IF NOT EXISTS  (
     expires_at TIMESTAMP WITH TIME ZONE -- For 24h stories
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_note_reactions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     voice_note_id UUID REFERENCES public.voice_notes(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -460,7 +506,7 @@ CREATE TABLE IF NOT EXISTS  (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_stories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     story_id UUID REFERENCES public.voice_notes(id) ON DELETE CASCADE,
     author_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -470,7 +516,7 @@ CREATE TABLE IF NOT EXISTS  (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.profile_voice_intros (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE UNIQUE,
     audio_url TEXT NOT NULL,
@@ -481,7 +527,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 2. LIVE VOICE ROOMS
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_rooms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     host_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     topic TEXT NOT NULL,
@@ -494,7 +540,7 @@ CREATE TABLE IF NOT EXISTS  (
     ended_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_room_members (
     room_id UUID REFERENCES public.voice_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     role TEXT DEFAULT 'listener' CHECK (role IN ('host', 'moderator', 'speaker', 'listener')),
@@ -504,7 +550,7 @@ CREATE TABLE IF NOT EXISTS  (
     PRIMARY KEY (room_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_room_chat (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     room_id UUID REFERENCES public.voice_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -513,7 +559,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 3. KARAOKE ROOMS (Extension of Voice Rooms)
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.karaoke_rooms (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     voice_room_id UUID REFERENCES public.voice_rooms(id) ON DELETE CASCADE UNIQUE,
     karaoke_type TEXT DEFAULT 'open_mic' CHECK (karaoke_type IN ('open_mic', 'competition', 'friends_only', 'private', 'artist_hosted', 'community_hosted')),
@@ -521,7 +567,7 @@ CREATE TABLE IF NOT EXISTS  (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.karaoke_participants (
     karaoke_room_id UUID REFERENCES public.karaoke_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
     role TEXT DEFAULT 'audience' CHECK (role IN ('performer', 'audience')),
@@ -530,7 +576,7 @@ CREATE TABLE IF NOT EXISTS  (
     PRIMARY KEY (karaoke_room_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.karaoke_queue (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     karaoke_room_id UUID REFERENCES public.karaoke_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -541,7 +587,7 @@ CREATE TABLE IF NOT EXISTS  (
     added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.karaoke_performances (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     karaoke_room_id UUID REFERENCES public.karaoke_rooms(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -551,7 +597,7 @@ CREATE TABLE IF NOT EXISTS  (
     ended_at TIMESTAMP WITH TIME ZONE
 );
 
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.karaoke_ratings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     performance_id UUID REFERENCES public.karaoke_performances(id) ON DELETE CASCADE,
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -561,7 +607,7 @@ CREATE TABLE IF NOT EXISTS  (
 );
 
 -- 4. ANALYTICS & KARMA
-CREATE TABLE IF NOT EXISTS  (
+CREATE TABLE IF NOT EXISTS public.voice_analytics (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES public.profiles(id) ON DELETE CASCADE UNIQUE,
     total_voice_score INTEGER DEFAULT 0,

@@ -22,7 +22,22 @@ export function MainLayout() {
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
-    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    const handleOffline = () => {
+      toast.warning("You are currently offline. Cached content is active.");
+    };
+    const handleOnline = () => {
+      toast.success("Back online! Connection restored.");
+    };
+
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
   }, []);
 
   const handleInstallClick = async () => {
