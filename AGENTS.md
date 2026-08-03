@@ -52,6 +52,7 @@ User scope overrides ambition. If the user requests one screen, one function, or
 ## Working rules
 
 - This is an existing codebase, not a greenfield rewrite.
+- **REELIO UI STYLE LOCK**: Preserve the established Reelio visual UI design (`Social Video Streaming Mobile App UI_UX __ Behance_files`) 100%. Do NOT redesign, replace, or alter the UI layout, visual aesthetics, glassmorphism, floating capsule navigation, gradient cards, or screen structure unless explicitly requested by the user. Only refine or fix underlying usability and bugs while maintaining 100% visual parity with the Reelio Behance blueprint.
 - Preserve the established premium mobile-first UI unless a small change is needed for usability, accessibility, honesty, or completion.
 - Do not add new features while production-hardening the current systems.
 - Do not use user-facing mock data, fake success messages, empty handlers, or “coming soon” behavior.

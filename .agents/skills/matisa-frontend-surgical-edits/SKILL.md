@@ -12,6 +12,8 @@ metadata:
 
 Make the smallest complete change that solves the user's exact request. Do not audit, redesign, refactor, or repair unrelated parts of Matisa.
 
+**REELIO UI STYLE LOCK**: The Reelio visual design blueprint (`Social Video Streaming Mobile App UI_UX __ Behance_files`) is strictly locked. Do NOT redesign or alter the visual UI layout, glassmorphism, gradient cards, squircle rails, or navigation dock unless explicitly requested by the user.
+
 ## Mandatory start
 
 Before editing, write a private scope lock containing:
