@@ -1,20 +1,58 @@
 import { useState } from "react";
 import { supabase } from "../lib/supabase";
 import { toast } from "sonner";
-import { User, LogIn } from "lucide-react";
+import { User, Phone, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/Button";
 
 export function Auth() {
+  const [authMethod, setAuthMethod] = useState<"phone" | "email">("phone");
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  // Phone OTP State
+  const [phone, setPhone] = useState("");
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const handlePhoneAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const fullPhone = phone.startsWith("+") ? phone : `+264${phone.replace(/^0/, "")}`;
+
+    try {
+      if (!otpSent) {
+        const { error } = await supabase.auth.signInWithOtp({
+          phone: fullPhone,
+        });
+        if (error) throw error;
+        setOtpSent(true);
+        toast.success(`OTP code sent to ${fullPhone}`);
+      } else {
+        const { error } = await supabase.auth.verifyOtp({
+          phone: fullPhone,
+          token: otp,
+          type: "sms",
+        });
+        if (error) throw error;
+        toast.success("Phone verified! Welcome to Matisa.");
+        navigate("/");
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send SMS OTP code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (authMethod === "phone") return handlePhoneAuth(e);
     setLoading(true);
 
     try {
@@ -24,7 +62,6 @@ export function Auth() {
           password,
         });
         if (error) {
-          // If it's a generic "Invalid login credentials", give a hint
           if (error.message === "Invalid login credentials") {
             throw new Error("Invalid login credentials. Have you confirmed your email address?");
           }
@@ -39,10 +76,8 @@ export function Auth() {
         });
         if (error) throw error;
 
-        // If email confirmation is required, session will be null
         if (data.user && !data.session) {
           toast.success("Account created! Please check your email to confirm your account.");
-          // Do not navigate to / yet, since they can't log in
         } else {
           toast.success("Account created! Welcome to Matisa.");
           navigate("/");
@@ -57,40 +92,12 @@ export function Auth() {
 
   const handleGuest = () => {
     localStorage.setItem("guestMode", "true");
-    toast("Browsing as Guest");
+    toast.info("Browsing as Guest");
     navigate("/");
   };
 
   return (
     <div className="relative min-h-[100dvh] w-full bg-[var(--color-background)] text-white overflow-y-auto no-scrollbar flex flex-col font-sans py-6">
-      {/* Decorative Wavy Lines */}
-      <div className="absolute top-0 left-0 w-full h-80 pointer-events-none overflow-hidden">
-        <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full opacity-80">
-          <path
-            d="M0,45 C30,30 50,70 100,20 L100,0 L0,0 Z"
-            fill="none"
-            stroke="url(#gradLine1)"
-            strokeWidth="0.5"
-          />
-          <path
-            d="M0,55 C40,80 60,30 100,10 L100,0 L0,0 Z"
-            fill="none"
-            stroke="url(#gradLine2)"
-            strokeWidth="0.3"
-          />
-          <defs>
-            <linearGradient id="gradLine1" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#FF416C" />
-              <stop offset="100%" stopColor="#FF4B2B" />
-            </linearGradient>
-            <linearGradient id="gradLine2" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#8E2DE2" />
-              <stop offset="100%" stopColor="#4A00E0" />
-            </linearGradient>
-          </defs>
-        </svg>
-      </div>
-
       {/* Header */}
       <div className="relative z-10 flex items-center justify-between px-6 pt-10">
         <div className="w-10 h-10 bg-[var(--color-surface-2)] rounded-xl flex items-center justify-center transform rotate-45 shadow-lg border border-[var(--color-border)]">
@@ -106,46 +113,115 @@ export function Auth() {
         </button>
       </div>
 
-      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 -mt-10">
-        <div className="mb-10">
-          <h1 className="text-4xl font-display font-bold tracking-tight mb-2">
+      <div className="relative z-10 flex-1 flex flex-col justify-center px-6 -mt-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-display font-bold tracking-tight mb-2">
             {isLogin ? "Welcome back" : "Create account"}
           </h1>
           <p className="text-[var(--color-text-muted)] text-sm font-medium">
-            {isLogin
-              ? "Enter your details to access your account."
-              : "Join the creative network for musicians."}
+            Join the Namibian social network for audio & stories.
           </p>
         </div>
 
+        {/* Auth Method Switcher (Phone vs Email) */}
+        <div className="flex rounded-2xl bg-white/5 p-1 mb-6 border border-white/10">
+          <button
+            type="button"
+            onClick={() => {
+              setAuthMethod("phone");
+              setOtpSent(false);
+            }}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition ${
+              authMethod === "phone"
+                ? "bg-[#24A3C7] text-white shadow-md"
+                : "text-white/60 hover:text-white"
+            }`}
+          >
+            <Phone size={14} />
+            <span>Phone OTP</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setAuthMethod("email")}
+            className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-xs font-bold transition ${
+              authMethod === "email"
+                ? "bg-[#24A3C7] text-white shadow-md"
+                : "text-white/60 hover:text-white"
+            }`}
+          >
+            <Mail size={14} />
+            <span>Email & Pass</span>
+          </button>
+        </div>
+
         <form onSubmit={handleAuth} className="space-y-4">
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email address"
-            required
-            className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent"
-          />
-          <Input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-            className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent"
-          />
+          {authMethod === "phone" ? (
+            <>
+              {!otpSent ? (
+                <div className="relative">
+                  <span className="absolute left-4 top-4 text-sm font-bold text-white/50">
+                    +264
+                  </span>
+                  <Input
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="81 123 4567"
+                    required
+                    className="h-14 pl-16 rounded-2xl bg-[var(--color-surface-2)] border-transparent text-white font-bold"
+                  />
+                </div>
+              ) : (
+                <Input
+                  type="text"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  placeholder="Enter 6-digit SMS OTP"
+                  required
+                  maxLength={6}
+                  className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent text-center text-lg tracking-widest font-bold text-white"
+                />
+              )}
+            </>
+          ) : (
+            <>
+              <Input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email address"
+                required
+                className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent"
+              />
+              <Input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                required
+                className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent"
+              />
+            </>
+          )}
 
           <Button
             variant="primary"
             disabled={loading}
-            className="w-full h-14 rounded-2xl font-bold text-base mt-4 shadow-[0_0_20px_rgba(139,92,246,0.3)]"
+            className="w-full h-14 rounded-2xl font-bold text-base mt-4 shadow-[0_0_20px_rgba(36,163,199,0.3)] bg-gradient-to-r from-[#FF9D2E] via-[#24A3C7] to-[#6139F2]"
           >
-            {loading ? "Please wait..." : isLogin ? "Sign In" : "Sign Up"}
+            {loading
+              ? "Please wait..."
+              : authMethod === "phone"
+                ? otpSent
+                  ? "Verify & Sign In"
+                  : "Send SMS Code"
+                : isLogin
+                  ? "Sign In"
+                  : "Sign Up"}
           </Button>
         </form>
 
-        <div className="mt-8 flex items-center gap-4">
+        <div className="mt-6 flex items-center gap-4">
           <div className="h-px bg-[var(--color-border)] flex-1" />
           <span className="text-[var(--color-text-muted)] text-xs font-bold uppercase tracking-wider">
             Or
@@ -156,7 +232,7 @@ export function Auth() {
         <Button
           variant="glass"
           onClick={handleGuest}
-          className="w-full h-14 rounded-2xl font-bold mt-8"
+          className="w-full h-14 rounded-2xl font-bold mt-6 border border-white/20"
         >
           Continue as Guest
         </Button>

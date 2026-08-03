@@ -413,6 +413,61 @@ export const NoteService = {
   },
 
   /**
+   * Offline Draft Queue Helpers (Feature #11: Offline Note Drafting)
+   */
+  getOfflineDrafts(): Array<{
+    id: string;
+    content: string;
+    type: "text" | "voice";
+    created_at: string;
+  }> {
+    try {
+      const stored = localStorage.getItem("matisa_offline_note_drafts");
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  saveOfflineDraft(content: string, type: "text" | "voice" = "text") {
+    try {
+      const drafts = this.getOfflineDrafts();
+      const newDraft = {
+        id: `draft_${Date.now()}`,
+        content,
+        type,
+        created_at: new Date().toISOString(),
+      };
+      drafts.push(newDraft);
+      localStorage.setItem("matisa_offline_note_drafts", JSON.stringify(drafts));
+      return newDraft;
+    } catch (err) {
+      console.error("Failed to save offline draft:", err);
+      return null;
+    }
+  },
+
+  async syncOfflineDrafts(userId: string): Promise<number> {
+    const drafts = this.getOfflineDrafts();
+    if (drafts.length === 0) return 0;
+
+    let syncedCount = 0;
+    const remainingDrafts = [];
+
+    for (const draft of drafts) {
+      const result = await this.createNote(userId, draft.content, draft.type);
+      if (result) {
+        syncedCount++;
+      } else {
+        remainingDrafts.push(draft);
+      }
+    }
+
+    localStorage.setItem("matisa_offline_note_drafts", JSON.stringify(remainingDrafts));
+    return syncedCount;
+  },
+
+  /**
    * Subscribe to new notes in realtime
    */
   subscribeToNotes(callback: (payload: any) => void) {

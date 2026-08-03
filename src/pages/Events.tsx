@@ -188,11 +188,37 @@ export function Events() {
                         <h3 className="text-white font-bold text-xl mb-1 leading-tight">
                           {event.title}
                         </h3>
-                        <div className="flex items-center gap-3 text-white/80 text-xs font-medium mb-3">
+                        <div className="flex items-center gap-3 text-white/80 text-xs font-medium mb-2">
                           <span className="flex items-center gap-1">
-                            <MapPin size={12} /> {event.location_name || event.location_type}
+                            <MapPin size={12} className="text-[#24A3C7]" />{" "}
+                            {event.location_name || event.location_type}
                           </span>
                         </div>
+
+                        {/* Who's Going & Carpool Pill */}
+                        <div className="flex items-center justify-between mb-3 pt-1">
+                          <div className="flex items-center gap-1.5">
+                            <div className="flex -space-x-2 overflow-hidden">
+                              <img
+                                className="inline-block h-5 w-5 rounded-full ring-1 ring-white/50"
+                                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80"
+                                alt=""
+                              />
+                              <img
+                                className="inline-block h-5 w-5 rounded-full ring-1 ring-white/50"
+                                src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80"
+                                alt=""
+                              />
+                            </div>
+                            <span className="text-[10px] text-white/70 font-semibold">
+                              +{event.attendees_count || 42} going
+                            </span>
+                          </div>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
+                            🚗 Carpool available
+                          </span>
+                        </div>
+
                         <div className="flex items-center justify-between">
                           <span className="text-white font-bold text-lg">
                             {event.is_paid ? "Paid" : "Free"}
