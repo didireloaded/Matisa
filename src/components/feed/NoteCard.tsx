@@ -10,6 +10,7 @@ import {
   CheckCircle2,
   UserPlus,
   UserCheck,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -261,51 +262,69 @@ export function NoteCard({ note }: NoteCardProps) {
           </p>
         )}
 
-        {/* Voice Note Waveform Player */}
-        {note.type === "voice" && note.audio_url && (
-          <div className="flex items-center gap-3.5 p-3.5 rounded-[18px] bg-gradient-to-r from-[#24A3C7]/15 to-[#6139F2]/15 border border-[#24A3C7]/30 backdrop-blur-md">
-            <button
-              onClick={toggleAudioPlayback}
-              className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#24A3C7] to-[#6139F2] text-white shadow-md active:scale-90 transition"
-              aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
-            >
-              {isPlaying ? (
-                <Pause size={18} fill="white" />
-              ) : (
-                <Play size={18} fill="white" className="ml-0.5" />
-              )}
-            </button>
+        {/* Voice Note Waveform Player & Transcript */}
+        {note.type === "voice" && (
+          <div className="space-y-2">
+            {note.audio_url && (
+              <div className="flex items-center gap-3.5 p-3.5 rounded-[18px] bg-gradient-to-r from-[#24A3C7]/15 to-[#6139F2]/15 border border-[#24A3C7]/30 backdrop-blur-md">
+                <button
+                  onClick={toggleAudioPlayback}
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#24A3C7] to-[#6139F2] text-white shadow-md active:scale-90 transition"
+                  aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
+                >
+                  {isPlaying ? (
+                    <Pause size={18} fill="white" />
+                  ) : (
+                    <Play size={18} fill="white" className="ml-0.5" />
+                  )}
+                </button>
 
-            <div className="flex-1 flex flex-col gap-1">
-              {/* Animated Waveform */}
-              <div className="relative flex items-center gap-1 h-8 overflow-hidden">
-                {waveformBars.slice(0, 24).map((heightVal, idx) => (
-                  <div
-                    key={idx}
-                    className={`w-1 rounded-full transition-all duration-200 ${
-                      isPlaying ? "bg-[#24A3C7] animate-pulse" : "bg-white/30"
-                    }`}
-                    style={{
-                      height: `${Math.max(20, heightVal)}%`,
-                      animationDelay: `${idx * 0.05}s`,
-                    }}
-                  />
-                ))}
-                {/* Progress bar overlay */}
-                <div
-                  className="absolute inset-y-0 left-0 bg-[#FF9D2E]/30 pointer-events-none rounded-full"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
+                <div className="flex-1 flex flex-col gap-1">
+                  {/* Animated Waveform */}
+                  <div className="relative flex items-center gap-1 h-8 overflow-hidden">
+                    {waveformBars.slice(0, 24).map((heightVal, idx) => (
+                      <div
+                        key={idx}
+                        className={`w-1 rounded-full transition-all duration-200 ${
+                          isPlaying ? "bg-[#24A3C7] animate-pulse" : "bg-white/30"
+                        }`}
+                        style={{
+                          height: `${Math.max(20, heightVal)}%`,
+                          animationDelay: `${idx * 0.05}s`,
+                        }}
+                      />
+                    ))}
+                    {/* Progress bar overlay */}
+                    <div
+                      className="absolute inset-y-0 left-0 bg-[#FF9D2E]/30 pointer-events-none rounded-full"
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
 
-              <div className="flex items-center justify-between text-[10px] text-white/60 font-semibold px-0.5">
-                <span>Voice Note</span>
-                <span>
-                  {note.duration_seconds
-                    ? `${Math.floor(note.duration_seconds / 60)}:${(note.duration_seconds % 60).toString().padStart(2, "0")}`
-                    : "0:30"}
-                </span>
+                  <div className="flex items-center justify-between text-[10px] text-white/60 font-semibold px-0.5">
+                    <span>Voice Note</span>
+                    <span>
+                      {note.duration_seconds
+                        ? `${Math.floor(note.duration_seconds / 60)}:${(note.duration_seconds % 60).toString().padStart(2, "0")}`
+                        : "0:30"}
+                    </span>
+                  </div>
+                </div>
               </div>
+            )}
+
+            {/* Skimmable Voice Transcript Block */}
+            <div className="px-3.5 py-2.5 rounded-[16px] bg-white/5 border border-white/10 text-xs text-white/90 space-y-1">
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#24A3C7] uppercase tracking-wider">
+                <FileText size={12} /> Transcript
+              </div>
+              <p className="italic leading-relaxed text-white/85">
+                "
+                {note.transcript ||
+                  note.content ||
+                  "Windhoek acoustic session dropping live tonight..."}
+                "
+              </p>
             </div>
           </div>
         )}

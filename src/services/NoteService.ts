@@ -12,6 +12,8 @@ export interface Note {
   audio_url?: string;
   duration_seconds?: number;
   waveform_data?: number[];
+  transcript?: string;
+
   profiles?: {
     id: string;
     username: string;

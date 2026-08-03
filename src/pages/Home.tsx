@@ -240,7 +240,56 @@ export function Home() {
         })}
       </div>
 
-      {/* 3. Feed Cards Section */}
+      {/* 3. Compact Live Now Horizontal Strip */}
+      <div className="px-5 mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+            </span>
+            <span className="text-xs font-bold text-white tracking-wide uppercase font-display">
+              Live Rooms Right Now
+            </span>
+          </div>
+          <button
+            onClick={() => navigate("/rooms")}
+            className="text-[11px] font-bold text-[#24A3C7] hover:underline"
+          >
+            View all
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-0.5">
+          <button
+            onClick={() => navigate("/rooms/demo-room-1")}
+            className="flex items-center gap-2.5 px-3.5 py-2 rounded-[18px] bg-gradient-to-r from-[#6139F2]/30 to-[#24A3C7]/20 border border-[#6139F2]/40 hover:border-[#6139F2]/70 transition active:scale-95 flex-shrink-0"
+          >
+            <Radio size={15} className="text-[#24A3C7] animate-pulse" />
+            <div className="text-left">
+              <div className="text-xs font-bold text-white truncate max-w-[140px]">
+                Afrobeats Only 🔥
+              </div>
+              <div className="text-[10px] text-white/60">34 listening • 2 singing</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate("/rooms/demo-room-1")}
+            className="flex items-center gap-2.5 px-3.5 py-2 rounded-[18px] bg-gradient-to-r from-[#FF9D2E]/20 to-[#6139F2]/20 border border-[#FF9D2E]/40 hover:border-[#FF9D2E]/70 transition active:scale-95 flex-shrink-0"
+          >
+            <Mic size={15} className="text-[#FF9D2E] animate-pulse" />
+            <div className="text-left">
+              <div className="text-xs font-bold text-white truncate max-w-[140px]">
+                Namibian Hits Jam
+              </div>
+              <div className="text-[10px] text-white/60">142 listening</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* 4. Unified Feed Stream */}
       <AnimatePresence mode="wait">
         <motion.div
           key={feedTab}
