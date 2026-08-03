@@ -240,12 +240,12 @@ export function Home() {
               </div>
 
               {/* Bottom Content Container (Author, Caption, Track, Comment bar) */}
-              <div className="absolute bottom-4 left-4 right-16 z-20 space-y-3">
+              <div className="absolute bottom-4 left-4 right-[72px] z-20 space-y-2.5">
                 {/* Author Info Row */}
-                <div className="flex items-center gap-3">
-                  <div className="relative">
+                <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                  <div className="relative shrink-0">
                     <Avatar
-                      size={40}
+                      size={38}
                       profile={{
                         id: reel.id,
                         display_name: reel.author,
@@ -254,28 +254,31 @@ export function Home() {
                     />
                   </div>
 
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-bold text-white tracking-wide">
+                  <div className="flex items-center gap-1 min-w-0 truncate">
+                    <span className="text-xs font-bold text-white tracking-wide truncate">
                       @{reel.username}
                     </span>
                     {reel.verified && (
-                      <CheckCircle2 size={14} className="text-[#24A3C7] fill-[#24A3C7]/20" />
+                      <CheckCircle2
+                        size={13}
+                        className="text-[#24A3C7] fill-[#24A3C7]/20 shrink-0"
+                      />
                     )}
                   </div>
 
                   <button
                     onClick={() => toast.success(`Following @${reel.username}`)}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full glass-panel text-white text-[11px] font-bold border border-white/20 hover:bg-white/20 transition active:scale-95 ml-1"
+                    className="flex items-center gap-1 px-2.5 py-0.5 rounded-full glass-panel text-white text-[10px] font-bold border border-white/20 hover:bg-white/20 transition active:scale-95 shrink-0"
                   >
-                    <Plus size={12} />
+                    <Plus size={11} />
                     <span>Follow</span>
                   </button>
 
                   <button
                     onClick={() => navigate("/rooms")}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-[#6139F2] to-[#24A3C7] text-white text-[11px] font-bold shadow-md hover:opacity-90 transition active:scale-95 ml-auto"
+                    className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-gradient-to-r from-[#6139F2] to-[#24A3C7] text-white text-[10px] font-bold shadow-md hover:opacity-90 transition active:scale-95 shrink-0 ml-auto"
                   >
-                    <Radio size={12} />
+                    <Radio size={11} />
                     <span>Continue live</span>
                   </button>
                 </div>
