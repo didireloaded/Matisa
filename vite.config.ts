@@ -18,10 +18,11 @@ export default defineConfig({
       manifest: {
         name: "Matisa",
         short_name: "Matisa",
-        description: "Matisa Social App",
-        theme_color: "#C8521A",
-        background_color: "#0F0D0B",
+        description: "Connect with people in Namibia — Notes, Live Rooms, Events & Stories",
+        theme_color: "#06101D",
+        background_color: "#06101D",
         display: "standalone",
+        orientation: "portrait",
         icons: [
           {
             src: "pwa-192x192.png",
@@ -32,6 +33,16 @@ export default defineConfig({
             src: "pwa-512x512.png",
             sizes: "512x512",
             type: "image/png",
+            purpose: "any maskable",
+          },
+        ],
+      },
+      workbox: {
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
+            handler: "NetworkFirst",
+            options: { cacheName: "supabase-cache" },
           },
         ],
       },
