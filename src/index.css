@@ -6,10 +6,21 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --color-background: #0b0b0b;
-  --color-foreground: #f5f0ea;
+  --color-background: #000000;
+  --color-foreground: #ffffff;
   
-  --color-surface: #151515;
+  --matisa-black: #000000;
+  --matisa-surface: #111111;
+  --matisa-surface-raised: #1a1a1a;
+  --matisa-border: rgba(255, 255, 255, 0.06);
+  --matisa-text-primary: #ffffff;
+  --matisa-text-secondary: rgba(255, 255, 255, 0.55);
+  --matisa-text-tertiary: rgba(255, 255, 255, 0.35);
+  --matisa-teal: #00D9C0;
+  --matisa-teal-glow: rgba(0, 217, 192, 0.25);
+  --matisa-pink: #E94560;
+
+  --color-surface: #111111;
   --color-surface-2: #1a1a1a;
   --color-surface-3: #222222;
 
@@ -22,12 +33,12 @@
   --color-warning: #f59e0b;
   --color-error: #ef4444;
 
-  --color-text: #f5f0ea;
-  --color-text-muted: #7a7169;
-  --color-text-dark: rgba(255, 255, 255, 0.3);
+  --color-text: #ffffff;
+  --color-text-muted: rgba(255, 255, 255, 0.55);
+  --color-text-dark: rgba(255, 255, 255, 0.35);
 
-  --color-border: rgba(255, 255, 255, 0.05);
-  --color-border-hover: rgba(255, 255, 255, 0.1);
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-hover: rgba(255, 255, 255, 0.12);
 
   --font-sans: 'DM Sans', 'Geist Variable', sans-serif;
   --font-heading: 'Syne', sans-serif;

@@ -275,7 +275,7 @@ export function Profile() {
       <div className="px-5 mt-5 space-y-5 flex-1">
         {/* Availability Status Badge */}
         <div className="flex items-center gap-2 p-3.5 rounded-[20px] bg-gradient-to-r from-emerald-500/10 to-[#24A3C7]/10 border border-emerald-500/30">
-          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
           <span className="text-xs font-semibold text-emerald-300">
             Available for collaboration & voice rooms in Windhoek
           </span>

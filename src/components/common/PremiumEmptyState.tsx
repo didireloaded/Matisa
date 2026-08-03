@@ -46,24 +46,15 @@ export function PremiumEmptyState({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center p-8 text-center min-h-[300px]">
-      <div className="relative mb-6">
-        {/* Glow behind the icon */}
-        <div
-          className="absolute inset-0 blur-xl opacity-30 rounded-full"
-          style={{ backgroundColor: hexColor }}
-        />
-        <div className="relative w-20 h-20 rounded-full bg-card border border-border flex items-center justify-center">
-          <Icon className="w-8 h-8 text-foreground" />
-        </div>
+    <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+      <div className="w-16 h-16 rounded-full bg-white/[0.03] flex items-center justify-center mb-4 border border-white/[0.06]">
+        <Icon className="w-7 h-7 text-white/30" />
       </div>
 
-      <h3 className="text-xl font-bold text-foreground mb-2 tracking-tight">{title}</h3>
-      <p className="text-sm text-muted-foreground max-w-[250px] mb-8 leading-relaxed">
-        {description}
-      </p>
+      <h3 className="text-sm font-semibold text-white/70 tracking-tight">{title}</h3>
+      <p className="text-xs text-white/40 max-w-[240px] mt-1 leading-relaxed">{description}</p>
 
-      {action && <div className="mt-2">{renderAction()}</div>}
+      {action && <div className="mt-5">{renderAction()}</div>}
     </div>
   );
 }

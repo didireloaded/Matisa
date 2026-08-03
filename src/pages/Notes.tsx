@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/common/Avatar";
 import { Button } from "@/components/ui/Button";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
+import { SkeletonList } from "@/components/common/SkeletonLoader";
 import { useNotes } from "@/hooks/useNotes";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
@@ -118,9 +119,7 @@ export function Notes() {
         </Card>
 
         {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
-          </div>
+          <SkeletonList />
         ) : notes.length === 0 ? (
           <div className="mt-8">
             <PremiumEmptyState

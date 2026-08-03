@@ -23,6 +23,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
+import { SkeletonList } from "@/components/common/SkeletonLoader";
 
 const DUMMY_EVENTS = [
   {
@@ -131,9 +132,7 @@ export function Events() {
 
       <div className="flex-1 px-5 space-y-6">
         {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
-          </div>
+          <SkeletonList />
         ) : displayEvents.length === 0 ? (
           <div className="mt-8">
             <PremiumEmptyState
