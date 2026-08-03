@@ -1,24 +1,23 @@
 import { useState, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
-import type { Post } from "@/types";
+import type { Note } from "@/types";
 
 export function useSaves() {
   const { user } = useAuth();
-  const [savedPosts, setSavedPosts] = useState<Post[]>([]);
+  const [savedNotes, setSavedNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchSavedPosts = useCallback(async () => {
+  const fetchSavedNotes = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     try {
-      // Join post_saves with posts and profiles
       const { data, error } = await supabase
-        .from("post_saves")
+        .from("saves")
         .select(
           `
-          post_id,
-          posts (*, profiles!posts_user_id_fkey(*))
+          note_id,
+          notes (*, profiles!notes_author_id_fkey(*))
         `,
         )
         .eq("user_id", user.id)
@@ -26,24 +25,24 @@ export function useSaves() {
 
       if (error) throw error;
 
-      const posts = data?.map((save) => save.posts).filter(Boolean) as unknown as Post[];
-      setSavedPosts(posts);
+      const notes = data?.map((save: any) => save.notes).filter(Boolean) as unknown as Note[];
+      setSavedNotes(notes);
     } catch (err) {
-      console.error("Error fetching saved posts:", err);
+      console.error("Error fetching saved notes:", err);
     } finally {
       setLoading(false);
     }
   }, [user]);
 
   const toggleSave = useCallback(
-    async (postId: string, isCurrentlySaved: boolean) => {
+    async (noteId: string, isCurrentlySaved: boolean) => {
       if (!user) return false;
 
       try {
         if (isCurrentlySaved) {
-          await supabase.from("post_saves").delete().match({ user_id: user.id, post_id: postId });
+          await supabase.from("saves").delete().match({ user_id: user.id, note_id: noteId });
         } else {
-          await supabase.from("post_saves").insert({ user_id: user.id, post_id: postId });
+          await supabase.from("saves").insert({ user_id: user.id, note_id: noteId });
         }
         return true;
       } catch (err) {
@@ -55,13 +54,13 @@ export function useSaves() {
   );
 
   const checkIsSaved = useCallback(
-    async (postId: string) => {
+    async (noteId: string) => {
       if (!user) return false;
       try {
         const { data, error } = await supabase
-          .from("post_saves")
-          .select("post_id")
-          .match({ user_id: user.id, post_id: postId })
+          .from("saves")
+          .select("note_id")
+          .match({ user_id: user.id, note_id: noteId })
           .single();
 
         if (error && error.code !== "PGRST116") throw error;
@@ -74,9 +73,11 @@ export function useSaves() {
   );
 
   return {
-    savedPosts,
+    savedNotes,
+    savedPosts: savedNotes, // Alias for backward compatibility
     loading,
-    fetchSavedPosts,
+    fetchSavedNotes,
+    fetchSavedPosts: fetchSavedNotes,
     toggleSave,
     checkIsSaved,
   };

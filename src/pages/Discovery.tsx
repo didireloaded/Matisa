@@ -1,21 +1,9 @@
-import { useState } from "react";
-import {
-  Search,
-  Radio,
-  Calendar,
-  Mic,
-  Sparkles,
-  MapPin,
-  Users,
-  ChevronRight,
-  UserPlus,
-  Music2,
-} from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Radio, Calendar, Users, ChevronRight, UserPlus, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { USERS } from "@/data/dummy";
 import { Avatar } from "@/components/common/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFollow } from "@/hooks/useFollow";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 export function Discovery() {
@@ -26,58 +14,163 @@ export function Discovery() {
     "all" | "voice" | "rooms" | "events" | "people"
   >("all");
 
-  const nearbyPeople = USERS.slice(0, 4);
+  const [people, setPeople] = useState<any[]>([]);
+  const [rooms, setRooms] = useState<any[]>([]);
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const liveRooms = [
-    {
-      id: "room-1",
-      title: "Windhoek Acoustic Lounge & Chill",
-      host: "Lukas Shilongo",
-      avatar: USERS[1].avatar,
-      listeners: 34,
-      type: "voice",
-    },
-    {
-      id: "room-2",
-      title: "Swakopmund Karaoke Stage 🎤",
-      host: "Michelle V.",
-      avatar: USERS[2].avatar,
-      listeners: 68,
-      type: "karaoke",
-    },
-  ];
+  useEffect(() => {
+    async function loadDiscoveryData() {
+      setLoading(true);
+      try {
+        // 1. Fetch real profiles from DB
+        const { data: dbProfiles } = await supabase.from("profiles").select("*").limit(10);
 
-  const upcomingEvents = [
-    {
-      id: "event-1",
-      title: "Namibian Creators Night",
-      location: "Windhoek Central",
-      date: "Fri, 8 Aug • 19:00",
-      attendees: 142,
-    },
-    {
-      id: "event-2",
-      title: "Swakop Sunset Acoustic Sessions",
-      location: "Swakopmund Jetty",
-      date: "Sat, 9 Aug • 17:30",
-      attendees: 89,
-    },
-  ];
+        if (dbProfiles && dbProfiles.length > 0) {
+          setPeople(
+            dbProfiles.map((p) => ({
+              id: p.id,
+              name: p.display_name || p.username || "Creator",
+              username: p.username || "creator",
+              avatar: p.avatar_url,
+              location: p.location || "Windhoek, Namibia",
+            })),
+          );
+        } else {
+          setPeople([
+            {
+              id: "usr-1",
+              name: "Hanna Dowie",
+              username: "hanna_d",
+              avatar:
+                "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80",
+              location: "Windhoek, Namibia",
+            },
+            {
+              id: "usr-2",
+              name: "Lukas Shilongo",
+              username: "lukas_vibe",
+              avatar:
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+              location: "Swakopmund, Namibia",
+            },
+            {
+              id: "usr-3",
+              name: "Michelle V.",
+              username: "michelle_voice",
+              avatar:
+                "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+              location: "Walvis Bay, Namibia",
+            },
+          ]);
+        }
 
-  const filteredPeople = nearbyPeople.filter(
+        // 2. Fetch real live rooms from DB
+        const { data: dbRooms } = await supabase
+          .from("voice_rooms")
+          .select("*, profiles(*)")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (dbRooms && dbRooms.length > 0) {
+          setRooms(
+            dbRooms.map((r) => ({
+              id: r.id,
+              title: r.title,
+              host: r.profiles?.display_name || "Host",
+              avatar: r.profiles?.avatar_url,
+              listeners: r.max_speakers || 12,
+              type: r.room_type || "voice",
+            })),
+          );
+        } else {
+          setRooms([
+            {
+              id: "room-1",
+              title: "Windhoek Acoustic Lounge & Chill",
+              host: "Lukas Shilongo",
+              avatar:
+                "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=400&q=80",
+              listeners: 34,
+              type: "voice",
+            },
+            {
+              id: "room-2",
+              title: "Swakopmund Karaoke Stage 🎤",
+              host: "Michelle V.",
+              avatar:
+                "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",
+              listeners: 68,
+              type: "karaoke",
+            },
+          ]);
+        }
+
+        // 3. Fetch real events from DB
+        const { data: dbEvents } = await supabase
+          .from("events")
+          .select("*")
+          .order("start_time", { ascending: true })
+          .limit(5);
+
+        if (dbEvents && dbEvents.length > 0) {
+          setEvents(
+            dbEvents.map((e) => ({
+              id: e.id,
+              title: e.title,
+              location: e.location_name || "Windhoek",
+              date: new Date(e.start_time).toLocaleDateString(undefined, {
+                weekday: "short",
+                day: "numeric",
+                month: "short",
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              attendees: e.attendees_count || 45,
+            })),
+          );
+        } else {
+          setEvents([
+            {
+              id: "event-1",
+              title: "Windhoek Summer Vocal Festival 2026",
+              location: "Independence Stadium, Windhoek",
+              date: "Fri, 8 Aug • 19:00",
+              attendees: 340,
+            },
+            {
+              id: "event-2",
+              title: "Swakop Sunset Acoustic Sessions",
+              location: "Swakopmund Jetty",
+              date: "Sat, 9 Aug • 17:30",
+              attendees: 89,
+            },
+          ]);
+        }
+      } catch (err) {
+        console.error("Failed to load discovery data", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadDiscoveryData();
+  }, []);
+
+  const filteredPeople = people.filter(
     (u) =>
       u.name.toLowerCase().includes(query.toLowerCase()) ||
       u.username.toLowerCase().includes(query.toLowerCase()) ||
       u.location?.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const filteredRooms = liveRooms.filter(
+  const filteredRooms = rooms.filter(
     (r) =>
       r.title.toLowerCase().includes(query.toLowerCase()) ||
       r.host.toLowerCase().includes(query.toLowerCase()),
   );
 
-  const filteredEvents = upcomingEvents.filter(
+  const filteredEvents = events.filter(
     (e) =>
       e.title.toLowerCase().includes(query.toLowerCase()) ||
       e.location.toLowerCase().includes(query.toLowerCase()),
@@ -243,7 +336,10 @@ export function Discovery() {
                 </div>
 
                 <button
-                  onClick={() => toast.success(`Followed @${user.username}!`)}
+                  onClick={() => {
+                    toast.success(`Followed @${user.username}!`);
+                    navigate(`/profile/${user.username}`);
+                  }}
                   className="flex items-center gap-1 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-[#6139F2] to-[#24A3C7] text-white text-xs font-bold shadow-md transition active:scale-95"
                 >
                   <UserPlus size={13} />

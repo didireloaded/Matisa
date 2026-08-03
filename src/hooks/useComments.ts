@@ -4,7 +4,8 @@ import { useAuth } from "../contexts/AuthContext";
 
 export interface Comment {
   id: string;
-  post_id: string;
+  note_id: string;
+  post_id?: string;
   author_id: string;
   content: string | null;
   media_url: string | null;
@@ -17,12 +18,13 @@ export interface Comment {
   };
 }
 
-export function useComments(postId: string) {
+export function useComments(noteId: string) {
   const { session } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchComments = useCallback(async () => {
+    if (!noteId) return;
     setIsLoading(true);
     try {
       const { data, error } = await supabase
@@ -30,7 +32,7 @@ export function useComments(postId: string) {
         .select(
           `
           id,
-          post_id,
+          note_id,
           author_id,
           content,
           media_url,
@@ -43,7 +45,7 @@ export function useComments(postId: string) {
           )
         `,
         )
-        .eq("post_id", postId)
+        .or(`note_id.eq.${noteId},post_id.eq.${noteId}`)
         .order("created_at", { ascending: true });
 
       if (error) throw error;
@@ -53,48 +55,49 @@ export function useComments(postId: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [postId]);
+  }, [noteId]);
 
   useEffect(() => {
     fetchComments();
 
-    if (!postId) return;
+    if (!noteId) return;
 
     // Realtime subscription
     const channel = supabase
-      .channel(`comments:${postId}`)
+      .channel(`comments:${noteId}`)
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "comments",
-          filter: `post_id=eq.${postId}`,
         },
         async (payload) => {
-          const { data: newComment } = await supabase
-            .from("comments")
-            .select(
-              `
-              id,
-              post_id,
-              author_id,
-              content,
-              media_url,
-              media_type,
-              created_at,
-              profiles:author_id (
-                username,
-                full_name,
-                avatar_url
+          if (payload.new.note_id === noteId || payload.new.post_id === noteId) {
+            const { data: newComment } = await supabase
+              .from("comments")
+              .select(
+                `
+                id,
+                note_id,
+                author_id,
+                content,
+                media_url,
+                media_type,
+                created_at,
+                profiles:author_id (
+                  username,
+                  full_name,
+                  avatar_url
+                )
+              `,
               )
-            `,
-            )
-            .eq("id", payload.new.id)
-            .single();
+              .eq("id", payload.new.id)
+              .single();
 
-          if (newComment) {
-            setComments((prev) => [...prev, newComment as any as Comment]);
+            if (newComment) {
+              setComments((prev) => [...prev, newComment as any as Comment]);
+            }
           }
         },
       )
@@ -103,14 +106,14 @@ export function useComments(postId: string) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [postId, fetchComments]);
+  }, [noteId, fetchComments]);
 
   const addComment = async (content: string | null, mediaUrl?: string, mediaType?: "voice") => {
     if (!session?.user) throw new Error("Must be logged in to comment");
 
     try {
       const { error } = await supabase.from("comments").insert({
-        post_id: postId,
+        note_id: noteId,
         author_id: session.user.id,
         content,
         media_url: mediaUrl,
@@ -119,21 +122,33 @@ export function useComments(postId: string) {
 
       if (error) throw error;
 
-      // Fetch the post author to send them a notification
-      const { data: postData } = await supabase
-        .from("posts")
+      // Fetch the note author to send them a notification
+      const { data: noteData } = await supabase
+        .from("notes")
         .select("author_id")
-        .eq("id", postId)
-        .single();
+        .eq("id", noteId)
+        .maybeSingle();
 
-      if (postData && postData.author_id !== session.user.id) {
+      if (noteData && noteData.author_id !== session.user.id) {
+        // Insert notification with type 'reply' (valid enum value)
+        try {
+          await supabase.from("notifications").insert({
+            user_id: noteData.author_id,
+            actor_id: session.user.id,
+            type: "reply",
+            content: content ? content : "🎤 Voice note reply",
+          });
+        } catch (err) {
+          console.error("Notification insert error:", err);
+        }
+
         supabase.functions
           .invoke("send-notification", {
             body: {
-              userId: postData.author_id,
-              title: `New comment on your post`,
-              body: `${session.user.user_metadata?.full_name || "Someone"} commented: ${content ? content : "🎤 Voice note"}`,
-              data: { url: `/` }, // Route them to feed for now
+              userId: noteData.author_id,
+              title: `New reply on your Note`,
+              body: `${session.user.user_metadata?.full_name || "Someone"} replied: ${content ? content : "🎤 Voice note"}`,
+              data: { url: `/` },
             },
           })
           .catch(console.error);
@@ -144,5 +159,10 @@ export function useComments(postId: string) {
     }
   };
 
-  return { comments, isLoading, addComment };
+  return {
+    comments,
+    isLoading,
+    addComment,
+    refreshComments: fetchComments,
+  };
 }
