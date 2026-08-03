@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Home, Search, Plus, Mic, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
@@ -8,6 +9,23 @@ interface BottomNavigationProps {
 export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
   const location = useLocation();
   const path = location.pathname;
+  const [isScrolled, setIsScrolled] = useState(false);
+
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > 60 && currentScrollY > lastScrollY) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const isHomeActive = path === "/";
   const isExploreActive = path === "/explore" || path.startsWith("/explore");
@@ -16,7 +34,11 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
 
   return (
     <nav
-      className="fixed bottom-4 left-1/2 z-50 flex w-[94%] max-w-[395px] -translate-x-1/2 items-center justify-between px-2 py-1.5 rounded-full glass-panel-elevated shadow-2xl border border-white/20 backdrop-blur-2xl bg-[#06101D]/90"
+      className={`fixed bottom-4 left-1/2 z-50 flex items-center justify-between transition-all duration-300 ease-in-out -translate-x-1/2 glass-panel-elevated shadow-2xl border border-white/20 backdrop-blur-2xl bg-[#06101D]/90 rounded-full ${
+        isScrolled
+          ? "w-[80%] max-w-[320px] px-3 py-1 scale-95 opacity-90 hover:opacity-100"
+          : "w-[94%] max-w-[395px] px-2 py-1.5"
+      }`}
       style={{
         marginBottom: "env(safe-area-inset-bottom)",
       }}
@@ -32,7 +54,7 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
         aria-label="Home"
       >
         <Home size={18} />
-        {isHomeActive && <span className="text-xs font-bold">Home</span>}
+        {isHomeActive && !isScrolled && <span className="text-xs font-bold">Home</span>}
       </Link>
 
       {/* 2. Explore */}
@@ -46,16 +68,16 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
         aria-label="Explore"
       >
         <Search size={18} />
-        {isExploreActive && <span className="text-xs font-bold">Explore</span>}
+        {isExploreActive && !isScrolled && <span className="text-xs font-bold">Explore</span>}
       </Link>
 
-      {/* 3. Center Elevated Create Trigger */}
+      {/* 3. Center Create Trigger (Contained completely inside dock) */}
       <button
         onClick={onOpenCreate}
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#FF9D2E] via-[#24A3C7] to-[#6139F2] text-white shadow-[0_0_16px_rgba(36,163,199,0.6)] border border-white/40 active:scale-90 transition hover:opacity-90 -mt-2.5 mx-0.5"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#FF9D2E] via-[#24A3C7] to-[#6139F2] text-white shadow-[0_0_12px_rgba(36,163,199,0.6)] border border-white/40 active:scale-90 transition hover:opacity-90 mx-0.5"
         aria-label="Create"
       >
-        <Plus size={20} strokeWidth={2.5} />
+        <Plus size={19} strokeWidth={2.5} />
       </button>
 
       {/* 4. Rooms */}
@@ -69,7 +91,7 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
         aria-label="Rooms"
       >
         <Mic size={18} />
-        {isRoomsActive && <span className="text-xs font-bold">Rooms</span>}
+        {isRoomsActive && !isScrolled && <span className="text-xs font-bold">Rooms</span>}
       </Link>
 
       {/* 5. Profile */}
@@ -83,7 +105,7 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
         aria-label="Profile"
       >
         <User size={18} />
-        {isProfileActive && <span className="text-xs font-bold">Profile</span>}
+        {isProfileActive && !isScrolled && <span className="text-xs font-bold">Profile</span>}
       </Link>
     </nav>
   );
