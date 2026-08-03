@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -9,14 +10,33 @@ import {
   ChevronRight,
   User,
   Lock,
+  Wifi,
+  Sun,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { Avatar } from "@/components/common/Avatar";
 import { toast } from "sonner";
 
 export function Settings() {
   const navigate = useNavigate();
   const { signOut, profile } = useAuth();
+  const { isOutdoorMode, toggleOutdoorMode } = useTheme();
+
+  const [isDataSaver, setIsDataSaver] = useState<boolean>(() => {
+    return localStorage.getItem("matisa_data_saver") === "true";
+  });
+
+  const toggleDataSaver = () => {
+    const next = !isDataSaver;
+    setIsDataSaver(next);
+    localStorage.setItem("matisa_data_saver", String(next));
+    toast.success(
+      next
+        ? "Data Saver Enabled: Compressed images & no audio preloading"
+        : "Data Saver Disabled: Full quality media",
+    );
+  };
 
   const handleLogout = async () => {
     try {
@@ -46,6 +66,26 @@ export function Settings() {
       ],
     },
     {
+      title: "Regional & Network Optimization",
+      items: [
+        {
+          icon: Wifi,
+          label: `Data Saver Mode (${isDataSaver ? "ON" : "OFF"})`,
+          action: toggleDataSaver,
+        },
+        {
+          icon: Sun,
+          label: `Outdoor Sunlight Mode (${isOutdoorMode ? "ON" : "OFF"})`,
+          action: () => {
+            toggleOutdoorMode();
+            toast.success(
+              isOutdoorMode ? "Switched to Sleek Dark Mode" : "Switched to Sunlight Outdoor Mode",
+            );
+          },
+        },
+      ],
+    },
+    {
       title: "Notifications & Audio",
       items: [
         {
@@ -60,6 +100,7 @@ export function Settings() {
         },
       ],
     },
+
     {
       title: "Support & Legal",
       items: [

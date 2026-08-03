@@ -196,9 +196,15 @@ export function Profile() {
 
         {/* Display Name & Handle */}
         <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">
-            {profileData.display_name}
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-xl font-bold text-white tracking-tight">
+              {profileData.display_name}
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              Active Now
+            </span>
+          </div>
           <p className="text-xs text-white/50">@{profileData.username}</p>
 
           {profileData.location && (

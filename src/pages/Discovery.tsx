@@ -332,6 +332,16 @@ export function Discovery() {
                     <p className="text-xs text-white/50">
                       @{user.username} • {user.location}
                     </p>
+                    <div className="flex items-center gap-1.5 mt-1">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#24A3C7]/15 text-[#39B7F2] text-[10px] font-semibold border border-[#24A3C7]/30">
+                        <Users size={10} />
+                        {user.id === "usr-1"
+                          ? "3 mutual friends"
+                          : user.id === "usr-2"
+                            ? "Both in Windhoek Creators"
+                            : "Attending Swakop Sessions"}
+                      </span>
+                    </div>
                   </div>
                 </div>
 

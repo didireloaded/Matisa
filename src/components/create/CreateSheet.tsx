@@ -14,7 +14,7 @@ import {
   ChevronRight,
   ArrowLeft,
 } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { NoteService } from "@/services/NoteService";
@@ -28,6 +28,7 @@ interface CreateSheetProps {
 
 export function CreateSheet({ open, onClose }: CreateSheetProps) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { profile, requireAuth } = useAuth();
   const [level, setLevel] = useState<"root" | "note-type" | "note-composer" | "room-type">("root");
 
@@ -36,6 +37,22 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
   const [storyModalOpen, setStoryModalOpen] = useState(false);
+
+  // Contextual pre-selection based on active route when sheet opens
+  useEffect(() => {
+    if (!open) {
+      setLevel("root");
+      return;
+    }
+
+    if (location.pathname.startsWith("/notes")) {
+      setLevel("note-type");
+    } else if (location.pathname.startsWith("/rooms")) {
+      setLevel("room-type");
+    } else {
+      setLevel("root");
+    }
+  }, [open, location.pathname]);
 
   // Prevent background body scroll when open
   useEffect(() => {

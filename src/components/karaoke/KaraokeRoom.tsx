@@ -312,6 +312,42 @@ export function KaraokeRoom() {
         </div>
       )}
 
+      {/* Spectator Cheer & Reaction Bar */}
+      <div className="relative z-20 px-5 mb-2 flex items-center justify-center gap-2">
+        <button
+          onClick={() => {
+            handleSendReaction();
+            toast.success("👏 You cheered the singer!");
+          }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/10 text-white text-xs font-bold border border-white/15 hover:bg-white/20 active:scale-95 transition"
+        >
+          <span>👏</span>
+          <span>Cheer</span>
+        </button>
+
+        <button
+          onClick={() => {
+            handleSendReaction();
+            toast.success("🔥 Fire energy sent!");
+          }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#FF9D2E]/15 text-[#FF9D2E] text-xs font-bold border border-[#FF9D2E]/30 hover:bg-[#FF9D2E]/25 active:scale-95 transition"
+        >
+          <span>🔥</span>
+          <span>Fire</span>
+        </button>
+
+        <button
+          onClick={() => {
+            handleSendReaction();
+            toast.success("🎉 Party vibes!");
+          }}
+          className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#6139F2]/15 text-[#24A3C7] text-xs font-bold border border-[#6139F2]/30 hover:bg-[#6139F2]/25 active:scale-95 transition"
+        >
+          <span>🎉</span>
+          <span>Vibes</span>
+        </button>
+      </div>
+
       {/* Floating Bottom Controls */}
       <div className="relative z-20 p-5 pb-safe glass-header">
         <div className="mx-auto flex max-w-[360px] items-center justify-between rounded-full glass-panel-elevated px-5 py-3 border border-white/15 shadow-2xl">
