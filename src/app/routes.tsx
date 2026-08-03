@@ -20,13 +20,21 @@ const Chat = lazy(() => import("@/pages/Chat").then((m) => ({ default: m.Chat })
 const KaraokeRoom = lazy(() =>
   import("@/components/karaoke/KaraokeRoom").then((m) => ({ default: m.KaraokeRoom })),
 );
+const ExploreRooms = lazy(() => import("@/pages/ExploreRooms"));
+const ExploreEvents = lazy(() => import("@/pages/ExploreEvents"));
+const ExplorePeople = lazy(() => import("@/pages/ExplorePeople"));
+const Inbox = lazy(() => import("@/pages/Inbox"));
+const ChatRoom = lazy(() => import("@/pages/ChatRoom"));
+const Notifications = lazy(() => import("@/pages/Notifications"));
 const NoteDetail = lazy(() =>
-  import("@/pages/NoteDetail").then((m) => ({ default: m.NoteDetail })),
+  import("@/pages/NoteDetail").then((m) => ({ default: m.NoteDetail || m.default })),
 );
 const EventDetail = lazy(() =>
-  import("@/pages/EventDetail").then((m) => ({ default: m.EventDetail })),
+  import("@/pages/EventDetail").then((m) => ({ default: m.EventDetail || m.default })),
 );
-const NotFound = lazy(() => import("@/pages/NotFound").then((m) => ({ default: m.NotFound })));
+const NotFound = lazy(() =>
+  import("@/pages/NotFound").then((m) => ({ default: m.NotFound || m.default })),
+);
 
 const Rooms = lazy(() => import("@/pages/Rooms").then((m) => ({ default: m.Rooms })));
 
@@ -36,9 +44,9 @@ export function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/explore" element={<Discovery />} />
-        <Route path="/explore/rooms" element={<Discovery />} />
-        <Route path="/explore/events" element={<Discovery />} />
-        <Route path="/explore/people" element={<Discovery />} />
+        <Route path="/explore/rooms" element={<ExploreRooms />} />
+        <Route path="/explore/events" element={<ExploreEvents />} />
+        <Route path="/explore/people" element={<ExplorePeople />} />
         <Route path="/discovery" element={<Navigate to="/explore" replace />} />
         <Route path="/notes" element={<Notes />} />
         <Route path="/note/:noteId" element={<NoteDetail />} />
@@ -47,21 +55,22 @@ export function AppRoutes() {
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/music" element={<Navigate to="/explore" replace />} />
         <Route path="/activity" element={<Activity />} />
-        <Route path="/notifications" element={<Activity />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:username" element={<Profile />} />
-        <Route path="/inbox" element={<Messages />} />
-        <Route path="/messages" element={<Messages />} />
-        <Route path="/chat" element={<Messages />} />
+        <Route path="/inbox" element={<Inbox />} />
+        <Route path="/messages" element={<Inbox />} />
+        <Route path="/chat" element={<Inbox />} />
         <Route path="/rooms" element={<Rooms />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
 
       <Route path="/auth" element={<Auth />} />
       <Route path="/onboarding" element={<Onboarding />} />
-      <Route path="/messages/new" element={<Chat />} />
-      <Route path="/messages/:conversationId" element={<Chat />} />
-      <Route path="/chat/:id" element={<Chat />} />
+      <Route path="/messages/new" element={<ChatRoom />} />
+      <Route path="/messages/:conversationId" element={<ChatRoom />} />
+      <Route path="/chat/:id" element={<ChatRoom />} />
+      <Route path="/chat/:conversationId" element={<ChatRoom />} />
       {/* Consolidated room routes — map all aliases cleanly */}
       <Route path="/rooms/:roomId" element={<KaraokeRoom />} />
       <Route path="/room/:roomId" element={<KaraokeRoom />} />

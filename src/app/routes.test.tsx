@@ -41,8 +41,26 @@ vi.mock("@/pages/Settings", () => ({
 vi.mock("@/pages/Auth", () => ({
   Auth: () => <div>Auth page</div>,
 }));
-vi.mock("@/pages/Chat", () => ({
-  Chat: () => <div>Chat page</div>,
+vi.mock("@/pages/Inbox", () => ({
+  default: () => <div>Inbox page</div>,
+  Inbox: () => <div>Inbox page</div>,
+}));
+vi.mock("@/pages/ChatRoom", () => ({
+  default: () => <div>Chat page</div>,
+  ChatRoom: () => <div>Chat page</div>,
+}));
+vi.mock("@/pages/Notifications", () => ({
+  default: () => <div>Activity page</div>,
+  Notifications: () => <div>Activity page</div>,
+}));
+vi.mock("@/pages/ExploreRooms", () => ({
+  default: () => <div>Explore Rooms page</div>,
+}));
+vi.mock("@/pages/ExploreEvents", () => ({
+  default: () => <div>Explore Events page</div>,
+}));
+vi.mock("@/pages/ExplorePeople", () => ({
+  default: () => <div>Explore People page</div>,
 }));
 vi.mock("@/pages/Onboarding", () => ({
   Onboarding: () => <div>Onboarding page</div>,
