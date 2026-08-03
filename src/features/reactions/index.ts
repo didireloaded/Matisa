@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase";
 import { ReactionRepository } from "./repositories/ReactionRepository";
 import { ReactionService } from "./services/ReactionService";
 

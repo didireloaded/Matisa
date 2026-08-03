@@ -1,42 +1,43 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Heart,
   MessageCircle,
+  Bookmark,
   Share2,
-  AlignLeft,
-  Send,
-  Mic,
-  Video,
-  Calendar,
   Plus,
+  Music,
+  Send,
+  CheckCircle2,
+  Radio,
+  Mic,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
-import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
-import { Avatar } from "@/components/ui/Avatar";
-import { StoryRing } from "@/components/ui/StoryRing";
-import { Card } from "@/components/ui/card";
-import { VoicePlayer } from "@/components/ui/VoicePlayer";
-import type { Profile } from "@/types";
+import { useNavigate } from "react-router-dom";
+import { USERS } from "@/data/dummy";
+import { Avatar } from "@/components/common/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { timeAgo } from "@/lib/utils";
 import { useNotes } from "@/hooks/useNotes";
-import { LiveRoomsBanner } from "@/components/voice/LiveRoomsBanner";
 import { StoryService } from "@/services/stories";
 import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
 import { StoriesViewer } from "@/components/stories/StoriesViewer";
 import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
-import type { Note } from "@/services/NoteService";
-// ─────────────────────────────────────────────
-// STORIES SECTION
-// ─────────────────────────────────────────────
-function StoriesSection() {
+import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
+import { VoiceReplyRecorder } from "@/components/voice/VoiceReplyRecorder";
+
+export function Home() {
   const { profile } = useAuth();
+  const navigate = useNavigate();
+  const [feedTab, setFeedTab] = useState<"discover" | "following">("discover");
+  const { notes, loading, refreshNotes } = useNotes();
   const [stories, setStories] = useState<any[]>([]);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isCreateStoryOpen, setIsCreateStoryOpen] = useState(false);
+  const [isCreateNoteOpen, setIsCreateNoteOpen] = useState(false);
+  const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
+
+  const [commentText, setCommentText] = useState("");
+  const [liked, setLiked] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     async function loadStories() {
@@ -50,43 +51,304 @@ function StoriesSection() {
     loadStories();
   }, []);
 
-  return (
-    <div className="py-4">
-      <div className="flex gap-4 overflow-x-auto no-scrollbar px-5 pb-2">
-        {/* Add Story */}
-        <StoryRing
-          isAddStory
-          hasUnviewed={false}
-          label="Add story"
-          avatarProps={{
-            profile: { id: "me", display_name: "Me", avatar_url: profile?.avatar_url || "" },
-          }}
-          onClick={() => setIsCreateModalOpen(true)}
-        />
+  const dummyReels = [
+    {
+      id: "reel-1",
+      user: {
+        name: "Maria Theodore",
+        username: "maria_theodore",
+        avatar: USERS[0].avatar,
+        verified: true,
+      },
+      content:
+        "Short scenes, deep emotions—each reel carries a piece of something special under the Namibian sky.",
+      track: "Loop Mode (instrumental)",
+      likes: "45.2k",
+      saves: "18.9k",
+      comments: "10.2k",
+      image:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+    },
+    {
+      id: "reel-2",
+      user: {
+        name: "Lukas Shilongo",
+        username: "lukas_shilongo",
+        avatar: USERS[1].avatar,
+        verified: true,
+      },
+      content: "Windhoek acoustic jams and live session recordings with local creators.",
+      track: "Sunset Vibes (Live)",
+      likes: "28.4k",
+      saves: "9.1k",
+      comments: "4.8k",
+      image:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
+    },
+  ];
 
-        {/* Other Stories */}
-        {stories.map((story, index) => {
-          const user = story.profiles;
+  return (
+    <div className="flex flex-col min-h-full pb-24">
+      {/* 1. Top Discover / Following Tab Selector */}
+      <div className="px-5 pt-1 pb-3 flex items-center gap-6">
+        <button
+          onClick={() => setFeedTab("discover")}
+          className={`text-base font-bold tracking-wide transition ${
+            feedTab === "discover" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Discover
+        </button>
+
+        <button
+          onClick={() => setFeedTab("following")}
+          className={`text-base font-bold tracking-wide transition ${
+            feedTab === "following" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
+          }`}
+        >
+          Following
+        </button>
+      </div>
+
+      {/* Voice-First Quick Actions */}
+      <div className="px-5 mb-3 flex items-center gap-2">
+        <button
+          onClick={() => setIsVoiceRecorderOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#FF9D2E]/20 to-[#24A3C7]/20 text-white border border-[#24A3C7]/30 text-xs font-bold hover:border-[#24A3C7]/60 transition active:scale-95"
+        >
+          <Mic size={15} className="text-[#FF9D2E]" />
+          <span>Voice Note</span>
+        </button>
+
+        <button
+          onClick={() => setIsCreateNoteOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-full glass-panel text-white/70 text-xs font-semibold hover:text-white transition active:scale-95"
+        >
+          <span>What's on your mind?</span>
+        </button>
+      </div>
+
+      {/* 2. Reelio Stories Rail (Rounded Squircles) */}
+      <div className="px-5 mb-5 overflow-x-auto no-scrollbar flex gap-3">
+        {/* Your Story Squircle Tile */}
+        <button
+          onClick={() => setIsCreateStoryOpen(true)}
+          className="relative h-28 w-20 flex-shrink-0 rounded-[24px] glass-panel-elevated p-2 flex flex-col items-center justify-between overflow-hidden border border-white/20 transition active:scale-95 group"
+        >
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-black shadow-lg">
+              <Plus size={20} strokeWidth={3} />
+            </div>
+          </div>
+          <span className="text-[10px] font-bold text-white/90 truncate w-full text-center">
+            Your story
+          </span>
+        </button>
+
+        {/* Community Story Squircles */}
+        {stories.map((s, idx) => {
+          const author = s.profiles;
           return (
-            <StoryRing
-              key={story.id}
-              hasUnviewed={true}
-              label={user?.display_name?.split(" ")[0] || "User"}
-              avatarProps={{
-                profile: {
-                  id: user?.id,
-                  display_name: user?.display_name,
-                  avatar_url: user?.avatar_url,
-                },
-              }}
-              onClick={() => setViewerIndex(index)}
-            />
+            <button
+              key={s.id}
+              onClick={() => setViewerIndex(idx)}
+              className="relative h-28 w-20 flex-shrink-0 rounded-[24px] overflow-hidden border-2 border-[#24A3C7]/60 shadow-lg transition active:scale-95 group"
+            >
+              <img
+                src={s.media_url || author?.avatar_url || USERS[idx % USERS.length].avatar}
+                alt="Story"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <span className="absolute bottom-2 left-0 right-0 text-[10px] font-bold text-white text-center truncate px-1">
+                {author?.display_name?.split(" ")[0] || "User"}
+              </span>
+            </button>
+          );
+        })}
+
+        {stories.length === 0 &&
+          USERS.map((user, i) => (
+            <button
+              key={user.id}
+              onClick={() => setIsCreateStoryOpen(true)}
+              className="relative h-28 w-20 flex-shrink-0 rounded-[24px] overflow-hidden border-2 border-[#24A3C7]/60 shadow-lg transition active:scale-95 group"
+            >
+              <img
+                src={user.avatar}
+                alt={user.name}
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+              <span className="absolute bottom-2 left-0 right-0 text-[10px] font-bold text-white text-center truncate px-1">
+                {user.name.split(" ")[0]}
+              </span>
+            </button>
+          ))}
+      </div>
+
+      {/* 3. Reelio Immersive Full-Width Media Cards Feed */}
+      <div className="px-5 space-y-6 flex-1">
+        {dummyReels.map((reel) => {
+          const isLiked = liked[reel.id];
+          const isSaved = saved[reel.id];
+
+          return (
+            <div
+              key={reel.id}
+              className="relative h-[550px] w-full rounded-[34px] overflow-hidden shadow-2xl border border-white/15 bg-black"
+            >
+              {/* Media Image Backdrop */}
+              <img
+                src={reel.image}
+                alt={reel.user.name}
+                className="absolute inset-0 h-full w-full object-cover opacity-90"
+              />
+
+              {/* Gradient Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30 pointer-events-none" />
+
+              {/* Right Floating Glass Action Strip */}
+              <div className="absolute right-4 top-1/3 -translate-y-1/2 flex flex-col items-center gap-4 py-4 px-2.5 rounded-full glass-panel-elevated border border-white/20 backdrop-blur-2xl z-20">
+                <button
+                  onClick={() => setLiked((prev) => ({ ...prev, [reel.id]: !prev[reel.id] }))}
+                  className="flex flex-col items-center gap-1 group"
+                >
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                      isLiked ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Heart size={20} fill={isLiked ? "red" : "none"} />
+                  </div>
+                  <span className="text-[10px] font-bold text-white/90">{reel.likes}</span>
+                </button>
+
+                <button
+                  onClick={() => setSaved((prev) => ({ ...prev, [reel.id]: !prev[reel.id] }))}
+                  className="flex flex-col items-center gap-1 group"
+                >
+                  <div
+                    className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
+                      isSaved
+                        ? "bg-[#39B7F2] text-white"
+                        : "bg-white/10 text-white hover:bg-white/20"
+                    }`}
+                  >
+                    <Bookmark size={20} fill={isSaved ? "#39B7F2" : "none"} />
+                  </div>
+                  <span className="text-[10px] font-bold text-white/90">{reel.saves}</span>
+                </button>
+
+                <button
+                  onClick={() => toast.info("Opening comments")}
+                  className="flex flex-col items-center gap-1 group"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition">
+                    <MessageCircle size={20} />
+                  </div>
+                  <span className="text-[10px] font-bold text-white/90">{reel.comments}</span>
+                </button>
+
+                <button
+                  onClick={() => toast.success("Share link copied!")}
+                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                  aria-label="Share"
+                >
+                  <Share2 size={18} />
+                </button>
+              </div>
+
+              {/* Bottom Overlay Info, Note-to-Room & Comment Bar */}
+              <div className="absolute bottom-0 left-0 right-0 p-5 z-20 space-y-2.5">
+                {/* Author Info & Follow Button */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar
+                      size={38}
+                      profile={{
+                        id: "author",
+                        display_name: reel.user.name,
+                        avatar_url: reel.user.avatar,
+                      }}
+                    />
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-bold text-white">@{reel.user.username}</span>
+                      {reel.user.verified && <CheckCircle2 size={15} className="text-[#39B7F2]" />}
+                    </div>
+
+                    <button className="ml-1 px-3 py-1 rounded-full bg-white/20 text-white font-bold text-xs border border-white/30 backdrop-blur-md transition hover:bg-white/30 active:scale-95">
+                      + Follow
+                    </button>
+                  </div>
+
+                  {/* Signature Feature: Note-to-Room ("Continue this live") */}
+                  <button
+                    onClick={() => {
+                      toast.success("Starting live Voice Room for this Note!");
+                      navigate("/rooms");
+                    }}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#6139F2]/30 text-[#39B7F2] font-bold text-[11px] border border-[#6139F2]/50 backdrop-blur-md hover:bg-[#6139F2]/50 active:scale-95 transition"
+                  >
+                    <Radio size={12} className="animate-pulse" />
+                    <span>Continue live</span>
+                  </button>
+                </div>
+
+                {/* Caption Text */}
+                <p className="text-xs text-white/95 leading-relaxed font-normal pr-16 line-clamp-2">
+                  {reel.content}
+                </p>
+
+                {/* Music Track Pill */}
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-white/90 text-[11px] font-semibold backdrop-blur-md border border-white/15">
+                  <Music size={13} className="text-[#39B7F2]" />
+                  <span>{reel.track}</span>
+                </div>
+
+                {/* Comment Bar Capsule */}
+                <div className="flex items-center gap-2 pt-1">
+                  <div className="flex-1 flex items-center gap-2 rounded-full glass-panel-elevated px-4 py-2 border border-white/20">
+                    <MessageCircle size={16} className="text-white/40" />
+                    <input
+                      type="text"
+                      value={commentText}
+                      onChange={(e) => setCommentText(e.target.value)}
+                      placeholder="Add a comment..."
+                      className="w-full bg-transparent text-xs text-white placeholder:text-white/40 focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (commentText.trim()) {
+                        toast.success("Comment added!");
+                        setCommentText("");
+                      }
+                    }}
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#24A3C7] to-[#6139F2] text-white shadow-lg active:scale-90 transition"
+                    aria-label="Send Comment"
+                  >
+                    <Send size={16} className="ml-0.5" />
+                  </button>
+                </div>
+              </div>
+            </div>
           );
         })}
       </div>
 
-      {isCreateModalOpen && (
-        <CreateStoryModal open={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
+      {isCreateStoryOpen && (
+        <CreateStoryModal open={isCreateStoryOpen} onClose={() => setIsCreateStoryOpen(false)} />
+      )}
+
+      {isCreateNoteOpen && (
+        <CreateNoteModal
+          open={isCreateNoteOpen}
+          onClose={() => setIsCreateNoteOpen(false)}
+          onSuccess={refreshNotes}
+          initialMode="text"
+        />
       )}
 
       {viewerIndex !== null && (
@@ -98,7 +360,7 @@ function StoriesSection() {
             userAvatar: s.profiles?.avatar_url || "",
             mediaUrl: s.media_url,
             mediaType: s.media_type as any,
-            content: { audioUrl: s.media_url }, // fallback for voice
+            content: { audioUrl: s.media_url },
             timestamp: new Date(s.created_at).toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
@@ -108,449 +370,18 @@ function StoriesSection() {
           onClose={() => setViewerIndex(null)}
         />
       )}
-    </div>
-  );
-}
 
-// ─────────────────────────────────────────────
-// COMPOSER
-// ─────────────────────────────────────────────
-function Composer({
-  onSubmit,
-  onNoteCreated,
-}: {
-  onSubmit: (c: string) => Promise<any>;
-  onNoteCreated: () => void;
-}) {
-  const navigate = useNavigate();
-  const { profile } = useAuth();
-  const [content, setContent] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
-  const [noteModalMode, setNoteModalMode] = useState<"text" | "voice">("text");
-
-  const handleSubmit = async () => {
-    if (!content.trim() || !profile || loading) return;
-    setLoading(true);
-    try {
-      await onSubmit(content.trim());
-      toast.success("Note dropped!");
-      setContent("");
-    } catch (err: any) {
-      // Error is handled in the hook
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  return (
-    <Card variant="glass" className="mx-5 mb-6 p-4">
-      <div className="flex items-center gap-3 mb-4">
-        <Avatar
-          size={40}
-          profile={{
-            id: profile?.id || "unknown",
-            display_name: profile?.display_name || "User",
-            avatar_url: profile?.avatar_url || "",
+      {isVoiceRecorderOpen && (
+        <VoiceNoteRecorderModal
+          open={isVoiceRecorderOpen}
+          onClose={() => setIsVoiceRecorderOpen(false)}
+          onPublished={() => {
+            refreshNotes();
+            setIsVoiceRecorderOpen(false);
           }}
-        />
-        <input
-          type="text"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          placeholder="What's on your mind?"
-          className="flex-1 bg-transparent text-white placeholder-[var(--color-text-muted)] focus:outline-none"
-        />
-        <button
-          onClick={handleSubmit}
-          disabled={loading || !content.trim()}
-          className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${loading || !content.trim() ? "bg-white/10" : "bg-[var(--color-primary)] hover:bg-[var(--color-primary-light)]"}`}
-        >
-          <Send size={18} className="text-white ml-1" />
-        </button>
-      </div>
-      <div className="flex items-center justify-between border-t border-[var(--color-border)] pt-4">
-        <ComposerAction
-          icon={AlignLeft}
-          label="Note"
-          color="#A0AEC0"
-          onClick={() => {
-            setNoteModalMode("text");
-            setIsNoteModalOpen(true);
-          }}
-        />
-        <ComposerAction
-          icon={Mic}
-          label="Voice Note"
-          color="#8B5CF6"
-          onClick={() => {
-            setNoteModalMode("voice");
-            setIsNoteModalOpen(true);
-          }}
-        />
-        <ComposerAction
-          icon={Video}
-          label="Story"
-          color="#EC4899"
-          onClick={() => {
-            setNoteModalMode("text");
-            setIsNoteModalOpen(false);
-            // Trigger story modal or radial menu
-          }}
-        />
-        <ComposerAction
-          icon={Calendar}
-          label="Event"
-          color="#00E5FF"
-          onClick={() => navigate("/events")}
-        />
-      </div>
-
-      {isNoteModalOpen && (
-        <CreateNoteModal
-          open={isNoteModalOpen}
-          onClose={() => setIsNoteModalOpen(false)}
-          onSuccess={onNoteCreated}
-          initialMode={noteModalMode}
+          mode="note"
         />
       )}
-    </Card>
-  );
-}
-
-function ComposerAction({
-  icon: Icon,
-  label,
-  color,
-  onClick,
-}: {
-  icon: any;
-  label: string;
-  color: string;
-  onClick?: () => void;
-}) {
-  return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1.5 group">
-      <div className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center transition-colors group-hover:bg-[var(--color-surface-3)]">
-        <Icon size={18} style={{ color }} />
-      </div>
-      <span className="text-[10px] font-semibold text-[var(--color-text-muted)] group-hover:text-white transition-colors">
-        {label}
-      </span>
-    </button>
-  );
-}
-
-import { useNoteReaction } from "@/hooks/useNoteReaction";
-
-function FeedCard({
-  note,
-  onDelete,
-  onEdit,
-}: {
-  note: Note;
-  onDelete?: (id: string) => void;
-  onEdit?: (id: string, newContent: string) => void;
-}) {
-  const { profile } = useAuth();
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editContent, setEditContent] = useState(note.content);
-
-  const { reacted, counts, toggleReaction } = useNoteReaction(note.id, note.reaction_count || 0);
-  const hasReacted = reacted === "heart";
-  const timeString = new Date(note.created_at).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const isOwner = profile?.id === note.user_id;
-
-  return (
-    <Card variant="glass" className="mx-5 mb-5 p-5">
-      <div className="flex items-start justify-between mb-2">
-        <div className="flex items-center gap-3">
-          <Avatar
-            size={44}
-            profile={{
-              id: note.profiles?.id || "unknown",
-              display_name: note.profiles?.display_name || note.profiles?.username || "User",
-              avatar_url: note.profiles?.avatar_url || "",
-            }}
-          />
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-white text-[15px] font-bold">
-                {note.profiles?.display_name || note.profiles?.username || "User"}
-              </span>
-              <span className="text-[var(--color-text-muted)] text-[12px] font-medium">
-                {timeAgo(note.created_at)}
-              </span>
-            </div>
-            <span className="text-[var(--color-text-muted)] text-[12px]">
-              @{note.profiles?.username || "user"}
-            </span>
-          </div>
-        </div>
-        <div className="relative">
-          <button
-            onClick={() => setMenuOpen(!menuOpen)}
-            className="text-[var(--color-text-muted)] hover:text-white transition-colors p-2"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="1" />
-              <circle cx="19" cy="12" r="1" />
-              <circle cx="5" cy="12" r="1" />
-            </svg>
-          </button>
-
-          <AnimatePresence>
-            {menuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="absolute right-0 top-full mt-1 w-32 bg-[#1A1A1A] border border-[#333] rounded-xl shadow-xl z-50 overflow-hidden"
-                >
-                  {isOwner && onEdit && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        setIsEditing(true);
-                      }}
-                      className="w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-[#2A2A2A] transition-colors"
-                    >
-                      Edit Note
-                    </button>
-                  )}
-                  {isOwner && onDelete && (
-                    <button
-                      onClick={() => {
-                        setMenuOpen(false);
-                        onDelete(note.id);
-                      }}
-                      className="w-full text-left px-4 py-3 text-sm font-medium text-red-500 hover:bg-[#2A2A2A] transition-colors"
-                    >
-                      Delete Note
-                    </button>
-                  )}
-                  <button className="w-full text-left px-4 py-3 text-sm font-medium text-white hover:bg-[#2A2A2A] transition-colors">
-                    Report
-                  </button>
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {isEditing ? (
-        <div className="mt-3 mb-4">
-          <textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            className="w-full bg-[#1A1A1A] text-white border border-[#333] rounded-xl p-3 text-[15px] focus:outline-none focus:border-[var(--color-primary)] transition-colors"
-            rows={3}
-          />
-          <div className="flex justify-end gap-2 mt-2">
-            <button
-              onClick={() => {
-                setIsEditing(false);
-                setEditContent(note.content);
-              }}
-              className="px-4 py-1.5 rounded-full text-sm font-bold text-white bg-[#2A2A2A] hover:bg-[#333] transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                if (editContent.trim() && onEdit) {
-                  onEdit(note.id, editContent.trim());
-                  setIsEditing(false);
-                }
-              }}
-              className="px-4 py-1.5 rounded-full text-sm font-bold text-white bg-primary hover:bg-pink-600 transition-colors"
-            >
-              Save
-            </button>
-          </div>
-        </div>
-      ) : note.type === "voice" && note.audio_url ? (
-        <VoicePlayer
-          id={`home-voice-${note.id}`}
-          audioUrl={note.audio_url}
-          duration={note.duration_seconds ? `0:${note.duration_seconds}` : "0:18"}
-          waveform={note.waveform_data}
-        />
-      ) : (
-        <p className="text-white text-[15px] leading-relaxed mb-4 mt-3">{note.content}</p>
-      )}
-
-      <div className="flex items-center gap-4 mt-4 pt-4 border-t border-[var(--color-border)]">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          onClick={() => toggleReaction("heart")}
-          className={`flex items-center gap-1.5 ${hasReacted ? "text-pink-500" : "text-[var(--color-text-muted)]"} hover:text-pink-500 transition-colors`}
-        >
-          <Heart size={18} className={hasReacted ? "fill-current" : ""} />
-          <span className="text-[12px] font-bold">{counts.heart}</span>
-        </motion.button>
-      </div>
-    </Card>
-  );
-}
-
-// ─────────────────────────────────────────────
-// NEW HOME UX SECTIONS
-// ─────────────────────────────────────────────
-function PeopleToMeetSection() {
-  const { profile } = useAuth();
-  const [people, setPeople] = useState<any[]>([]);
-
-  useEffect(() => {
-    if (!profile) return;
-    async function loadPeople() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("id, display_name, username, avatar_url, follower_count")
-        .neq("id", profile!.id)
-        .order("created_at", { ascending: false })
-        .limit(5);
-      if (data) setPeople(data);
-    }
-    loadPeople();
-  }, [profile]);
-
-  if (people.length === 0) return null;
-
-  return (
-    <div className="mb-6">
-      <div className="flex items-center justify-between px-5 mb-3">
-        <h2 className="text-white text-sm font-bold tracking-wide">PEOPLE TO MEET</h2>
-        <button className="text-[var(--color-primary)] text-xs font-semibold">See all</button>
-      </div>
-      <div className="flex gap-4 overflow-x-auto no-scrollbar px-5 pb-2">
-        {people.map((user) => (
-          <Card
-            key={user.id}
-            variant="glass"
-            className="min-w-[160px] p-4 flex flex-col items-center text-center"
-          >
-            <Avatar
-              size={60}
-              profile={{
-                id: user.id,
-                display_name: user.display_name || user.username,
-                avatar_url: user.avatar_url,
-              }}
-            />
-            <h3 className="text-white font-bold text-sm mt-3">
-              {user.display_name?.split(" ")[0] || user.username}
-            </h3>
-            <p className="text-[var(--color-text-muted)] text-[11px] mt-1 mb-3">
-              {user.follower_count || 0} followers
-            </p>
-            <button className="w-full py-2 bg-primary/20 text-primary font-bold text-xs rounded-xl hover:bg-primary hover:text-white transition-colors">
-              Wave
-            </button>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────
-// HOME PAGE
-// ─────────────────────────────────────────────
-import { AnalyticsAI } from "@/services/ai/AnalyticsAI";
-
-export function Home() {
-  const { profile } = useAuth();
-  const { notes, loading, createNote, deleteNote, editNote, refreshNotes } = useNotes();
-
-  useEffect(() => {
-    if (profile) {
-      AnalyticsAI.trackEvent(profile.id, "page_view", "home");
-    }
-  }, [profile]);
-
-  return (
-    <div className="flex flex-col min-h-[100dvh] pb-32 pt-2">
-      {/* 1. Stories */}
-      <StoriesSection />
-
-      {/* 2. Composer */}
-      <div className="z-10 relative">
-        <Composer
-          onSubmit={(content) => createNote(content, "text")}
-          onNoteCreated={refreshNotes}
-        />
-      </div>
-
-      {/* 3. Active Voice Rooms */}
-      <LiveRoomsBanner />
-
-      {/* 3. People To Meet (Discovery Injected) */}
-      <PeopleToMeetSection />
-
-      {/* 4. Trending Notes (Conversations) */}
-      <div className="px-5 mb-3 mt-4">
-        <h2 className="text-white text-sm font-bold tracking-wide">TRENDING CONVERSATIONS</h2>
-      </div>
-
-      <div className="flex-1">
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
-          </div>
-        ) : notes.length === 0 ? (
-          <PremiumEmptyState
-            icon={AlignLeft}
-            title="No Conversations Yet"
-            description="Start a conversation. Ask a question or share an idea."
-            glowColor="primary"
-            action={{
-              label: "Ask a Question",
-              onClick: () => {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-                // Focus the composer input after scrolling
-                setTimeout(() => {
-                  const input = document.querySelector<HTMLInputElement>(
-                    'input[placeholder="What\'s on your mind?"]',
-                  );
-                  input?.focus();
-                }, 500);
-              },
-            }}
-          />
-        ) : (
-          <div>
-            {notes.map((note, i) => (
-              <motion.div
-                key={note.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <FeedCard note={note} onDelete={deleteNote} onEdit={editNote} />
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
     </div>
   );
 }

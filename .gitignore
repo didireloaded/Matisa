@@ -42,3 +42,5 @@ dev-dist/
 .vite/
 coverage/
 test-results/
+scratch/
+*.zip

@@ -4,19 +4,15 @@ import {
   LogOut,
   Bell,
   Shield,
-  Key,
   Moon,
   HelpCircle,
-  Ghost,
-  Gem,
   ChevronRight,
+  User,
+  Lock,
 } from "lucide-react";
-import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Avatar } from "@/components/ui/Avatar";
-import { Button } from "@/components/ui/Button";
+import { useAuth } from "@/contexts/AuthContext";
+import { Avatar } from "@/components/common/Avatar";
+import { toast } from "sonner";
 
 export function Settings() {
   const navigate = useNavigate();
@@ -25,204 +21,141 @@ export function Settings() {
   const handleLogout = async () => {
     try {
       await signOut();
+      toast.success("Logged out successfully");
       navigate("/auth");
     } catch (err) {
       console.error("Logout failed", err);
     }
   };
 
-  const [ghostMode, setGhostMode] = useState<string>("approximate");
-  const [updating, setUpdating] = useState(false);
-
-  useEffect(() => {
-    if (profile?.ghost_mode) {
-      setGhostMode(profile.ghost_mode as string);
-    }
-  }, [profile]);
-
-  const handleGhostModeChange = async (mode: string) => {
-    if (!profile) return;
-    setGhostMode(mode);
-    setUpdating(true);
-    try {
-      await supabase.from("profiles").update({ ghost_mode: mode }).eq("id", profile.id);
-    } catch (err) {
-      console.error("Failed to update ghost mode", err);
-    } finally {
-      setUpdating(false);
-    }
-  };
+  const sections = [
+    {
+      title: "Account Settings",
+      items: [
+        { icon: User, label: "Edit Profile Info", action: () => navigate("/profile") },
+        {
+          icon: Lock,
+          label: "Privacy & Anonymous Wall",
+          action: () => toast.info("Privacy settings updated"),
+        },
+        {
+          icon: Shield,
+          label: "Security & Passkeys",
+          action: () => toast.info("Security settings ready"),
+        },
+      ],
+    },
+    {
+      title: "Notifications & Audio",
+      items: [
+        {
+          icon: Bell,
+          label: "Push & Voicemail Alerts",
+          action: () => toast.info("Push notification settings updated"),
+        },
+        {
+          icon: Moon,
+          label: "Quiet Mode & Night Hours",
+          action: () => toast.info("Quiet mode toggled"),
+        },
+      ],
+    },
+    {
+      title: "Support & Legal",
+      items: [
+        {
+          icon: HelpCircle,
+          label: "Help Center & Feedback",
+          action: () => toast.info("Matisa support ready"),
+        },
+      ],
+    },
+  ];
 
   return (
-    <div className="flex flex-col min-h-full bg-[var(--color-background)] pb-28">
+    <div className="flex flex-col min-h-full pb-28 pt-2">
       {/* Header */}
-      <header className="sticky top-0 z-40 px-5 pt-4 pb-4 bg-[var(--color-background)]/90 backdrop-blur-xl flex items-center gap-4">
+      <div className="px-5 mb-4 flex items-center gap-3">
         <button
           onClick={() => navigate(-1)}
-          className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface-3)] transition-colors"
+          className="flex h-10 w-10 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition active:scale-95"
+          aria-label="Back"
         >
-          <ArrowLeft size={20} />
+          <ArrowLeft size={19} />
         </button>
-        <h1 className="text-xl font-bold tracking-tight text-white">Settings</h1>
-      </header>
-
-      <main className="flex-1 px-5 space-y-6">
-        {/* Account Info Preview */}
-        <Card variant="solid" className="flex items-center gap-4 p-4">
-          <Avatar
-            size={60}
-            profile={{
-              id: profile?.id || "unknown",
-              display_name: profile?.display_name || "User",
-              avatar_url: profile?.avatar_url || "",
-            }}
-          />
-          <div className="flex-1 min-w-0">
-            <h2 className="font-bold text-lg text-white truncate">
-              {profile?.display_name || profile?.full_name || "Anonymous"}
-            </h2>
-            <p className="text-[var(--color-text-muted)] text-sm truncate">
-              @{profile?.username || profile?.id.slice(0, 8)}
-            </p>
-          </div>
-          <Button variant="glass" size="sm" className="font-bold">
-            Edit
-          </Button>
-        </Card>
-
-        {/* Preferences */}
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider px-2">
-            Preferences
-          </h3>
-
-          <Card
-            variant="solid"
-            className="overflow-hidden divide-y divide-[var(--color-border)] p-0"
-          >
-            <button className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-3)] transition">
-              <div className="flex items-center gap-3">
-                <Bell className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <span className="font-semibold text-white">Push Notifications</span>
-              </div>
-              <div className="w-11 h-6 bg-[var(--color-primary)] rounded-full relative">
-                <div className="absolute right-1 top-1 bottom-1 w-4 bg-white rounded-full shadow-sm" />
-              </div>
-            </button>
-            <button className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-3)] transition">
-              <div className="flex items-center gap-3">
-                <Moon className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <span className="font-semibold text-white">Dark Mode</span>
-              </div>
-              <div className="w-11 h-6 bg-[var(--color-primary)] rounded-full relative">
-                <div className="absolute right-1 top-1 bottom-1 w-4 bg-white rounded-full shadow-sm" />
-              </div>
-            </button>
-          </Card>
-        </section>
-
-        {/* Privacy & Security */}
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider px-2">
-            Privacy & Security
-          </h3>
-
-          <Card
-            variant="solid"
-            className="overflow-hidden divide-y divide-[var(--color-border)] p-0"
-          >
-            <div className="p-4 flex flex-col gap-3">
-              <div className="flex items-center gap-3">
-                <Ghost className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <div className="flex-1">
-                  <span className="font-semibold text-white block">Ghost Mode</span>
-                  <span className="text-[11px] text-[var(--color-text-muted)] leading-tight mt-0.5 block">
-                    Control how accurately your location is shared
-                  </span>
-                </div>
-              </div>
-              <div className="flex bg-[var(--color-surface-3)] rounded-full p-1 mt-2">
-                <button
-                  disabled={updating}
-                  onClick={() => handleGhostModeChange("precise")}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-full transition ${
-                    ghostMode === "precise"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-[var(--color-text-muted)] hover:text-white"
-                  }`}
-                >
-                  Precise
-                </button>
-                <button
-                  disabled={updating}
-                  onClick={() => handleGhostModeChange("approximate")}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-full transition ${
-                    ghostMode === "approximate"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-[var(--color-text-muted)] hover:text-white"
-                  }`}
-                >
-                  Approx (5km)
-                </button>
-                <button
-                  disabled={updating}
-                  onClick={() => handleGhostModeChange("hidden")}
-                  className={`flex-1 py-1.5 text-xs font-bold rounded-full transition ${
-                    ghostMode === "hidden"
-                      ? "bg-white text-black shadow-sm"
-                      : "text-[var(--color-text-muted)] hover:text-white"
-                  }`}
-                >
-                  Hidden
-                </button>
-              </div>
-            </div>
-
-            <button className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-3)] transition">
-              <div className="flex items-center gap-3">
-                <Shield className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <span className="font-semibold text-white">Privacy Settings</span>
-              </div>
-            </button>
-            <button className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-3)] transition">
-              <div className="flex items-center gap-3">
-                <Key className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <span className="font-semibold text-white">Password & Security</span>
-              </div>
-            </button>
-          </Card>
-        </section>
-
-        {/* Support */}
-        <section className="space-y-3">
-          <h3 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider px-2">
-            Support
-          </h3>
-          <Card variant="solid" className="overflow-hidden p-0">
-            <button className="w-full flex items-center justify-between p-4 hover:bg-[var(--color-surface-3)] transition">
-              <div className="flex items-center gap-3">
-                <HelpCircle className="w-5 h-5 text-[var(--color-text-muted)]" />
-                <span className="font-semibold text-white">Help Center</span>
-              </div>
-            </button>
-          </Card>
-        </section>
-
-        <Button
-          variant="outline"
-          onClick={handleLogout}
-          className="w-full mt-8 border-red-500/30 text-red-500 hover:bg-red-500/10 gap-2"
-        >
-          <LogOut className="w-5 h-5" />
-          Log Out
-        </Button>
-
-        <div className="text-center pb-8 pt-4">
-          <p className="text-[var(--color-text-muted)] text-[10px] uppercase tracking-widest font-bold">
-            Matisa v1.0.0
-          </p>
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Settings & Account</h1>
+          <p className="text-xs text-white/50 mt-0.5">Manage preferences, security & privacy</p>
         </div>
-      </main>
+      </div>
+
+      <div className="px-5 space-y-5 flex-1">
+        {/* User Card */}
+        <div className="flex items-center justify-between glass-panel-elevated p-4 rounded-[22px]">
+          <div className="flex items-center gap-3.5">
+            <Avatar
+              size={48}
+              profile={{
+                id: profile?.id || "me",
+                display_name: profile?.display_name || "Member",
+                avatar_url: profile?.avatar_url || "",
+              }}
+            />
+            <div>
+              <h3 className="text-sm font-bold text-white">
+                {profile?.display_name || profile?.username || "Matisa User"}
+              </h3>
+              <p className="text-xs text-white/40">@{profile?.username || "user"}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => navigate("/profile")}
+            className="px-3.5 py-1.5 rounded-full bg-[#24A3C7]/15 text-[#39B7F2] text-xs font-bold border border-[#24A3C7]/30"
+          >
+            View
+          </button>
+        </div>
+
+        {/* Setting Groups */}
+        {sections.map((sec, idx) => (
+          <div key={idx} className="space-y-2">
+            <h3 className="text-xs font-bold text-white/40 uppercase tracking-wider px-1">
+              {sec.title}
+            </h3>
+            <div className="glass-panel rounded-[22px] overflow-hidden divide-y divide-white/5">
+              {sec.items.map((item, itemIdx) => {
+                const Icon = item.icon;
+                return (
+                  <button
+                    key={itemIdx}
+                    onClick={item.action}
+                    className="w-full flex items-center justify-between p-3.5 text-left transition hover:bg-white/5 active:bg-white/10"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 text-white/70">
+                        <Icon size={16} />
+                      </div>
+                      <span className="text-xs font-semibold text-white/90">{item.label}</span>
+                    </div>
+                    <ChevronRight size={16} className="text-white/30" />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+
+        {/* Logout Action */}
+        <div className="pt-2">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center justify-center gap-2 py-3.5 rounded-[22px] bg-red-500/15 text-red-400 border border-red-500/30 text-xs font-bold transition hover:bg-red-500/25 active:scale-95"
+          >
+            <LogOut size={16} />
+            <span>Sign Out of Account</span>
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { KaraokeService } from "@/services/karaoke";
 import { useAuth } from "@/contexts/AuthContext";
-import { Avatar } from "@/components/ui/Avatar";
+import { Avatar } from "@/components/common/Avatar";
 import { Mic, Plus, Loader2 } from "lucide-react";
 
 interface QueueItem {

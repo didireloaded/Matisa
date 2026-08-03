@@ -54,7 +54,7 @@ export interface AuthUser {
 }
 
 // ============================================================================
-// POST TYPES
+// POST TYPES (DEPRECATED — use Note)
 // ============================================================================
 
 export interface Media {
@@ -67,6 +67,9 @@ export interface Media {
   thumbnail_url?: string;
 }
 
+/**
+ * @deprecated Use Note instead. Posts and Notes are unified in Matisa.
+ */
 export interface Post {
   id: string;
   user_id: string;
@@ -90,8 +93,108 @@ export interface Post {
   profiles?: Profile | Profile[];
 }
 
-export interface Note extends Omit<Post, "media"> {
-  expires_at?: string; // Ephemeral content
+// ============================================================================
+// NOTE TYPES — Matisa's unified content model
+// ============================================================================
+
+/** The purpose/intent behind a Note — determines composer fields and CTA */
+export type NoteIntent =
+  | "share" // Default: text + media
+  | "ask" // Question with optional deadline, location, voice answers
+  | "discuss" // Topic for conversation, can open a Voice Room
+  | "invite" // Activity with date, location, capacity
+  | "build" // Project idea with roles and progress
+  | "offer" // Service or item offered
+  | "update" // Progress update on a Living Note
+  | "document"; // Long-form documentation
+
+/** The lifecycle type of a Note */
+export type NoteType = "temporary" | "permanent" | "living";
+
+/** The audience for a Note */
+export type NoteAudience = "public" | "followers" | "close_circle" | "selected";
+
+export interface Note {
+  id: string;
+  user_id: string;
+  user?: User;
+  content: string;
+  note_type: NoteType;
+  intent: NoteIntent;
+  audience: NoteAudience;
+
+  // Media
+  media: Media[];
+  voice_url?: string;
+  duration_seconds?: number;
+
+  // Engagement
+  likes_count: number;
+  comments_count: number;
+  shares_count: number;
+  saves_count: number;
+  is_liked?: boolean;
+  is_saved?: boolean;
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+  edited_at?: string;
+  expires_at?: string; // Only for temporary notes
+  deleted_at?: string;
+
+  // Intent-specific fields (Ask)
+  is_solved?: boolean;
+  answer_deadline?: string;
+  allow_voice_answers?: boolean;
+
+  // Intent-specific fields (Invite)
+  invite_activity?: string;
+  invite_date?: string;
+  invite_location?: string;
+  invite_capacity?: number;
+  invite_joined_count?: number;
+
+  // Intent-specific fields (Build)
+  build_roles_needed?: string[];
+  build_next_step?: string;
+  is_completed?: boolean;
+
+  // Intent-specific fields (Offer)
+  offer_type?: string;
+
+  // Living Note
+  updates_count?: number;
+
+  // Collaborative
+  collaborators?: NoteCollaborator[];
+
+  // Join data
+  profiles?: Profile | Profile[];
+  is_public: boolean;
+}
+
+/** A collaborator credited on a Note */
+export interface NoteCollaborator {
+  id: string;
+  note_id: string;
+  user_id: string;
+  user?: User;
+  role: string; // e.g., "artist", "director", "editor", "producer"
+  approved: boolean;
+  created_at: string;
+}
+
+/** An update entry on a Living Note */
+export interface NoteUpdate {
+  id: string;
+  note_id: string;
+  user_id: string;
+  user?: User;
+  content: string;
+  media?: Media[];
+  update_type: "update" | "milestone" | "collaborator" | "media" | "event" | "completion";
+  created_at: string;
 }
 
 export interface Story extends Omit<
@@ -326,11 +429,11 @@ export interface Toast {
 // SEARCH TYPES
 // ============================================================================
 
-export type SearchType = "users" | "posts" | "events" | "hashtags";
+export type SearchType = "users" | "notes" | "events" | "hashtags";
 
 export interface SearchResult {
   type: SearchType;
-  results: Array<User | Post | Event | Hashtag>;
+  results: Array<User | Note | Event | Hashtag>;
   total_count: number;
   query: string;
 }
@@ -338,13 +441,13 @@ export interface SearchResult {
 export interface Hashtag {
   id: string;
   name: string;
-  posts_count: number;
+  notes_count: number;
   trending_rank?: number;
   created_at: string;
 }
 
 // ============================================================================
-// MATCHING TYPES
+// DISCOVERY TYPES
 // ============================================================================
 
 export interface UserMatch {
@@ -352,17 +455,6 @@ export interface UserMatch {
   match_score: number; // 0-100
   common_interests: string[];
   mutual_followers_count: number;
-}
-
-export interface MatchPreferences {
-  user_id: string;
-  min_age?: number;
-  max_age?: number;
-  gender_preference?: string;
-  distance_radius_km?: number;
-  interests?: string[];
-  created_at: string;
-  updated_at: string;
 }
 
 // ============================================================================

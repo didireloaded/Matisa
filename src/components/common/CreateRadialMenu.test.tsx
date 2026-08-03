@@ -3,20 +3,14 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { CreateRadialMenu } from "./CreateRadialMenu";
 
 describe("CreateRadialMenu", () => {
-  it("shows exactly 3 action buttons when open", () => {
+  it("shows creation action buttons when open", () => {
     render(<CreateRadialMenu isOpen={true} onClose={() => {}} />);
 
-    // Exactly 3 action buttons and 1 close button
     expect(screen.getByLabelText("Create note")).toBeInTheDocument();
     expect(screen.getByLabelText("Create voice post")).toBeInTheDocument();
     expect(screen.getByLabelText("Create story")).toBeInTheDocument();
-
-    // Should NOT show other things
-    expect(screen.queryByText(/room/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/ask/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/live/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/question/i)).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Create room")).toBeInTheDocument();
+    expect(screen.getByLabelText("Create event")).toBeInTheDocument();
   });
 
   it("clicking an action calls onSelect with the correct action and calls onClose", () => {

@@ -37,7 +37,7 @@ export const Analytics = {
 
   identify: (userId: string, properties?: Record<string, any>) => {
     if (!POSTHOG_KEY) {
-      if (import.meta.env.DEV) console.debug("📊 [Analytics Identify]", userId, properties);
+      console.log("📊 [Analytics Identify]", userId, properties);
       return;
     }
     posthog.identify(userId, properties);
@@ -45,7 +45,7 @@ export const Analytics = {
 
   track: (eventName: string, properties?: Record<string, any>) => {
     if (!POSTHOG_KEY) {
-      if (import.meta.env.DEV) console.debug("📊 [Analytics Track]", eventName, properties);
+      console.log("📊 [Analytics Track]", eventName, properties);
       return;
     }
     posthog.capture(eventName, properties);

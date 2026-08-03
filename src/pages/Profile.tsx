@@ -1,416 +1,297 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
   Settings as SettingsIcon,
-  MessageSquare,
-  Loader2,
+  MessageCircle,
   MapPin,
-  Grid3X3,
   Mic,
   Calendar,
+  Bookmark,
+  Video,
+  FileText,
+  Edit,
+  Share2,
 } from "lucide-react";
+import { VoiceIntroPlayer } from "@/components/voice/VoiceIntroPlayer";
 import { motion } from "framer-motion";
-import { useAuth } from "../contexts/AuthContext";
-import { supabase } from "../lib/supabase";
-import type { Post } from "@/types";
-import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
-import { useSaves } from "@/hooks/useSaves";
-import { FollowButton } from "@/components/common/FollowButton";
-import { VoicePlayer } from "@/components/ui/VoicePlayer";
-import { Avatar } from "@/components/ui/Avatar";
-import { Tabs } from "@/components/ui/Tabs";
-import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/card";
-import { MessageService } from "@/services/messages";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/lib/supabase";
+import { Avatar } from "@/components/common/Avatar";
 import { toast } from "sonner";
-import { EditProfileModal } from "@/components/profile/EditProfileModal";
+import { USERS } from "@/data/dummy";
 
 export function Profile() {
-  const { id } = useParams();
+  const { username } = useParams<{ username?: string }>();
   const navigate = useNavigate();
   const { profile: currentUser } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("notes");
+  const [activeTab, setActiveTab] = useState<"notes" | "voice" | "events" | "videos" | "saved">(
+    "notes",
+  );
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [crewProfile, setCrewProfile] = useState<any>(null);
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [userNotes, setUserNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFollowing, setIsFollowing] = useState(false);
 
-  const targetId = id || currentUser?.id;
-  const isOwnProfile = targetId === currentUser?.id;
-
-  const PROFILE_TABS = isOwnProfile
-    ? [
-        { id: "notes", label: "Notes" },
-        { id: "voice", label: "Voice" },
-        { id: "rooms", label: "Rooms" },
-        { id: "saved", label: "Saved" },
-      ]
-    : [
-        { id: "notes", label: "Notes" },
-        { id: "voice", label: "Voice" },
-        { id: "rooms", label: "Rooms" },
-      ];
-
-  const { fetchSavedPosts } = useSaves();
+  const isOwnProfile =
+    !username || username === currentUser?.username || username === currentUser?.id;
 
   useEffect(() => {
-    if (activeTab === "saved" && isOwnProfile) {
-      fetchSavedPosts();
-    }
-  }, [activeTab, isOwnProfile, fetchSavedPosts]);
-
-  useEffect(() => {
-    async function loadProfile() {
-      if (!targetId) {
-        setLoading(false);
-        return;
-      }
+    async function loadProfileData() {
       setLoading(true);
-
       try {
-        const { data: profileData } = await supabase
-          .from("profiles")
-          .select(
-            "id, username, display_name, avatar_url, bio, location, follower_count, following_count",
-          )
-          .eq("id", targetId)
-          .single();
+        if (isOwnProfile && currentUser) {
+          setUserProfile(currentUser);
+        } else {
+          const searchVal = username || "";
+          const { data } = await supabase
+            .from("profiles")
+            .select("*")
+            .or(`username.eq.${searchVal},id.eq.${searchVal}`)
+            .maybeSingle();
 
-        if (profileData) setUserProfile(profileData);
+          if (data) {
+            setUserProfile(data);
+          } else {
+            setUserProfile({
+              id: "dummy-user",
+              display_name: USERS[0].name,
+              username: USERS[0].username,
+              avatar_url: USERS[0].avatar,
+              bio: USERS[0].bio || "Namibian content creator & story teller.",
+              location: "Windhoek, Namibia",
+              followers_count: 1240,
+              following_count: 380,
+            });
+          }
+        }
 
-        const { data: postsData } = await supabase
-          .from("posts")
-          .select(
-            "id, user_id, content, created_at, image_url, likes_count, comments_count, media, shares_count, is_public, updated_at",
-          )
-          .eq("user_id", targetId)
-          .order("created_at", { ascending: false });
+        // Fetch profile notes
+        const targetId = userProfile?.id || currentUser?.id;
+        if (targetId) {
+          const { data: notesData } = await supabase
+            .from("notes")
+            .select("*")
+            .eq("author_id", targetId)
+            .order("created_at", { ascending: false });
 
-        if (postsData) setPosts(postsData as any as Post[]);
-
-        const { data: crewData } = await supabase
-          .from("crew_profiles")
-          .select("id, categories, availability, hourly_rate, portfolio_url")
-          .eq("id", targetId)
-          .single();
-
-        if (crewData) setCrewProfile(crewData);
+          if (notesData) setUserNotes(notesData);
+        }
       } catch (err) {
-        console.error("Error loading profile:", err);
-      } finally {
+        console.error("Error loading profile", err);
+      }
+      {
         setLoading(false);
       }
     }
+    loadProfileData();
+  }, [username, currentUser, isOwnProfile]);
 
-    loadProfile();
-  }, [targetId]);
+  const profileData = userProfile || {
+    display_name: currentUser?.display_name || "Hanna Dowie",
+    username: currentUser?.username || "hanna_d",
+    avatar_url: currentUser?.avatar_url || USERS[0].avatar,
+    bio: "Windhoek born 🌿 Creative director & storyteller",
+    location: "Windhoek, Namibia",
+    followers_count: 1240,
+    following_count: 380,
+  };
+
+  const tabs = [
+    { id: "notes", label: "Notes", icon: FileText },
+    { id: "voice", label: "Voice", icon: Mic },
+    { id: "events", label: "Events", icon: Calendar },
+    { id: "videos", label: "Videos", icon: Video },
+    ...(isOwnProfile ? [{ id: "saved", label: "Saved", icon: Bookmark }] : []),
+  ];
 
   return (
-    <div className="flex flex-col min-h-full pb-28 relative bg-[var(--color-background)]">
-      {loading ? (
-        <div className="flex flex-col items-center justify-center flex-1 mt-12">
-          <Loader2 className="w-8 h-8 animate-spin text-[var(--color-primary)] mb-4" />
-        </div>
-      ) : !userProfile ? (
-        <div className="flex-1 flex flex-col bg-[var(--color-background)]">
-          {/* Gradient header */}
-          <div className="relative h-48 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#8B5CF6] via-[#EC4899] to-[#FF416C]" />
-            <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-background)] via-transparent to-transparent" />
-            <div className="absolute bottom-6 left-0 right-0 text-center">
-              <h1 className="text-white text-3xl font-display font-bold tracking-tight mb-1">
-                Matisa
-              </h1>
-              <p className="text-white/70 text-sm font-medium">Namibia's Creative Platform</p>
-            </div>
-          </div>
+    <div className="flex flex-col min-h-full pb-28">
+      {/* 1. Cover Header Banner */}
+      <div className="relative h-44 w-full bg-gradient-to-r from-[#FF9D2E]/40 via-[#24A3C7]/40 to-[#6139F2]/40 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-[#06101D] via-transparent to-transparent" />
 
-          <div className="px-6 -mt-2 flex flex-col items-center text-center">
-            {/* Icon */}
-            <div className="relative mb-6">
-              <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#8B5CF6]" />
-              <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
-                <SettingsIcon className="w-8 h-8 text-white" />
-              </div>
-            </div>
+        {isOwnProfile && (
+          <button
+            onClick={() => navigate("/settings")}
+            className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition active:scale-95 border border-white/20 z-10"
+            aria-label="Settings"
+          >
+            <SettingsIcon size={18} />
+          </button>
+        )}
+      </div>
 
-            <h2 className="text-xl font-bold text-white mb-2 tracking-tight">
-              {!targetId ? "Join the Community" : "User Not Found"}
-            </h2>
-            <p className="text-sm text-[var(--color-text-muted)] max-w-[280px] mb-8 leading-relaxed">
-              {!targetId
-                ? "Sign in to create your profile, connect with creators, and share your talent."
-                : "This account doesn't exist or has been removed."}
-            </p>
-
-            {/* Feature highlights */}
-            {!targetId && (
-              <div className="w-full space-y-3 mb-8">
-                {[
-                  { icon: "🎤", label: "Share voice notes & stories" },
-                  { icon: "🤝", label: "Connect with Namibian creators" },
-                  { icon: "💼", label: "Find gigs & opportunities" },
-                  { icon: "🎵", label: "Join live voice rooms" },
-                ].map((feature) => (
-                  <div
-                    key={feature.label}
-                    className="flex items-center gap-3 p-3 bg-[var(--color-surface-2)] rounded-2xl border border-[var(--color-border)]"
-                  >
-                    <span className="text-xl">{feature.icon}</span>
-                    <span className="text-sm text-white/80 font-medium">{feature.label}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <button
-              onClick={() => navigate(!targetId ? "/auth" : "/")}
-              className="w-full max-w-[280px] px-6 py-3.5 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_20px_rgba(139,92,246,0.4)]"
-            >
-              {!targetId ? "Sign In / Create Account" : "Go Home"}
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Cover */}
+      {/* 2. User Info & Avatar Overlay */}
+      <div className="px-5 -mt-16 relative z-10 space-y-3">
+        <div className="flex items-end justify-between">
           <div className="relative">
-            <button
-              onClick={() => navigate(-1)}
-              className="absolute top-4 left-4 z-10 w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center text-white"
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <div
-              className="h-40"
-              style={{
-                background:
-                  "linear-gradient(135deg, var(--color-background) 0%, var(--color-primary) 100%)",
-                opacity: 0.8,
-              }}
-            />
-
-            {/* Avatar & Actions */}
-            <div className="absolute -bottom-10 left-5 flex items-end justify-between w-[calc(100%-40px)]">
-              <div className="relative rounded-full p-1 bg-[var(--color-background)]">
-                <Avatar
-                  size={80}
-                  profile={{
-                    id: userProfile.id,
-                    display_name: userProfile.display_name,
-                    avatar_url: userProfile.avatar_url,
-                  }}
-                />
-              </div>
-
-              <div className="flex gap-2 mb-2">
-                {isOwnProfile ? (
-                  <EditProfileModal>
-                    <Button variant="glass" size="sm" className="h-8 text-xs font-semibold px-4">
-                      Edit Profile
-                    </Button>
-                  </EditProfileModal>
-                ) : (
-                  <>
-                    <FollowButton userId={targetId as string} />
-                    <Button
-                      variant="glass"
-                      size="sm"
-                      className="h-8 text-xs font-semibold px-4"
-                      onClick={async () => {
-                        try {
-                          const convId = await MessageService.getOrCreateConversation(
-                            currentUser?.id as string,
-                            targetId as string,
-                          );
-                          if (convId) navigate(`/messages/${convId}`);
-                          else toast.error("Could not start conversation");
-                        } catch (err) {
-                          toast.error("Failed to start conversation");
-                        }
-                      }}
-                    >
-                      Message
-                    </Button>
-                  </>
-                )}
-              </div>
+            <div className="h-24 w-24 rounded-full p-1 bg-[#06101D] shadow-2xl">
+              <Avatar
+                size={88}
+                profile={{
+                  id: profileData.id || "me",
+                  display_name: profileData.display_name,
+                  avatar_url: profileData.avatar_url,
+                }}
+                className="w-full h-full"
+              />
             </div>
+            <span className="absolute bottom-1 right-1 h-4 w-4 rounded-full bg-[#35C67A] border-2 border-[#06101D]" />
           </div>
 
-          {/* Profile Info */}
-          <div className="px-5 pt-14 pb-4">
-            <h1 className="text-white text-2xl font-bold tracking-tight mb-0.5">
-              {userProfile.display_name || userProfile.full_name || "Anonymous"}
-            </h1>
-            <p className="text-[var(--color-text-muted)] text-sm mb-3">
-              @{userProfile.username || userProfile.id.slice(0, 8)}
-            </p>
-
-            {userProfile.bio && (
-              <p className="text-white/80 text-sm leading-relaxed mb-4">{userProfile.bio}</p>
-            )}
-
-            {/* Badges / Stats */}
-            <div className="flex flex-wrap gap-2 mb-5">
-              <span className="px-3 py-1 bg-green-500/10 text-green-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
-                Available
-              </span>
-              {userProfile.location && (
-                <span className="px-3 py-1 bg-[var(--color-surface-2)] text-[var(--color-text-muted)] rounded-full uppercase tracking-wider text-[10px] font-bold flex items-center gap-1">
-                  <MapPin size={10} />
-                  {userProfile.location}
-                </span>
-              )}
-              {userProfile.role && (
-                <span className="px-3 py-1 bg-purple-500/10 text-purple-400 rounded-full uppercase tracking-wider text-[10px] font-bold">
-                  {userProfile.role}
-                </span>
-              )}
-            </div>
-
-            {/* Voice Intro */}
-            {userProfile.voice_intro_url && (
-              <div className="mb-6">
-                <VoicePlayer
-                  id="profile-voice-intro"
-                  audioUrl={userProfile.voice_intro_url}
-                  duration="0:30"
-                  waveform={[4, 8, 12, 16, 12, 8, 14, 10, 6, 12, 18]}
-                />
-              </div>
-            )}
-
-            {/* Connections */}
-            <div className="flex items-center gap-6 mb-6 pt-4 border-t border-[var(--color-border)]">
-              <div className="flex flex-col">
-                <span className="text-white font-bold text-lg">
-                  {userProfile.follower_count || 0}
-                </span>
-                <span className="text-[var(--color-text-muted)] text-xs font-medium">
-                  Followers
-                </span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-white font-bold text-lg">
-                  {userProfile.following_count || 0}
-                </span>
-                <span className="text-[var(--color-text-muted)] text-xs font-medium">
-                  Following
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Content Tabs */}
-          <div className="px-5 mb-4">
-            <Tabs
-              variant="pill"
-              activeTab={activeTab}
-              onChange={setActiveTab}
-              tabs={PROFILE_TABS}
-            />
-          </div>
-
-          {/* Content Feed */}
-          <div className="px-5">
-            {activeTab === "crew" ? (
-              <div className="space-y-4">
-                {crewProfile ? (
-                  <Card variant="solid" className="p-5">
-                    <h3 className="text-white font-bold text-lg mb-2">Crew Details</h3>
-                    <div className="space-y-3">
-                      <div>
-                        <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
-                          Categories
-                        </span>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {crewProfile.categories?.map((cat: string) => (
-                            <span
-                              key={cat}
-                              className="px-2 py-1 bg-[var(--color-primary)]/20 text-[var(--color-primary)] text-xs rounded-lg font-semibold"
-                            >
-                              {cat}
-                            </span>
-                          )) || <span className="text-white/50 text-sm">None set</span>}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
-                          Availability
-                        </span>
-                        <p className="text-white text-sm capitalize">
-                          {crewProfile.availability || "Not specified"}
-                        </p>
-                      </div>
-                      <div>
-                        <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
-                          Hourly Rate
-                        </span>
-                        <p className="text-white text-sm">
-                          {crewProfile.hourly_rate
-                            ? `$${crewProfile.hourly_rate}/hr`
-                            : "Negotiable"}
-                        </p>
-                      </div>
-                      {crewProfile.portfolio_url && (
-                        <div>
-                          <span className="text-[var(--color-text-muted)] text-xs uppercase tracking-wider font-bold">
-                            Portfolio
-                          </span>
-                          <a
-                            href={crewProfile.portfolio_url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="block text-[var(--color-primary)] text-sm underline truncate"
-                          >
-                            {crewProfile.portfolio_url}
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </Card>
-                ) : (
-                  <Card
-                    variant="solid"
-                    className="p-8 flex flex-col items-center justify-center text-center"
-                  >
-                    <Grid3X3 className="text-[var(--color-text-muted)] mb-3" size={24} />
-                    <h3 className="text-white font-bold mb-1">No Crew Profile</h3>
-                    <p className="text-[var(--color-text-muted)] text-sm">
-                      {isOwnProfile
-                        ? "Set up your crew profile in settings to get hired."
-                        : "This user hasn't set up a crew profile."}
-                    </p>
-                  </Card>
-                )}
-              </div>
-            ) : posts.length === 0 ? (
-              <Card
-                variant="solid"
-                className="p-8 flex flex-col items-center justify-center text-center"
+          <div className="flex items-center gap-2 mb-1">
+            {isOwnProfile ? (
+              <button
+                onClick={() => toast.info("Opening Edit Profile...")}
+                className="flex items-center gap-1.5 px-4 py-2 rounded-full glass-panel text-white text-xs font-bold border border-white/20 hover:bg-white/10 transition active:scale-95"
               >
-                <Grid3X3 className="text-[var(--color-text-muted)] mb-3" size={24} />
-                <h3 className="text-white font-bold mb-1">No Posts Yet</h3>
-                <p className="text-[var(--color-text-muted)] text-sm">
-                  When they post something, it will show up here.
-                </p>
-              </Card>
+                <Edit size={14} />
+                <span>Edit Profile</span>
+              </button>
             ) : (
-              <div className="space-y-4">
-                {/* Map through posts and render FeedCards... for now just show a simple list */}
-                {posts.map((p) => (
-                  <Card key={p.id} variant="solid" className="p-4">
-                    <p className="text-white text-sm">{p.content}</p>
-                  </Card>
-                ))}
+              <>
+                <button
+                  onClick={() => setIsFollowing((prev) => !prev)}
+                  className={`px-5 py-2 rounded-full text-xs font-bold transition active:scale-95 ${
+                    isFollowing
+                      ? "glass-panel text-white border border-white/20"
+                      : "bg-[#24A3C7] text-white shadow-lg"
+                  }`}
+                >
+                  {isFollowing ? "Following" : "+ Follow"}
+                </button>
+                <button
+                  onClick={() => navigate("/messages")}
+                  className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition border border-white/20"
+                >
+                  <MessageCircle size={16} />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Display Name & Handle */}
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">
+            {profileData.display_name}
+          </h1>
+          <p className="text-xs text-white/50">@{profileData.username}</p>
+
+          {profileData.location && (
+            <div className="flex items-center gap-1 text-[11px] text-[#39B7F2] font-semibold mt-1">
+              <MapPin size={12} />
+              <span>{profileData.location}</span>
+            </div>
+          )}
+
+          {profileData.bio && (
+            <p className="text-xs text-white/80 leading-relaxed mt-2">{profileData.bio}</p>
+          )}
+        </div>
+
+        {/* Voice Introduction */}
+        <div className="mt-3">
+          <VoiceIntroPlayer
+            audioUrl={profileData.voice_intro_url || null}
+            isOwner={isOwnProfile}
+            profileId={profileData.id || "me"}
+            onUpdated={(url) => {
+              setUserProfile((prev: any) => (prev ? { ...prev, voice_intro_url: url } : prev));
+            }}
+          />
+        </div>
+
+        {/* Followers / Following Stats */}
+        <div className="flex items-center gap-5 pt-1 text-xs">
+          <div>
+            <span className="font-bold text-white text-sm">
+              {profileData.followers_count || 1240}
+            </span>{" "}
+            <span className="text-white/50">Followers</span>
+          </div>
+          <div>
+            <span className="font-bold text-white text-sm">
+              {profileData.following_count || 380}
+            </span>{" "}
+            <span className="text-white/50">Following</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Reelio 5 Profile Category Tabs */}
+      <div className="px-5 mt-5 border-b border-white/10">
+        <div className="flex items-center justify-between overflow-x-auto no-scrollbar gap-2">
+          {tabs.map(({ id, label, icon: Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id as any)}
+                className={`flex items-center gap-1.5 py-3 px-2 border-b-2 text-xs font-bold whitespace-nowrap transition ${
+                  isActive
+                    ? "border-[#24A3C7] text-[#39B7F2]"
+                    : "border-transparent text-white/40 hover:text-white/70"
+                }`}
+              >
+                <Icon size={14} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 4. Tab Content Feed Area */}
+      <div className="px-5 mt-4 flex-1">
+        {activeTab === "notes" && (
+          <div className="space-y-3">
+            {userNotes.length > 0 ? (
+              userNotes.map((note) => (
+                <div key={note.id} className="glass-panel p-4 rounded-[22px] text-xs text-white">
+                  {note.content}
+                </div>
+              ))
+            ) : (
+              <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
+                <FileText size={32} className="mx-auto mb-2 opacity-30" />
+                No permanent notes posted yet.
               </div>
             )}
           </div>
-        </>
-      )}
+        )}
+
+        {activeTab === "voice" && (
+          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
+            <Mic size={32} className="mx-auto mb-2 opacity-30" />
+            No voice notes or voicemails published yet.
+          </div>
+        )}
+
+        {activeTab === "events" && (
+          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
+            <Calendar size={32} className="mx-auto mb-2 opacity-30" />
+            No upcoming hosted events.
+          </div>
+        )}
+
+        {activeTab === "videos" && (
+          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
+            <Video size={32} className="mx-auto mb-2 opacity-30" />
+            No video broadcasts recorded.
+          </div>
+        )}
+
+        {activeTab === "saved" && isOwnProfile && (
+          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
+            <Bookmark size={32} className="mx-auto mb-2 opacity-30" />
+            Your saved notes and events collection is empty.
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+
+export default Profile;

@@ -100,6 +100,10 @@ export function Events() {
               title="No Events Yet"
               description="Events near you and from creators you follow will appear here."
               glowColor="accent1"
+              action={{
+                label: "Create an Event",
+                onClick: () => toast.info("Event creation coming soon!"),
+              }}
             />
           </div>
         ) : (
@@ -116,6 +120,7 @@ export function Events() {
                       key={`feat_${event.id}`}
                       whileTap={{ scale: 0.98 }}
                       className="relative min-w-[280px] h-[320px] rounded-[24px] overflow-hidden shrink-0 group cursor-pointer"
+                      onClick={() => {}}
                     >
                       <img
                         src={

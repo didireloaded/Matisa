@@ -70,11 +70,15 @@ describe("AppRoutes", () => {
     ["/activity", "Activity page"],
     ["/events", "Events page"],
     ["/notes", "Notes page"],
-    ["/music", "Music page"],
     ["/settings", "Settings page"],
   ])("resolves %s to the correct page", async (path, label) => {
     renderRoute(path);
     expect(await screen.findByText(label)).toBeInTheDocument();
+  });
+
+  it("redirects /music to /explore because music tab is removed", async () => {
+    renderRoute("/music");
+    expect(await screen.findByText("Explore page")).toBeInTheDocument();
   });
 
   it("resolves /auth outside the main layout", async () => {

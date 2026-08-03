@@ -1,272 +1,182 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  Phone,
-  Video,
-  MoreVertical,
-  Plus,
-  Mic,
-  Send,
-  Image as ImageIcon,
-  Smile,
-  MessageCircle,
-} from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { toast } from "sonner";
-import { useAuth } from "../contexts/AuthContext";
-import { MessageService } from "../services/messages";
-import { VoicePlayer } from "@/components/ui/VoicePlayer";
-import { Avatar } from "@/components/ui/Avatar";
-import { Input } from "@/components/ui/input";
+import { ArrowLeft, Video, PhoneCall, Plus, Mic, Send, Play } from "lucide-react";
+import { Avatar } from "@/components/common/Avatar";
+import { USERS } from "@/data/dummy";
 
 export function Chat() {
-  const { id } = useParams();
+  const { conversationId, id } = useParams<{ conversationId?: string; id?: string }>();
   const navigate = useNavigate();
-  const { profile } = useAuth();
   const [inputText, setInputText] = useState("");
-  const [messages, setMessages] = useState<any[]>([]);
-  const [otherUser, setOtherUser] = useState<any>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fallback when no conversation is selected (Moved below hooks)
+  const [messages, setMessages] = useState([
+    {
+      id: "m-1",
+      sender: "them",
+      avatar: USERS[0].avatar,
+      text: "Hi 😁 It's god. Yours",
+      type: "text",
+    },
+    {
+      id: "m-2",
+      sender: "them",
+      avatar: USERS[0].avatar,
+      text: "It seem we have a lot common and have a lot interest in each other 😍",
+      type: "text",
+    },
+    {
+      id: "m-3",
+      sender: "them",
+      avatar: USERS[0].avatar,
+      audioUrl: "#",
+      duration: "2:45",
+      type: "voice",
+    },
+    {
+      id: "m-4",
+      sender: "me",
+      text: "Good Concepts!",
+      type: "text",
+    },
+  ]);
 
-  useEffect(() => {
-    if (!profile || !id) return;
-
-    async function loadConv() {
-      const other = await MessageService.getOtherUser(id!, profile!.id);
-      if (other) setOtherUser(other);
-    }
-
-    async function loadMessages() {
-      const data = await MessageService.getMessages(id!);
-      setMessages(data);
-    }
-
-    loadConv();
-    loadMessages();
-
-    const channel = MessageService.subscribeToMessages(id, (newMsg) => {
-      setMessages((prev) => [...prev, newMsg]);
-    });
-
-    return () => {
-      MessageService.unsubscribe(channel);
-    };
-  }, [id, profile]);
-
-  useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!inputText.trim() || !profile || !id) return;
-
-    const content = inputText.trim();
+  const handleSend = () => {
+    if (!inputText.trim()) return;
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(),
+        sender: "me",
+        text: inputText.trim(),
+        type: "text",
+      },
+    ]);
     setInputText("");
-
-    try {
-      await MessageService.sendTextMessage(id, profile.id, content);
-    } catch (err) {
-      toast.error("Failed to send message");
-    }
   };
-
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !profile || !id) return;
-
-    // For simplicity, treating all files as images here.
-    try {
-      await MessageService.sendMediaMessage(id, profile.id, file, "image");
-    } catch (err) {
-      toast.error("Failed to upload image");
-    }
-  };
-
-  if (!id) {
-    return (
-      <div className="flex flex-col h-[100dvh] bg-[var(--color-background)] items-center justify-center px-6">
-        <div className="relative mb-6">
-          <div className="absolute inset-0 blur-xl opacity-30 rounded-full bg-[#8B5CF6]" />
-          <div className="relative w-20 h-20 rounded-full bg-[var(--color-surface-2)] border border-[var(--color-border)] flex items-center justify-center">
-            <MessageCircle className="w-8 h-8 text-white" />
-          </div>
-        </div>
-        <h3 className="text-xl font-bold text-white mb-2 tracking-tight">No Chat Selected</h3>
-        <p className="text-sm text-[var(--color-text-muted)] max-w-[250px] mb-8 leading-relaxed text-center">
-          Select a conversation from your messages to start chatting.
-        </p>
-        <button
-          onClick={() => navigate("/messages")}
-          className="px-6 py-3 rounded-full bg-[var(--color-primary)] text-white font-bold hover:opacity-90 transition-opacity active:scale-95 shadow-[0_0_15px_rgba(139,92,246,0.3)]"
-        >
-          Go to Messages
-        </button>
-      </div>
-    );
-  }
 
   return (
-    <div className="flex flex-col h-[100dvh] bg-[var(--color-background)] relative">
-      {/* HEADER */}
-      <div className="sticky top-0 z-20 flex items-center justify-between px-4 pt-12 pb-4 bg-[var(--color-background)]/80 backdrop-blur-2xl border-b border-[var(--color-border)]">
-        <div className="flex items-center gap-4">
+    <div className="flex flex-col h-[100dvh] bg-[#030712] text-white relative overflow-hidden">
+      {/* 1. Reelio Chat Header */}
+      <div className="relative z-20 flex items-center justify-between px-5 pt-12 pb-4 glass-header border-b border-white/10">
+        <div className="flex items-center gap-3.5">
           <button
             onClick={() => navigate(-1)}
-            className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-surface-2)] text-white hover:bg-[var(--color-surface-3)] transition-colors"
+            className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition active:scale-95"
+            aria-label="Back"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </button>
 
-          <div className="flex items-center gap-3 cursor-pointer">
+          <div className="relative">
             <Avatar
-              size={44}
+              size={40}
               profile={{
-                id: otherUser?.id || "unknown",
-                display_name: otherUser?.display_name || "Loading...",
-                avatar_url: otherUser?.avatar_url || "",
+                id: "user",
+                display_name: "Daniel Garcia",
+                avatar_url: USERS[0].avatar,
               }}
             />
-            <div className="flex flex-col justify-center">
-              <h2 className="font-bold text-[17px] leading-tight text-white tracking-tight">
-                {otherUser?.display_name || "Loading..."}
-              </h2>
-              <p className="text-[13px] font-semibold text-[var(--color-success)]">Active now</p>
-            </div>
+            <span className="absolute bottom-0 right-0 h-2.5 w-2.5 rounded-full bg-[#35C67A] border-2 border-[#030712]" />
+          </div>
+
+          <div>
+            <h1 className="text-sm font-bold text-white leading-tight">Daniel Garcia</h1>
+            <span className="text-[11px] text-[#35C67A] font-semibold block">Online</span>
           </div>
         </div>
 
-        <div className="flex items-center gap-2"></div>
+        {/* Top Right Action Triggers */}
+        <div className="flex items-center gap-2">
+          <button className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition active:scale-95">
+            <Video size={17} />
+          </button>
+          <button className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition active:scale-95">
+            <PhoneCall size={17} />
+          </button>
+        </div>
       </div>
 
-      {/* MESSAGE LIST */}
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6 space-y-6 z-10 no-scrollbar">
-        {messages.map((msg, index) => {
-          const isMe = msg.user_id === profile?.id;
-          const showAvatar = !isMe && (index === 0 || messages[index - 1].user_id !== msg.user_id);
-          const isVoice = msg.type === "voice" || msg.content?.includes("🎤"); // simple heuristic
-
-          return (
-            <motion.div
-              key={msg.id || index}
-              initial={{ opacity: 0, y: 10, scale: 0.95 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ type: "spring", stiffness: 400, damping: 25 }}
-              className={`flex w-full ${isMe ? "justify-end" : "justify-start"}`}
-            >
-              <div className="flex items-end gap-2 max-w-[85%]">
-                {!isMe && (
-                  <div className="w-8 shrink-0">
-                    {showAvatar && (
-                      <Avatar
-                        size={32}
-                        profile={{
-                          id: otherUser?.id || "unknown",
-                          display_name: otherUser?.display_name || "User",
-                          avatar_url: otherUser?.avatar_url || "",
-                        }}
-                      />
-                    )}
+      {/* 2. Chat Messages Area */}
+      <div className="flex-1 p-5 overflow-y-auto space-y-4 no-scrollbar">
+        {messages.map((m) => {
+          if (m.sender === "them") {
+            return (
+              <div key={m.id} className="flex items-start gap-3">
+                <Avatar
+                  size={36}
+                  profile={{
+                    id: "them",
+                    display_name: "Daniel Garcia",
+                    avatar_url: m.avatar || USERS[0].avatar,
+                  }}
+                />
+                {m.type === "voice" ? (
+                  /* Reelio Voice Note Bubble */
+                  <div className="flex items-center gap-3 px-4 py-3 rounded-[22px] glass-panel-elevated border border-white/15 max-w-[260px]">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#39B7F2] text-white shadow-md">
+                      <Play size={16} fill="white" className="ml-0.5" />
+                    </div>
+                    <div className="flex-1 flex flex-col gap-1">
+                      <div className="flex items-center gap-1">
+                        {Array.from({ length: 16 }).map((_, i) => (
+                          <span
+                            key={i}
+                            className="w-0.5 rounded-full bg-[#39B7F2]"
+                            style={{ height: `${(i % 5) * 4 + 6}px` }}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-white/60 font-semibold">{m.duration}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="px-4 py-3 rounded-[22px] glass-panel text-xs text-white max-w-[260px] leading-relaxed">
+                    {m.text}
                   </div>
                 )}
-
-                <div
-                  className={`relative px-5 py-3.5 shadow-md ${
-                    isMe
-                      ? "bg-gradient-to-br from-[var(--color-primary)] to-[#c026d3] text-white rounded-2xl rounded-br-sm"
-                      : "bg-[var(--color-surface-2)] text-white rounded-2xl rounded-bl-sm border border-[var(--color-border)]"
-                  }`}
-                >
-                  {msg.kind === "image" ? (
-                    <div className="w-48 h-48 rounded-lg overflow-hidden">
-                      <img
-                        src={msg.media_url}
-                        alt="Sent image"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  ) : isVoice ? (
-                    <div className="w-48">
-                      <VoicePlayer
-                        id={`chat-voice-${msg.id}`}
-                        audioUrl={msg.media_url}
-                        duration="0:12"
-                        waveform={[4, 8, 12, 24, 18, 12, 8, 20, 30, 15, 10, 5]}
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
-                  )}
-                  <span
-                    className={`block text-[10px] mt-1.5 font-medium ${
-                      isMe ? "text-white/70 text-right" : "text-[var(--color-text-muted)] text-left"
-                    }`}
-                  >
-                    {new Date(msg.created_at).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
               </div>
-            </motion.div>
+            );
+          }
+
+          /* Sent Message Bubble */
+          return (
+            <div key={m.id} className="flex justify-end">
+              <div className="px-4 py-3 rounded-[22px] bg-gradient-to-r from-[#24A3C7] to-[#6139F2] text-xs font-semibold text-white max-w-[260px] shadow-lg">
+                {m.text}
+              </div>
+            </div>
           );
         })}
       </div>
 
-      {/* COMPOSER */}
-      <div className="sticky bottom-0 z-20 px-4 pb-safe pt-2 bg-gradient-to-t from-[var(--color-background)] to-transparent">
-        <div className="flex items-center gap-2 p-2 bg-[var(--color-surface-2)] rounded-full border border-[var(--color-border)] shadow-lg mb-4">
-          <button className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-3)] hover:text-white transition-colors">
-            <Plus size={22} />
+      {/* 3. Reelio Bottom Input Capsule */}
+      <div className="p-4 pb-safe glass-header">
+        <div className="flex items-center gap-2 rounded-full glass-panel-elevated p-2 border border-white/20">
+          <button className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold text-white hover:bg-white/10">
+            <Plus size={16} />
+            <span>New</span>
           </button>
 
           <input
+            type="text"
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            placeholder="Message..."
-            className="flex-1 bg-transparent text-white placeholder-[var(--color-text-muted)] focus:outline-none text-[15px]"
+            placeholder="Type Message.."
+            className="flex-1 bg-transparent text-xs text-white placeholder:text-white/40 focus:outline-none"
           />
 
-          <AnimatePresence mode="popLayout">
-            {inputText.trim() ? (
-              <motion.button
-                key="send"
-                initial={{ scale: 0, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0, opacity: 0 }}
-                onClick={handleSend}
-                className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.5)]"
-              >
-                <Send size={18} className="ml-0.5" />
-              </motion.button>
-            ) : (
-              <motion.div key="actions" className="flex items-center gap-1">
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleFileSelect}
-                  accept="image/*"
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-10 h-10 flex items-center justify-center rounded-full text-[var(--color-text-muted)] hover:bg-[var(--color-surface-3)] hover:text-white transition-colors"
-                >
-                  <ImageIcon size={20} />
-                </button>
-                <button className="w-10 h-10 flex items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-[0_0_12px_rgba(139,92,246,0.3)]">
-                  <Mic size={20} />
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <button className="flex h-9 w-9 items-center justify-center rounded-full text-white/60 hover:text-white">
+            <Mic size={18} />
+          </button>
+
+          <button
+            onClick={handleSend}
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-[#24A3C7] text-white shadow-md active:scale-90 transition"
+            aria-label="Send"
+          >
+            <Send size={16} className="ml-0.5" />
+          </button>
         </div>
       </div>
     </div>

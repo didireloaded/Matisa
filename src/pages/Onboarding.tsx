@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { AudioRecorder } from "@/components/ui/AudioRecorder";
 import {
   UserPlus,
   Check,
@@ -20,9 +21,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
-import { Avatar } from "@/components/ui/Avatar";
+import { Avatar } from "@/components/common/Avatar";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 
 const INTERESTS = [
   { id: "Music", icon: Music },
@@ -42,21 +42,16 @@ export function Onboarding() {
   const navigate = useNavigate();
   const { profile, refreshProfile } = useAuth();
 
-  const [username, setUsername] = useState(
-    profile?.username?.startsWith("user_") ? "" : profile?.username || "",
-  );
-  const [displayName, setDisplayName] = useState(profile?.display_name || "");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
-
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [isSavingInterests, setIsSavingInterests] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [followedIds, setFollowedIds] = useState<string[]>([]);
 
   useEffect(() => {
-    if (step === 4) {
+    if (step === 5) {
       supabase
         .from("profiles")
         .select("id, display_name, username, avatar_url")
@@ -69,46 +64,6 @@ export function Onboarding() {
   }, [step, profile]);
 
   const handleNext = () => setStep((s) => s + 1);
-
-  const saveProfile = async () => {
-    if (!username.trim() || !displayName.trim()) {
-      toast.error("Please enter a name and username");
-      return;
-    }
-
-    setIsSavingProfile(true);
-    try {
-      if (profile) {
-        // Simple check to ensure username isn't taken (RLS will also catch this if it has a unique constraint)
-        const { count } = await supabase
-          .from("profiles")
-          .select("id", { count: "exact" })
-          .eq("username", username.trim().toLowerCase())
-          .neq("id", profile.id);
-
-        if (count && count > 0) {
-          toast.error("Username is already taken");
-          setIsSavingProfile(false);
-          return;
-        }
-
-        await supabase
-          .from("profiles")
-          .update({
-            username: username.trim().toLowerCase(),
-            display_name: displayName.trim(),
-          })
-          .eq("id", profile.id);
-
-        await refreshProfile();
-      }
-      handleNext();
-    } catch (err: any) {
-      toast.error("Failed to save profile: " + err.message);
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
 
   const saveInterests = async () => {
     if (selectedInterests.length === 0) {
@@ -156,10 +111,20 @@ export function Onboarding() {
     }
   };
 
+  const handleVoiceRecording = async (url: string) => {
+    if (!profile) return;
+    try {
+      setVoiceUrl(url);
+
+      await supabase.from("profiles").update({ voice_intro_url: url }).eq("id", profile.id);
+    } catch (err: any) {
+      toast.error("Failed to save voice intro: " + err.message);
+    }
+  };
+
   const finishOnboarding = async () => {
     try {
       if (profile) {
-        // In a real app we would create follow relationships here for `followedIds`
         await supabase
           .from("profiles")
           .update({ has_completed_onboarding: true })
@@ -181,7 +146,7 @@ export function Onboarding() {
       <div className="h-1 w-full bg-[var(--color-surface-2)] fixed top-0 z-50">
         <div
           className="h-full bg-[var(--color-primary)] transition-all duration-500 ease-out"
-          style={{ width: `${(step / 4) * 100}%` }}
+          style={{ width: `${(step / 5) * 100}%` }}
         />
       </div>
 
@@ -195,43 +160,16 @@ export function Onboarding() {
               exit={{ opacity: 0, x: -20 }}
               className="flex-1 flex flex-col"
             >
-              <h1 className="text-3xl font-display font-bold mb-4">Create your profile</h1>
-              <p className="text-[var(--color-text-muted)] mb-8">
-                How should people find you on Matisa?
+              <h1 className="text-3xl font-display font-bold mb-4">Welcome to Matisa</h1>
+              <p className="text-[var(--color-text-muted)] mb-auto">
+                Let's set up your creative profile so you can connect with the right people.
               </p>
-
-              <div className="flex-1 space-y-4">
-                <div>
-                  <label className="text-sm font-bold text-[var(--color-text-muted)] mb-2 block">
-                    Display Name
-                  </label>
-                  <Input
-                    value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
-                    placeholder="E.g. Jane Doe"
-                    className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent"
-                  />
-                </div>
-                <div>
-                  <label className="text-sm font-bold text-[var(--color-text-muted)] mb-2 block">
-                    Username
-                  </label>
-                  <Input
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="janedoe"
-                    className="h-14 rounded-2xl bg-[var(--color-surface-2)] border-transparent"
-                  />
-                </div>
-              </div>
-
               <Button
                 variant="primary"
-                onClick={saveProfile}
-                disabled={isSavingProfile || !username || !displayName}
-                className="w-full h-14 rounded-full font-bold shadow-lg mt-8"
+                onClick={handleNext}
+                className="w-full h-14 rounded-full font-bold shadow-lg"
               >
-                {isSavingProfile ? "Saving..." : "Continue"}
+                Get Started
               </Button>
             </motion.div>
           )}
@@ -354,6 +292,53 @@ export function Onboarding() {
           {step === 4 && (
             <motion.div
               key="step4"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 flex flex-col"
+            >
+              <h1 className="text-3xl font-display font-bold mb-2">Voice Intro</h1>
+              <p className="text-[var(--color-text-muted)] mb-12">
+                Introduce yourself to the community in 30 seconds or less.
+              </p>
+
+              <div className="flex-1 flex flex-col items-center justify-center">
+                {voiceUrl ? (
+                  <div className="text-center">
+                    <div className="w-20 h-20 bg-green-500/20 text-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Check size={40} />
+                    </div>
+                    <p className="text-white font-bold">Intro recorded!</p>
+                  </div>
+                ) : (
+                  <div className="bg-[var(--color-surface-2)] p-6 rounded-[24px] border border-[var(--color-border)] text-center">
+                    <AudioRecorder onUploadSuccess={handleVoiceRecording} />
+                  </div>
+                )}
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="glass"
+                  onClick={handleNext}
+                  className="flex-1 h-14 rounded-full font-bold"
+                >
+                  Skip
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={handleNext}
+                  className="flex-[2] h-14 rounded-full font-bold"
+                >
+                  Continue
+                </Button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 5 && (
+            <motion.div
+              key="step5"
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}

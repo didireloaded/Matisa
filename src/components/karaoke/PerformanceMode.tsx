@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Flame, Heart, Sparkles, Star } from "lucide-react";
-import { Avatar } from "@/components/ui/Avatar";
+import { Avatar } from "@/components/common/Avatar";
 import { KaraokeService } from "@/services/karaoke";
 
 interface PerformanceModeProps {

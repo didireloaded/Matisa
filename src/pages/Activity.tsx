@@ -1,28 +1,19 @@
 import { useState, useEffect } from "react";
-import { Bell, Heart, MessageCircle, UserPlus, AtSign, Sparkles } from "lucide-react";
+import { Bell, Heart, MessageCircle, UserPlus, AtSign, Sparkles, PhoneCall } from "lucide-react";
 import { motion } from "framer-motion";
-import { supabase } from "../lib/supabase";
-import { useAuth } from "../contexts/AuthContext";
-import { PremiumEmptyState as EmptyState } from "@/components/common/PremiumEmptyState";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/contexts/AuthContext";
 import { timeAgo } from "@/lib/utils";
-import type { AppNotification } from "@/types";
-import { DiscoveryAI } from "@/services/ai";
-import { Avatar } from "@/components/ui/Avatar";
-import { Tabs } from "@/components/ui/Tabs";
-
-const TYPE_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
-  like: { icon: <Heart size={14} />, color: "#FF416C", label: "liked your note" },
-  follow: { icon: <UserPlus size={14} />, color: "#8B5CF6", label: "started following you" },
-  comment: { icon: <MessageCircle size={14} />, color: "#00E5FF", label: "replied to your note" },
-  mention: { icon: <AtSign size={14} />, color: "#F59E0B", label: "mentioned you" },
-  default: { icon: <Sparkles size={14} />, color: "#8B5CF6", label: "interacted with you" },
-};
+import { Avatar } from "@/components/common/Avatar";
+import { USERS } from "@/data/dummy";
 
 export function Activity() {
   const { profile } = useAuth();
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState<"all" | "mentions" | "reactions" | "voicemails">(
+    "all",
+  );
 
   useEffect(() => {
     async function loadNotifs() {
@@ -38,7 +29,49 @@ export function Activity() {
           .order("created_at", { ascending: false })
           .limit(30);
 
-        if (data) setNotifications(data as AppNotification[]);
+        if (data && data.length > 0) {
+          setNotifications(data);
+        } else {
+          // Dummy notification fallbacks
+          setNotifications([
+            {
+              id: "n-1",
+              type: "like",
+              created_at: new Date().toISOString(),
+              profiles: {
+                id: USERS[0].id,
+                display_name: USERS[0].name,
+                username: USERS[0].username,
+                avatar_url: USERS[0].avatar,
+              },
+              content: "liked your Note",
+            },
+            {
+              id: "n-2",
+              type: "follow",
+              created_at: new Date(Date.now() - 7200000).toISOString(),
+              profiles: {
+                id: USERS[1].id,
+                display_name: USERS[1].name,
+                username: USERS[1].username,
+                avatar_url: USERS[1].avatar,
+              },
+              content: "started following you",
+            },
+            {
+              id: "n-3",
+              type: "voicemail",
+              created_at: new Date(Date.now() - 14400000).toISOString(),
+              profiles: {
+                id: USERS[2].id,
+                display_name: USERS[2].name,
+                username: USERS[2].username,
+                avatar_url: USERS[2].avatar,
+              },
+              content: "left you a 0:35 Voicemail",
+            },
+          ]);
+        }
       } catch (err) {
         console.error("Failed to load notifications", err);
       } finally {
@@ -47,126 +80,98 @@ export function Activity() {
     }
 
     loadNotifs();
-
-    if (profile) {
-      const subscription = supabase
-        .channel(`public:notifications:recipient_id=eq.${profile.id}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "notifications",
-            filter: `recipient_id=eq.${profile.id}`,
-          },
-          (payload) => {
-            // Re-fetch to get joined profile data easily
-            loadNotifs();
-          },
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(subscription);
-      };
-    }
   }, [profile]);
 
+  const categories = [
+    { id: "all", label: "All Activity" },
+    { id: "mentions", label: "Mentions" },
+    { id: "reactions", label: "Reactions" },
+    { id: "voicemails", label: "Voicemails" },
+  ];
+
   return (
-    <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)] pb-28">
+    <div className="flex flex-col min-h-full pb-28 pt-2">
       {/* Header */}
-      <div className="px-5 pt-4 pb-2 flex items-center justify-between">
-        <h1 className="text-white text-3xl font-display font-bold tracking-tight">Activity</h1>
-        <button className="w-10 h-10 rounded-full bg-[var(--color-surface-2)] flex items-center justify-center text-white hover:bg-[var(--color-surface-3)] transition-colors">
-          <Bell size={20} />
-        </button>
+      <div className="px-5 mb-4 flex items-center justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-white tracking-tight">Notifications & Activity</h1>
+          <p className="text-xs text-white/50 mt-0.5">Recent interactions with your profile</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-full glass-panel text-[#24A3C7]">
+          <Bell size={19} />
+        </div>
       </div>
 
-      {/* Tabs */}
-      <div className="px-5 mb-4">
-        <Tabs
-          variant="pill"
-          activeTab={activeTab}
-          onChange={setActiveTab}
-          tabs={[
-            { id: "all", label: "All" },
-            { id: "mentions", label: "Mentions" },
-            { id: "follows", label: "Follows" },
-          ]}
-        />
+      {/* Segmented Filter Pills */}
+      <div className="mb-5 overflow-x-auto no-scrollbar px-5 flex gap-2">
+        {categories.map(({ id, label }) => {
+          const isActive = activeTab === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id as any)}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition active:scale-95 ${
+                isActive
+                  ? "bg-[#24A3C7]/20 text-[#39B7F2] border border-[#24A3C7]/40 shadow-[0_0_12px_rgba(36,163,199,0.2)]"
+                  : "glass-panel text-white/50 hover:text-white"
+              }`}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="flex-1 px-5">
+      {/* Notifications Feed */}
+      <div className="px-5 flex-1 space-y-2.5">
         {loading ? (
-          <div className="space-y-6">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="flex gap-4 items-center">
-                <div className="h-14 w-14 rounded-full bg-[var(--color-surface-2)] animate-pulse" />
-                <div className="space-y-2 flex-1">
-                  <div className="h-4 w-1/2 bg-[var(--color-surface-2)] animate-pulse rounded" />
-                  <div className="h-3 w-3/4 bg-[var(--color-surface-2)] animate-pulse rounded" />
-                </div>
-              </div>
-            ))}
+          <div className="flex justify-center py-20">
+            <div className="h-8 w-8 rounded-full border-2 border-[#24A3C7] border-t-transparent animate-spin" />
           </div>
         ) : notifications.length === 0 ? (
-          <div className="mt-8">
-            <EmptyState
-              icon={Bell}
-              title="All caught up!"
-              description="When people interact with you or your notes, you'll see it here."
-              glowColor="primary"
-            />
+          <div className="glass-panel p-8 text-center rounded-[24px]">
+            <Bell size={32} className="mx-auto mb-2 text-white/30" />
+            <p className="text-xs text-white/50">No notifications yet.</p>
           </div>
         ) : (
-          <div className="flex flex-col space-y-4">
-            {notifications.map((notif, i) => {
-              const actor = notif.profiles as any;
-              const config = TYPE_CONFIG[notif.type] || TYPE_CONFIG.default;
-
-              return (
-                <motion.div
-                  key={notif.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="flex items-start gap-4 p-4 bg-[var(--color-surface-2)] rounded-[20px] relative overflow-hidden group"
-                >
-                  <div
-                    className={`absolute left-0 top-0 bottom-0 w-1 bg-[${config.color}]`}
-                    style={{ backgroundColor: config.color }}
-                  />
-
-                  <div className="relative shrink-0 pl-1">
+          notifications.map((notif, i) => {
+            const actor = notif.profiles || USERS[0];
+            return (
+              <motion.div
+                key={notif.id || i}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="flex items-center justify-between glass-panel p-3.5 rounded-[22px]"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative">
                     <Avatar
-                      size={48}
+                      size={44}
                       profile={{
-                        id: actor?.id || "unknown",
-                        display_name: actor?.display_name || "User",
-                        avatar_url: actor?.avatar_url || "",
+                        id: actor.id,
+                        display_name: actor.display_name || actor.name,
+                        avatar_url: actor.avatar_url || actor.avatar || "",
                       }}
                     />
-                    <div
-                      className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center border-2 border-[var(--color-surface-2)] text-white shadow-sm"
-                      style={{ backgroundColor: config.color }}
-                    >
-                      {config.icon}
-                    </div>
+                    <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-[#FF9D2E] text-black">
+                      <Heart size={9} fill="black" />
+                    </span>
                   </div>
 
-                  <div className="flex-1 min-w-0 pt-0.5">
-                    <p className="text-[14px] text-white/90 leading-snug">
-                      <span className="font-bold text-white">{actor?.display_name || "User"}</span>{" "}
-                      {config.label}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs text-white leading-snug">
+                      <span className="font-bold">{actor.display_name || actor.name}</span>{" "}
+                      <span className="text-white/70">{notif.content || "liked your Note"}</span>
                     </p>
-                    <span className="text-[11px] font-bold text-[var(--color-text-muted)] mt-1 block uppercase tracking-wider">
+                    <span className="text-[10px] text-[#24A3C7] font-semibold mt-0.5 block">
                       {timeAgo(notif.created_at || new Date().toISOString())}
                     </span>
                   </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                </div>
+              </motion.div>
+            );
+          })
         )}
       </div>
     </div>

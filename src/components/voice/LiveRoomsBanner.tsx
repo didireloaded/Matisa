@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Mic, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { Avatar } from "@/components/ui/Avatar";
+import { Avatar } from "@/components/common/Avatar";
 import { useVoice } from "@/contexts/VoiceContext";
 
 interface VoiceRoom {

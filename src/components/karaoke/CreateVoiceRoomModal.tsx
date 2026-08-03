@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Mic2, X, Users, Globe, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/common/Button";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -127,9 +127,9 @@ export function CreateVoiceRoomModal({ open, onClose }: CreateVoiceRoomModalProp
             <Button
               onClick={handleStart}
               disabled={!title.trim()}
-              isLoading={loading}
+              loading={loading}
               className="mt-8 w-full rounded-full bg-[#F44336] py-3.5 text-sm font-bold text-white shadow-lg transition"
-              aria-label="Start voice room"
+              ariaLabel="Start voice room"
             >
               Go Live
             </Button>

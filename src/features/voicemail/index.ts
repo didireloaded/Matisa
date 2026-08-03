@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/utils/supabase";
 import { VoicemailRepository } from "./repositories/VoicemailRepository";
 import { VoicemailService } from "./services/VoicemailService";
 

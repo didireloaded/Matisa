@@ -44,7 +44,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Needs onboarding if username isn't set yet
       setNeedsOnboarding(!data.username);
     } else {
-      // Profile missing. Attempting to create default profile
+      console.log(
+        "[AuthContext] Profile missing. Attempting to create default profile for:",
+        userId,
+      );
+      // Create a default profile to prevent the app from hanging
       const defaultUsername = `user_${userId.substring(0, 8)}`;
       const { data: newProfile, error: insertError } = await supabase
         .from("profiles")
@@ -78,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("guestMode");
     setSession(null);
     setProfile(null);
   };

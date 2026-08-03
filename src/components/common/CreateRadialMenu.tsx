@@ -1,40 +1,21 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, FileText, Camera, Mic } from "lucide-react";
-
-export type CreateAction = "note" | "voice" | "story";
+import { Plus, FileText, Camera, Mic, CalendarDays, Radio } from "lucide-react";
 
 interface CreateRadialMenuProps {
   isOpen: boolean;
   onClose: () => void;
-  onSelect?: (action: CreateAction) => void;
+  onSelect?: (action: string) => void;
 }
 
+import { HelpCircle } from "lucide-react";
+
 const CREATE_ITEMS = [
-  {
-    id: "note",
-    label: "Note",
-    icon: FileText,
-    color: "#FF9D2E",
-    angle: -135,
-    ariaLabel: "Create note",
-  },
-  {
-    id: "voice",
-    label: "Voice",
-    icon: Mic,
-    color: "#A855F7",
-    angle: -90,
-    ariaLabel: "Create voice post",
-  },
-  {
-    id: "story",
-    label: "Story",
-    icon: Camera,
-    color: "#F5F0EA",
-    angle: -45,
-    ariaLabel: "Create story",
-  },
-] as const;
+  { id: "note", label: "Note", icon: FileText, color: "#FF9D2E", angle: -150 },
+  { id: "voice", label: "Voice", icon: Mic, color: "#2D7DD2", angle: -90 },
+  { id: "story", label: "Story", icon: Camera, color: "#EC4899", angle: -30 },
+  { id: "room", label: "Room", icon: Radio, color: "#6139F2", angle: 30 },
+  { id: "event", label: "Event", icon: CalendarDays, color: "#35C67A", angle: 90 },
+];
 
 export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenuProps) {
   return (
@@ -45,9 +26,6 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Create"
         >
           <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={onClose} />
           <div className="absolute bottom-[80px] left-1/2 -translate-x-1/2">
@@ -57,9 +35,17 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
               const x = Math.cos(rad) * r;
               const y = Math.sin(rad) * r;
               const Icon = item.icon;
+              const ariaLabelMap: Record<string, string> = {
+                note: "Create note",
+                voice: "Create voice post",
+                story: "Create story",
+                room: "Create room",
+                event: "Create event",
+              };
               return (
                 <motion.button
                   key={item.id}
+                  aria-label={ariaLabelMap[item.id] || item.label}
                   initial={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
                   animate={{ opacity: 1, x, y, scale: 1 }}
                   exit={{ opacity: 0, x: 0, y: 0, scale: 0.5 }}
@@ -72,7 +58,6 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
                     if (onSelect) onSelect(item.id);
                     onClose();
                   }}
-                  aria-label={item.ariaLabel}
                 >
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center shadow-lg"
@@ -86,18 +71,20 @@ export function CreateRadialMenu({ isOpen, onClose, onSelect }: CreateRadialMenu
             })}
 
             <motion.button
+              aria-label="Close create menu"
               initial={{ rotate: 0 }}
               animate={{ rotate: 45 }}
               exit={{ rotate: 0 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.9 }}
               onClick={onClose}
-              className="absolute -translate-x-1/2 -translate-y-1/2 w-[52px] h-[52px] rounded-full flex items-center justify-center bg-[var(--color-primary)] shadow-[0_4px_20px_rgba(255,157,46,0.5)]"
+              className="absolute -translate-x-1/2 -translate-y-1/2 w-[52px] h-[52px] rounded-full flex items-center justify-center"
               style={{
                 left: 0,
                 top: 0,
+                background: "linear-gradient(135deg, #FF9D2E, #A855F7)",
+                boxShadow: "0 4px 20px rgba(255,157,46,0.5)",
               }}
-              aria-label="Close create menu"
             >
               <Plus size={26} className="text-black" />
             </motion.button>

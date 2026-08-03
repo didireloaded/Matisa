@@ -2,17 +2,52 @@
 
 ## Product scope
 
-Matisa is a mobile-first PWA social platform for everyday users. Its core product includes people discovery, Stories, Explore, Music, Messages, Activity, Profiles, 50-character Notes, voice content, live voice rooms, karaoke, events, reactions, comments, sharing, saves, contextual user ratings, and an Anonymous Wall.
+Matisa is a mobile-first social platform centred on Notes, Stories, people discovery, Messages, Activity, Profiles, voice content, live voice rooms, karaoke, physical and in-app events, and live video.
 
-Matisa is not a marketplace, freelancer platform, job board, creator SaaS platform, business directory, ecommerce app, dating app, professional network, game, XP platform, or Radar/map-discovery app. Do not reintroduce opportunities, crew finder, wallets, gifting, creator tiers, or Radar.
+Matisa uses two Note lifetimes:
 
-## Required master specification
+- 24-hour Note, maximum 200 characters
+- Permanent Note, maximum 1,000 characters, with optional image or video
 
-Before planning or changing code, read:
+The permanent bottom navigation is Home, Explore, Create, Rooms, and Profile. The top navigation contains Messages and Activity but no Profile button. Rooms contains Karaoke and Voice Rooms. Profile tabs are Posts, Voice, Events, Videos, and Saved. Music is not part of the current product UI.
 
-`docs/production/MATISA_CODEX_MASTER_BUILD_PROMPT.md`
+Matisa may sell access to specific paid virtual events through an external payment provider and server-authoritative event entitlements. This does not make Matisa a general wallet, gifting, marketplace, job board, dating app, creator SaaS, or Radar/map-discovery product. Do not reintroduce wallets, gifting, opportunities, crew finder, creator tiers, Radar, or unrelated gamification.
 
-Treat that document as the implementation and production-readiness specification. Work phase by phase. Begin with Phase 0 unless the user explicitly selects another approved phase.
+For the complete current product behaviour, consult `docs/product/MATISA_COMPLETE_PRODUCT_IMPLEMENTATION_SPEC.md` as directed below.
+
+## Task routing and required instructions
+
+Always read this file once at the start of a coding session. Then load only the instructions required by the current task.
+
+### Focused frontend work
+
+For any Matisa frontend screen, component, interaction, styling, navigation, accessibility, or client-side state task, read:
+
+`.agents/skills/matisa-frontend-surgical-edits/SKILL.md`
+
+Follow its scope-lock and context-efficiency rules. For a focused frontend request, do not load the full production specification or audit the whole repository unless the task proves that broader context is necessary.
+
+### Focused backend work
+
+For any Matisa database, Supabase, Edge Function, RLS, storage, realtime, authentication, LiveKit, notification, AI, service, or server-side integration task, read:
+
+`.agents/skills/matisa-backend-surgical-system/SKILL.md`
+
+Follow its scope-lock, source-of-truth, security, migration, and context-efficiency rules. For a focused backend request, do not load every migration, all Edge Functions, the full backend map, or the master production prompt unless the direct trace proves broader context is necessary.
+
+### Broad product implementation
+
+For a multi-screen product build, navigation change, Home or Explore rebuild, Note lifecycle work, room-system work, profile-system work, or event-system work, read:
+
+`docs/product/MATISA_COMPLETE_PRODUCT_IMPLEMENTATION_SPEC.md`
+
+Work only on the approved phase. For a focused task, search the specification for the relevant section instead of loading the whole document.
+
+### Broad production or cross-system work
+
+Read `.agents/skills/matisa-backend-surgical-system/BACKEND_SYSTEM_MAP.md` and `docs/production/MATISA_CODEX_MASTER_BUILD_PROMPT.md` only when the user requests a broad audit, production hardening, architecture consolidation, migration repair, security review, deployment readiness, or a multi-feature system change. The current product behaviour in `docs/product/MATISA_COMPLETE_PRODUCT_IMPLEMENTATION_SPEC.md` overrides older product descriptions where they conflict. Work phase by phase and begin with the applicable approved phase.
+
+User scope overrides ambition. If the user requests one screen, one function, or one behavior, complete only that scope.
 
 ## Working rules
 
@@ -56,7 +91,7 @@ Use the repository’s established stack:
 
 ## Required workflow
 
-1. Read the master specification and repository documentation.
+1. Read only the specifications and repository documentation required by the approved task scope.
 2. Inspect Git status and work on a feature branch.
 3. Run baseline install, typecheck, lint, tests, build, and Supabase checks.
 4. Produce factual findings and a written plan before destructive changes.

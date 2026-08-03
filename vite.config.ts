@@ -14,13 +14,13 @@ export default defineConfig({
     }),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["pwa-192x192.png"],
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "Matisa",
         short_name: "Matisa",
-        description: "Matisa — The People Around You Have Stories Worth Discovering",
-        theme_color: "#0b0b0b",
-        background_color: "#0b0b0b",
+        description: "Matisa Social App",
+        theme_color: "#C8521A",
+        background_color: "#0F0D0B",
         display: "standalone",
         icons: [
           {
@@ -28,11 +28,12 @@ export default defineConfig({
             sizes: "192x192",
             type: "image/png",
           },
-          // TODO: Add branded 512x512 icon — required for full installability
+          {
+            src: "pwa-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
         ],
-      },
-      devOptions: {
-        enabled: true,
       },
     }),
   ],
