@@ -47,6 +47,15 @@ vi.mock("@/pages/Chat", () => ({
 vi.mock("@/pages/Onboarding", () => ({
   Onboarding: () => <div>Onboarding page</div>,
 }));
+vi.mock("@/pages/NoteDetail", () => ({
+  NoteDetail: () => <div>Note Detail page</div>,
+}));
+vi.mock("@/pages/EventDetail", () => ({
+  EventDetail: () => <div>Event Detail page</div>,
+}));
+vi.mock("@/pages/NotFound", () => ({
+  NotFound: () => <div>NotFound page</div>,
+}));
 vi.mock("@/components/karaoke/KaraokeRoom", () => ({
   KaraokeRoom: () => <div>Room page</div>,
 }));
@@ -66,10 +75,14 @@ describe("AppRoutes", () => {
     ["/", "Home page"],
     ["/explore", "Explore page"],
     ["/inbox", "Inbox page"],
+    ["/chat", "Inbox page"],
+    ["/notifications", "Activity page"],
     ["/profile", "Profile page"],
     ["/activity", "Activity page"],
     ["/events", "Events page"],
     ["/notes", "Notes page"],
+    ["/note/test", "Note Detail page"],
+    ["/event/test", "Event Detail page"],
     ["/settings", "Settings page"],
   ])("resolves %s to the correct page", async (path, label) => {
     renderRoute(path);
@@ -104,20 +117,8 @@ describe("AppRoutes", () => {
     expect(await screen.findByText("Explore page")).toBeInTheDocument();
   });
 
-  it("redirects the former /messages URL to /inbox", async () => {
-    renderRoute("/messages");
-    expect(await screen.findByText("Inbox page")).toBeInTheDocument();
-  });
-
-  it("does not expose a Radar route", async () => {
-    renderRoute("/radar");
-    // Should redirect to home (catch-all)
-    expect(await screen.findByText("Home page")).toBeInTheDocument();
-    expect(screen.queryByText(/radar/i)).not.toBeInTheDocument();
-  });
-
-  it("redirects unknown routes to home", async () => {
+  it("renders NotFound for unknown routes", async () => {
     renderRoute("/nonexistent-page");
-    expect(await screen.findByText("Home page")).toBeInTheDocument();
+    expect(await screen.findByText("NotFound page")).toBeInTheDocument();
   });
 });

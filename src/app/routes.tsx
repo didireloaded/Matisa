@@ -20,6 +20,13 @@ const Chat = lazy(() => import("@/pages/Chat").then((m) => ({ default: m.Chat })
 const KaraokeRoom = lazy(() =>
   import("@/components/karaoke/KaraokeRoom").then((m) => ({ default: m.KaraokeRoom })),
 );
+const NoteDetail = lazy(() =>
+  import("@/pages/NoteDetail").then((m) => ({ default: m.NoteDetail })),
+);
+const EventDetail = lazy(() =>
+  import("@/pages/EventDetail").then((m) => ({ default: m.EventDetail })),
+);
+const NotFound = lazy(() => import("@/pages/NotFound").then((m) => ({ default: m.NotFound })));
 
 const Rooms = lazy(() => import("@/pages/Rooms").then((m) => ({ default: m.Rooms })));
 
@@ -29,17 +36,23 @@ export function AppRoutes() {
       <Route element={<MainLayout />}>
         <Route path="/" element={<Home />} />
         <Route path="/explore" element={<Discovery />} />
+        <Route path="/explore/rooms" element={<Discovery />} />
+        <Route path="/explore/events" element={<Discovery />} />
+        <Route path="/explore/people" element={<Discovery />} />
         <Route path="/discovery" element={<Navigate to="/explore" replace />} />
         <Route path="/notes" element={<Notes />} />
+        <Route path="/note/:noteId" element={<NoteDetail />} />
         <Route path="/events" element={<Events />} />
-        <Route path="/events/:id" element={<Events />} />
-        {/* Music removed — redirect to Explore */}
+        <Route path="/event/:eventId" element={<EventDetail />} />
+        <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/music" element={<Navigate to="/explore" replace />} />
         <Route path="/activity" element={<Activity />} />
+        <Route path="/notifications" element={<Activity />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:username" element={<Profile />} />
         <Route path="/inbox" element={<Messages />} />
-        <Route path="/messages" element={<Navigate to="/inbox" replace />} />
+        <Route path="/messages" element={<Messages />} />
+        <Route path="/chat" element={<Messages />} />
         <Route path="/rooms" element={<Rooms />} />
         <Route path="/settings" element={<Settings />} />
       </Route>
@@ -54,7 +67,7 @@ export function AppRoutes() {
       <Route path="/room/:roomId" element={<KaraokeRoom />} />
       <Route path="/karaoke/:roomId" element={<KaraokeRoom />} />
       <Route path="/live/:roomId" element={<KaraokeRoom />} />
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
