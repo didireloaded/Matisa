@@ -160,7 +160,7 @@ export function Events() {
                             variant="primary"
                             size="sm"
                             className="bg-white text-black hover:bg-white/90 font-bold px-4"
-                            onClick={(e) => handleRSVP(event.id, e)}
+                            onClick={(e: React.MouseEvent) => handleRSVP(event.id, e)}
                           >
                             RSVP
                           </Button>
@@ -223,7 +223,7 @@ export function Events() {
                             variant="glass"
                             size="sm"
                             className="h-7 px-3 text-[10px]"
-                            onClick={(e) => handleRSVP(event.id, e)}
+                            onClick={(e: React.MouseEvent) => handleRSVP(event.id, e)}
                           >
                             RSVP
                           </Button>
