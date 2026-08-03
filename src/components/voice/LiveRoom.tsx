@@ -13,6 +13,7 @@ import {
 } from "@livekit/components-react";
 import { Track } from "livekit-client";
 import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 type Reaction = { id: number; emoji: string; x: number };
 
@@ -85,7 +86,7 @@ function LiveRoomInner({ roomId, navigate }: { roomId: string; navigate: any }) 
     });
 
     if (error || !data) {
-      alert("Failed to send gift. Try again later.");
+      toast.error("Failed to send gift. Try again later.");
       return;
     }
 

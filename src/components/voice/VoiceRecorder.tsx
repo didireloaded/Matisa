@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Mic, Square, Play, Pause, Trash2, Send } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "sonner";
 import { supabase } from "../../lib/supabase";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -134,7 +135,7 @@ export function VoiceRecorder({
       }, 1000);
     } catch (error) {
       console.error("Error accessing microphone", error);
-      alert(
+      toast.error(
         error instanceof Error
           ? error.message
           : "Microphone access is required to record voice notes.",
@@ -172,7 +173,7 @@ export function VoiceRecorder({
       deleteRecording();
     } catch (error) {
       console.error("Publish error:", error);
-      alert("Failed to publish voice recording.");
+      toast.error("Failed to publish voice recording.");
     } finally {
       setIsPublishing(false);
     }

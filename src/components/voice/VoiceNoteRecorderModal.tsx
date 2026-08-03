@@ -56,21 +56,7 @@ export function VoiceNoteRecorderModal({
   const analyserRef = useRef<AnalyserNode | null>(null);
   const [liveAmplitudes, setLiveAmplitudes] = useState<number[]>([]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      stopAllMedia();
-    };
-  }, []);
-
-  // Auto-stop at max duration
-  useEffect(() => {
-    if (state === "recording" && elapsed >= maxDuration) {
-      stopRecording();
-    }
-  }, [elapsed, maxDuration, state]);
-
-  const stopAllMedia = () => {
+  const stopAllMedia = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
@@ -80,7 +66,31 @@ export function VoiceNoteRecorderModal({
       audioRef.current = null;
     }
     if (audioUrl) URL.revokeObjectURL(audioUrl);
-  };
+  }, [audioUrl]);
+
+  const stopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && state === "recording") {
+      mediaRecorderRef.current.stop();
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  }, [state]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      stopAllMedia();
+    };
+  }, [stopAllMedia]);
+
+  // Auto-stop at max duration
+  useEffect(() => {
+    if (state === "recording" && elapsed >= maxDuration) {
+      stopRecording();
+    }
+  }, [elapsed, maxDuration, state, stopRecording]);
 
   const startRecording = async () => {
     setPermissionDenied(false);
@@ -88,7 +98,6 @@ export function VoiceNoteRecorderModal({
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      // Set up analyser for live waveform
       const audioCtx = new AudioContext();
       const source = audioCtx.createMediaStreamSource(stream);
       const analyser = audioCtx.createAnalyser();
@@ -122,7 +131,6 @@ export function VoiceNoteRecorderModal({
       timerRef.current = window.setInterval(() => {
         setElapsed((p) => p + 1);
 
-        // Sample live amplitude for waveform visualization
         if (analyserRef.current) {
           const data = new Uint8Array(analyserRef.current.frequencyBinCount);
           analyserRef.current.getByteFrequencyData(data);
@@ -137,16 +145,6 @@ export function VoiceNoteRecorderModal({
         setPermissionDenied(true);
       } else {
         toast.error("Could not access microphone");
-      }
-    }
-  };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && state === "recording") {
-      mediaRecorderRef.current.stop();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
       }
     }
   };

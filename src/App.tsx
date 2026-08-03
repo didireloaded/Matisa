@@ -13,10 +13,10 @@ export default function App() {
         <BrowserRouter>
           <Suspense
             fallback={
-              <div className="flex min-h-screen items-center justify-center bg-[#030712] text-white">
+              <div className="flex min-h-screen items-center justify-center bg-[#06101D] text-white">
                 <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#24A3C7] border-t-transparent" />
-                  <span className="text-xs font-semibold tracking-wider text-white/50 font-display">
+                  <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#FF9D2E] border-t-transparent shadow-[0_0_12px_rgba(255,157,70,0.5)]" />
+                  <span className="text-xs font-bold tracking-widest text-white/70 font-display">
                     MATISA
                   </span>
                 </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { X, Gem, Heart, Star, Sparkles, Gift } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/common/Avatar";
 import type { UserProfile } from "@/types";
@@ -92,7 +93,7 @@ export function GiftingModal({
         onClose();
       } else {
         // Here we'd typically trigger a top-up modal or navigation
-        alert("Insufficient balance. Top up in Wallet.");
+        toast.error("Insufficient balance. Top up in Wallet.");
       }
     }
   };

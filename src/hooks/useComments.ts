@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { useAuth } from '../contexts/AuthContext';
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../contexts/AuthContext";
 
 export interface Comment {
   id: string;
@@ -8,7 +8,7 @@ export interface Comment {
   author_id: string;
   content: string | null;
   media_url: string | null;
-  media_type: 'voice' | null;
+  media_type: "voice" | null;
   created_at: string;
   profiles: {
     username: string;
@@ -22,12 +22,13 @@ export function useComments(postId: string) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase
-        .from('comments')
-        .select(`
+        .from("comments")
+        .select(
+          `
           id,
           post_id,
           author_id,
@@ -40,18 +41,19 @@ export function useComments(postId: string) {
             full_name,
             avatar_url
           )
-        `)
-        .eq('post_id', postId)
-        .order('created_at', { ascending: true });
+        `,
+        )
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
 
       if (error) throw error;
       if (data) setComments(data as any as Comment[]);
     } catch (err) {
-      console.error('Error fetching comments:', err);
+      console.error("Error fetching comments:", err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [postId]);
 
   useEffect(() => {
     fetchComments();
@@ -59,19 +61,21 @@ export function useComments(postId: string) {
     if (!postId) return;
 
     // Realtime subscription
-    const channel = supabase.channel(`comments:${postId}`)
+    const channel = supabase
+      .channel(`comments:${postId}`)
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'comments',
-          filter: `post_id=eq.${postId}`
+          event: "INSERT",
+          schema: "public",
+          table: "comments",
+          filter: `post_id=eq.${postId}`,
         },
         async (payload) => {
           const { data: newComment } = await supabase
-            .from('comments')
-            .select(`
+            .from("comments")
+            .select(
+              `
               id,
               post_id,
               author_id,
@@ -84,58 +88,58 @@ export function useComments(postId: string) {
                 full_name,
                 avatar_url
               )
-            `)
-            .eq('id', payload.new.id)
+            `,
+            )
+            .eq("id", payload.new.id)
             .single();
 
           if (newComment) {
-            setComments(prev => [...prev, newComment as any as Comment]);
+            setComments((prev) => [...prev, newComment as any as Comment]);
           }
-        }
+        },
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [postId]);
+  }, [postId, fetchComments]);
 
-  const addComment = async (content: string | null, mediaUrl?: string, mediaType?: 'voice') => {
-    if (!session?.user) throw new Error('Must be logged in to comment');
+  const addComment = async (content: string | null, mediaUrl?: string, mediaType?: "voice") => {
+    if (!session?.user) throw new Error("Must be logged in to comment");
 
     try {
-      const { error } = await supabase
-        .from('comments')
-        .insert({
-          post_id: postId,
-          author_id: session.user.id,
-          content,
-          media_url: mediaUrl,
-          media_type: mediaType
-        });
+      const { error } = await supabase.from("comments").insert({
+        post_id: postId,
+        author_id: session.user.id,
+        content,
+        media_url: mediaUrl,
+        media_type: mediaType,
+      });
 
       if (error) throw error;
 
       // Fetch the post author to send them a notification
       const { data: postData } = await supabase
-        .from('posts')
-        .select('author_id')
-        .eq('id', postId)
+        .from("posts")
+        .select("author_id")
+        .eq("id", postId)
         .single();
 
       if (postData && postData.author_id !== session.user.id) {
-        supabase.functions.invoke('send-notification', {
-          body: {
-            userId: postData.author_id,
-            title: `New comment on your post`,
-            body: `${session.user.user_metadata?.full_name || 'Someone'} commented: ${content ? content : '🎤 Voice note'}`,
-            data: { url: `/` } // Route them to feed for now
-          }
-        }).catch(console.error);
+        supabase.functions
+          .invoke("send-notification", {
+            body: {
+              userId: postData.author_id,
+              title: `New comment on your post`,
+              body: `${session.user.user_metadata?.full_name || "Someone"} commented: ${content ? content : "🎤 Voice note"}`,
+              data: { url: `/` }, // Route them to feed for now
+            },
+          })
+          .catch(console.error);
       }
-
     } catch (err) {
-      console.error('Error adding comment:', err);
+      console.error("Error adding comment:", err);
       throw err;
     }
   };

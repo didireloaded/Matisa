@@ -117,10 +117,15 @@ export function CreateStoryModal({
                 <span className="font-semibold text-sm">Upload Media</span>
               </button>
               <button
+                onClick={() => {
+                  if (fileInputRef.current) {
+                    fileInputRef.current.setAttribute("capture", "environment");
+                    fileInputRef.current.click();
+                  }
+                }}
                 className="flex flex-col items-center justify-center gap-3 p-8 border-2 border-dashed border-border rounded-2xl hover:bg-secondary/50 hover:border-primary/50 transition-all text-muted-foreground hover:text-foreground"
-                onClick={() => toast.info("Camera capture coming soon!")}
               >
-                <Camera className="w-8 h-8" />
+                <Camera className="w-8 h-8 text-primary" />
                 <span className="font-semibold text-sm">Take Photo</span>
               </button>
             </div>

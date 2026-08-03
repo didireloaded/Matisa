@@ -85,7 +85,7 @@ export function Profile() {
       }
     }
     loadProfileData();
-  }, [username, currentUser, isOwnProfile]);
+  }, [username, currentUser, isOwnProfile, userProfile?.id]);
 
   const profileData = userProfile || {
     display_name: currentUser?.display_name || "Hanna Dowie",

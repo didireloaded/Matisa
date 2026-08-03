@@ -54,7 +54,7 @@ export function KaraokeRoom() {
       }
     }
     loadRoom();
-  }, [roomId]);
+  }, [roomId, joinRoom]);
 
   const handleLeave = () => {
     leaveRoom();

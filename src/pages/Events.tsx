@@ -24,48 +24,43 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 
+const DUMMY_EVENTS = [
+  {
+    id: "evt-1",
+    title: "Windhoek Summer Vocal Festival 2026",
+    description: "Live outdoor music & karaoke competition featuring top Namibian artists.",
+    event_type: "in_person",
+    location_name: "Independence Stadium, Windhoek",
+    start_time: new Date(Date.now() + 86400000 * 2).toISOString(),
+    price: 150,
+    is_paid: true,
+    cover_url:
+      "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=800&q=80",
+    attendees_count: 340,
+    is_saved: true,
+  },
+  {
+    id: "evt-2",
+    title: "Namibian Acoustic Voice Session",
+    description: "Intimate live virtual voice room and acoustic performance stream.",
+    event_type: "virtual",
+    location_name: "Matisa Voice Room 1",
+    start_time: new Date(Date.now() + 86400000 * 5).toISOString(),
+    price: 0,
+    is_paid: false,
+    cover_url:
+      "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
+    attendees_count: 120,
+    is_saved: false,
+  },
+];
+
 export function Events() {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const [activeTab, setActiveTab] = useState("upcoming");
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const dummyEvents = [
-    {
-      id: "event-1",
-      title: "Namibian Creators Night 🎤",
-      cover_image:
-        "https://images.unsplash.com/photo-1540039155732-d674d6e3f670?q=80&w=1000&auto=format&fit=crop",
-      location_name: "Windhoek Central",
-      location_type: "Physical",
-      start_time: new Date(Date.now() + 86400000).toISOString(),
-      is_paid: false,
-      attendees_count: 142,
-    },
-    {
-      id: "event-2",
-      title: "Swakop Sunset Acoustic Sessions",
-      cover_image:
-        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1000&auto=format&fit=crop",
-      location_name: "Swakopmund Jetty",
-      location_type: "Physical",
-      start_time: new Date(Date.now() + 172800000).toISOString(),
-      is_paid: true,
-      attendees_count: 89,
-    },
-    {
-      id: "event-3",
-      title: "Live Voice Jam & Karaoke Night",
-      cover_image:
-        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1000&auto=format&fit=crop",
-      location_name: "Matisa Voice Stage",
-      location_type: "Virtual",
-      start_time: new Date(Date.now() + 259200000).toISOString(),
-      is_paid: false,
-      attendees_count: 210,
-    },
-  ];
 
   useEffect(() => {
     async function loadEvents() {
@@ -78,11 +73,11 @@ export function Events() {
         if (!error && data && data.length > 0) {
           setEvents(data);
         } else {
-          setEvents(dummyEvents);
+          setEvents(DUMMY_EVENTS);
         }
       } catch (err) {
         console.error("Failed to load events", err);
-        setEvents(dummyEvents);
+        setEvents(DUMMY_EVENTS);
       } finally {
         setLoading(false);
       }

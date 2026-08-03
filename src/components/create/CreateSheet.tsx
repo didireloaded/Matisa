@@ -210,25 +210,30 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
                 <ChevronRight size={18} className="text-white/40 group-hover:text-white" />
               </button>
 
-              {/* 5. Live (Coming Soon) */}
+              {/* 5. Live Broadcast */}
               <button
-                disabled
-                className="flex items-center justify-between p-4 rounded-[22px] glass-panel opacity-60 cursor-not-allowed group"
+                onClick={() => {
+                  onClose();
+                  navigate("/rooms");
+                  toast.success("Opening Live Broadcast Stage...");
+                }}
+                className="flex items-center justify-between p-4 rounded-[22px] glass-panel hover:border-white/30 transition active:scale-[0.98] group"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/20 text-red-400">
                     <Video size={22} />
                   </div>
                   <div className="text-left">
                     <div className="flex items-center gap-2">
                       <h3 className="text-sm font-bold text-white">Live Broadcast</h3>
-                      <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold text-white/60">
-                        Coming Soon
+                      <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-[10px] font-semibold text-red-300 border border-red-500/30">
+                        LIVE
                       </span>
                     </div>
-                    <p className="text-xs text-white/40">Live video streaming coming to Namibia</p>
+                    <p className="text-xs text-white/50">Stream live video or voice to followers</p>
                   </div>
                 </div>
+                <ChevronRight size={18} className="text-white/40 group-hover:text-white" />
               </button>
             </div>
           )}
