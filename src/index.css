@@ -160,11 +160,9 @@ html::-webkit-scrollbar, body::-webkit-scrollbar, #root::-webkit-scrollbar {
   * {
     border-color: var(--color-border);
     -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-    user-select: none;
   }
-  input, textarea {
-    user-select: auto;
+  button, input, textarea {
+    touch-action: manipulation;
   }
 }
 

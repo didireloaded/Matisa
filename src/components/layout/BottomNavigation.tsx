@@ -1,12 +1,11 @@
 import { Home, Search, Plus, Mic, User } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 
 interface BottomNavigationProps {
   onOpenCreate?: () => void;
 }
 
 export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
-  const navigate = useNavigate();
   const location = useLocation();
   const path = location.pathname;
 
@@ -18,8 +17,8 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
       }}
     >
       {/* 1. Home */}
-      <button
-        onClick={() => navigate("/")}
+      <Link
+        to="/"
         className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full transition active:scale-95 ${
           path === "/"
             ? "bg-white/20 text-white font-bold text-xs shadow-md border border-white/30 backdrop-blur-md"
@@ -29,11 +28,11 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
       >
         <Home size={19} />
         {path === "/" && <span>Home</span>}
-      </button>
+      </Link>
 
       {/* 2. Explore */}
-      <button
-        onClick={() => navigate("/explore")}
+      <Link
+        to="/explore"
         className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full transition active:scale-95 ${
           path === "/explore" || path.startsWith("/explore")
             ? "bg-white/20 text-white font-bold text-xs shadow-md border border-white/30 backdrop-blur-md"
@@ -43,7 +42,7 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
       >
         <Search size={19} />
         {(path === "/explore" || path.startsWith("/explore")) && <span>Explore</span>}
-      </button>
+      </Link>
 
       {/* 3. Center Elevated Create Trigger */}
       <button
@@ -55,8 +54,8 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
       </button>
 
       {/* 4. Rooms */}
-      <button
-        onClick={() => navigate("/rooms")}
+      <Link
+        to="/rooms"
         className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full transition active:scale-95 ${
           path === "/rooms" || path.startsWith("/rooms")
             ? "bg-white/20 text-white font-bold text-xs shadow-md border border-white/30 backdrop-blur-md"
@@ -66,11 +65,11 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
       >
         <Mic size={19} />
         {(path === "/rooms" || path.startsWith("/rooms")) && <span>Rooms</span>}
-      </button>
+      </Link>
 
       {/* 5. Profile */}
-      <button
-        onClick={() => navigate("/profile")}
+      <Link
+        to="/profile"
         className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full transition active:scale-95 ${
           path === "/profile" || path.startsWith("/profile")
             ? "bg-white/20 text-white font-bold text-xs shadow-md border border-white/30 backdrop-blur-md"
@@ -80,7 +79,9 @@ export function BottomNavigation({ onOpenCreate }: BottomNavigationProps) {
       >
         <User size={19} />
         {(path === "/profile" || path.startsWith("/profile")) && <span>Profile</span>}
-      </button>
+      </Link>
     </nav>
   );
 }
+
+export default BottomNavigation;
