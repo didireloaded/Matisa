@@ -312,8 +312,8 @@ export function NoteCard({ note }: NoteCardProps) {
       </div>
 
       {/* Action Bar & Note-to-Room Shortcut */}
-      <div className="flex items-center justify-between pt-2 border-t border-white/10">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-white/10">
+        <div className="flex items-center gap-3">
           {/* Like Button */}
           <button
             onClick={handleLikeToggle}
@@ -377,7 +377,7 @@ export function NoteCard({ note }: NoteCardProps) {
             toast.success(`Opening live Room for @${authorUsername}'s Note!`);
             navigate("/rooms");
           }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#6139F2]/20 text-[#24A3C7] font-bold text-[11px] border border-[#6139F2]/40 hover:bg-[#6139F2]/40 active:scale-95 transition"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#6139F2]/20 text-[#24A3C7] font-bold text-[11px] border border-[#6139F2]/40 hover:bg-[#6139F2]/40 active:scale-95 transition shrink-0 ml-auto"
         >
           <Radio size={12} className="animate-pulse text-[#24A3C7]" />
           <span>Continue live</span>

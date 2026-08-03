@@ -24,7 +24,8 @@ import { toast } from "sonner";
 import { USERS } from "@/data/dummy";
 
 export function KaraokeRoom() {
-  const { id: roomId } = useParams<{ id: string }>();
+  const { roomId: rawRoomId, id: rawId } = useParams<{ roomId?: string; id?: string }>();
+  const roomId = rawRoomId || rawId || "demo-room";
   const navigate = useNavigate();
   const { profile } = useAuth();
   const { joinRoom, leaveRoom, isMuted: isContextMuted, toggleMute } = useVoice();
@@ -135,7 +136,7 @@ export function KaraokeRoom() {
       </div>
 
       {/* Main Performer Stage */}
-      <div className="relative z-10 flex-1 px-5 flex flex-col justify-center items-center">
+      <div className="relative z-10 flex-1 px-5 py-4 overflow-y-auto no-scrollbar flex flex-col justify-center items-center">
         {/* Floating Heart Reactions */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-30">
           <AnimatePresence>

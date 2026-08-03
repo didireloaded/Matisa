@@ -1,30 +1,33 @@
-import { Menu, Bell, MessageCircle } from "lucide-react";
+import { Bell, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export function TopNavigation() {
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-40 flex items-center justify-between px-5 pt-4 pb-3 bg-gradient-to-b from-[#06101D] via-[#06101D]/80 to-transparent backdrop-blur-md">
-      {/* Left Menu Button */}
-      <button
-        onClick={() => navigate("/settings")}
-        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/10"
-        aria-label="Menu Settings"
-      >
-        <div className="flex flex-col gap-1 w-4">
-          <span className="h-[2px] w-full bg-white rounded-full" />
-          <span className="h-[2px] w-full bg-white rounded-full" />
-        </div>
-      </button>
+    <header
+      className="sticky top-0 z-40 grid grid-cols-3 items-center px-5 pb-3 bg-gradient-to-b from-[#06101D] via-[#06101D]/90 to-transparent backdrop-blur-md"
+      style={{
+        paddingTop: "calc(12px + env(safe-area-inset-top))",
+      }}
+    >
+      {/* 1. Left Spacer (Width matched to right column for absolute center) */}
+      <div className="flex items-center justify-start" />
 
-      {/* Center Brand Title */}
-      <button onClick={() => navigate("/")} className="flex items-center gap-2">
-        <span className="text-xl font-bold tracking-tight text-white font-display">Matisa</span>
-      </button>
+      {/* 2. Absolute Centered Brand Title */}
+      <div className="flex items-center justify-center">
+        <button
+          onClick={() => navigate("/")}
+          className="flex items-center gap-2 hover:opacity-90 transition active:scale-95"
+        >
+          <span className="text-xl font-extrabold tracking-tight text-white font-display">
+            Matisa
+          </span>
+        </button>
+      </div>
 
-      {/* Right Header Actions */}
-      <div className="flex items-center gap-2.5">
+      {/* 3. Right Header Actions */}
+      <div className="flex items-center justify-end gap-2.5">
         <button
           onClick={() => navigate("/activity")}
           className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/10"
@@ -45,3 +48,5 @@ export function TopNavigation() {
     </header>
   );
 }
+
+export default TopNavigation;

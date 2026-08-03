@@ -138,7 +138,7 @@ export function Onboarding() {
   };
 
   return (
-    <div className="min-h-[100dvh] bg-[var(--color-background)] text-white flex flex-col relative overflow-hidden">
+    <div className="min-h-[100dvh] bg-[var(--color-background)] text-white flex flex-col relative overflow-y-auto no-scrollbar">
       {/* Decorative Blur */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[300px] h-[300px] bg-[var(--color-primary)]/20 blur-[120px] rounded-full pointer-events-none" />
 

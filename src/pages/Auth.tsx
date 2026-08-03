@@ -62,7 +62,7 @@ export function Auth() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-[var(--color-background)] text-white overflow-hidden flex flex-col font-sans">
+    <div className="relative min-h-[100dvh] w-full bg-[var(--color-background)] text-white overflow-y-auto no-scrollbar flex flex-col font-sans py-6">
       {/* Decorative Wavy Lines */}
       <div className="absolute top-0 left-0 w-full h-80 pointer-events-none overflow-hidden">
         <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="w-full h-full opacity-80">

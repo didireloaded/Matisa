@@ -3,14 +3,14 @@ import type { Profile } from "@/types";
 import { Check, Flame, TrendingUp } from "lucide-react";
 
 const GRADIENTS = [
-  "linear-gradient(135deg, var(--primary), var(--accent3))",
-  "linear-gradient(135deg, var(--secondary), var(--accent3))",
-  "linear-gradient(135deg, var(--accent1), var(--secondary))",
-  "linear-gradient(135deg, var(--accent4), var(--accent1))",
-  "linear-gradient(135deg, var(--accent2), var(--primary))",
-  "linear-gradient(135deg, var(--accent3), var(--secondary))",
-  "linear-gradient(135deg, var(--primary), var(--background))",
-  "linear-gradient(135deg, var(--secondary), var(--background))",
+  "linear-gradient(135deg, var(--color-primary), #6139F2)",
+  "linear-gradient(135deg, var(--color-secondary), #24A3C7)",
+  "linear-gradient(135deg, #FF9D2E, var(--color-secondary))",
+  "linear-gradient(135deg, #24A3C7, #6139F2)",
+  "linear-gradient(135deg, #FF6B35, var(--color-primary))",
+  "linear-gradient(135deg, #6139F2, var(--color-secondary))",
+  "linear-gradient(135deg, var(--color-primary), #151515)",
+  "linear-gradient(135deg, var(--color-secondary), #151515)",
 ];
 
 export function pickGradient(seed: string) {
