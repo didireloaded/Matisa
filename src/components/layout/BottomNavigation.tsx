@@ -1,4 +1,4 @@
-import { Home, Search, Plus, Mic, User } from "lucide-react";
+import { Home, Search, Plus, Radio, User } from "lucide-react";
 import { useLocation, Link } from "react-router-dom";
 
 interface BottomNavigationProps {
@@ -86,7 +86,7 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
               : "text-white/50"
           }`}
         >
-          <Mic size={18} />
+          <Radio size={18} />
           {isRoomsActive && !compact && <span className="text-xs font-bold">Rooms</span>}
         </div>
       </Link>

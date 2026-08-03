@@ -139,15 +139,6 @@ export function Notes() {
         )}
       </div>
 
-      {/* Frame-Constrained Floating FAB */}
-      <button
-        onClick={() => setIsCreateSheetOpen(true)}
-        className="fixed bottom-[88px] right-5 sm:right-[calc(50%-200px)] w-14 h-14 bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] rounded-full flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition-transform z-40"
-        aria-label="Create new note"
-      >
-        <Plus size={24} />
-      </button>
-
       {isVoiceModalOpen && (
         <VoiceNoteRecorderModal
           open={isVoiceModalOpen}

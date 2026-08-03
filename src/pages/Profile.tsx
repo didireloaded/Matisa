@@ -248,75 +248,76 @@ export function Profile() {
         </div>
       </div>
 
-      {/* 3. Reelio 5 Profile Category Tabs */}
-      <div className="px-5 mt-5 border-b border-white/10">
-        <div className="flex items-center justify-between overflow-x-auto no-scrollbar gap-2">
-          {tabs.map(({ id, label, icon: Icon }) => {
-            const isActive = activeTab === id;
-            return (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id as any)}
-                className={`flex items-center gap-1.5 py-3 px-2 border-b-2 text-xs font-bold whitespace-nowrap transition ${
-                  isActive
-                    ? "border-[#24A3C7] text-[#39B7F2]"
-                    : "border-transparent text-white/40 hover:text-white/70"
-                }`}
-              >
-                <Icon size={14} />
-                <span>{label}</span>
-              </button>
-            );
-          })}
+      {/* 3. Single Continuous Scroll Activity Stream */}
+      <div className="px-5 mt-5 space-y-5 flex-1">
+        {/* Availability Status Badge */}
+        <div className="flex items-center gap-2 p-3.5 rounded-[20px] bg-gradient-to-r from-emerald-500/10 to-[#24A3C7]/10 border border-emerald-500/30">
+          <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+          <span className="text-xs font-semibold text-emerald-300">
+            Available for collaboration & voice rooms in Windhoek
+          </span>
         </div>
-      </div>
 
-      {/* 4. Tab Content Feed Area */}
-      <div className="px-5 mt-4 flex-1">
-        {activeTab === "notes" && (
-          <div className="space-y-3">
-            {userNotes.length > 0 ? (
-              userNotes.map((note) => (
-                <div key={note.id} className="glass-panel p-4 rounded-[22px] text-xs text-white">
-                  {note.content}
-                </div>
-              ))
-            ) : (
-              <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
-                <FileText size={32} className="mx-auto mb-2 opacity-30" />
-                No permanent notes posted yet.
+        {/* Upcoming Events Section */}
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+              <Calendar size={13} className="text-[#FF9D2E]" /> Upcoming Events
+            </h3>
+          </div>
+          <div className="p-4 rounded-[22px] glass-panel-elevated border border-[#FF9D2E]/30 flex items-center justify-between">
+            <div>
+              <h4 className="text-xs font-bold text-white">Windhoek Street Food Festival</h4>
+              <p className="text-[11px] text-white/60">Sat, Aug 30 • Independence Ave</p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-[#FF9D2E]/15 text-[#FF9D2E] text-[10px] font-bold border border-[#FF9D2E]/30">
+              Going
+            </span>
+          </div>
+        </div>
+
+        {/* Recent Notes Stream */}
+        <div className="space-y-2.5">
+          <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+            <FileText size={13} className="text-[#24A3C7]" /> Recent Notes & Voice Posts
+          </h3>
+          {userNotes.length > 0 ? (
+            userNotes.map((note) => (
+              <div
+                key={note.id}
+                className="glass-panel p-4 rounded-[22px] text-xs text-white leading-relaxed"
+              >
+                {note.content}
               </div>
-            )}
-          </div>
-        )}
+            ))
+          ) : (
+            <div className="glass-panel p-4 rounded-[22px] text-xs text-white/90 leading-relaxed border border-white/10">
+              "Swakopmund sunsets could cure anything honestly 🌅 Fog rolling over the dunes..."
+              <div className="mt-2 text-[10px] text-white/50 font-semibold">
+                Posted 2h ago • 12 replies
+              </div>
+            </div>
+          )}
+        </div>
 
-        {activeTab === "voice" && (
-          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
-            <Mic size={32} className="mx-auto mb-2 opacity-30" />
-            No voice notes or voicemails published yet.
+        {/* Recent Rooms Hosted */}
+        <div className="space-y-2.5">
+          <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+            <Mic size={13} className="text-[#6139F2]" /> Recent Voice Rooms
+          </h3>
+          <div className="p-4 rounded-[22px] glass-panel border border-[#6139F2]/30 flex items-center justify-between">
+            <div>
+              <h4 className="text-xs font-bold text-white">Afro-pop & Acoustic Jam Session</h4>
+              <p className="text-[11px] text-white/60">89 listeners • Hosted 2 days ago</p>
+            </div>
+            <button
+              onClick={() => navigate("/rooms")}
+              className="px-3 py-1 rounded-full bg-[#6139F2]/20 text-[#24A3C7] text-[10px] font-bold border border-[#6139F2]/40"
+            >
+              Replay
+            </button>
           </div>
-        )}
-
-        {activeTab === "events" && (
-          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
-            <Calendar size={32} className="mx-auto mb-2 opacity-30" />
-            No upcoming hosted events.
-          </div>
-        )}
-
-        {activeTab === "videos" && (
-          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
-            <Video size={32} className="mx-auto mb-2 opacity-30" />
-            No video broadcasts recorded.
-          </div>
-        )}
-
-        {activeTab === "saved" && isOwnProfile && (
-          <div className="glass-panel p-8 text-center rounded-[24px] text-white/50 text-xs">
-            <Bookmark size={32} className="mx-auto mb-2 opacity-30" />
-            Your saved notes and events collection is empty.
-          </div>
-        )}
+        </div>
       </div>
     </div>
   );

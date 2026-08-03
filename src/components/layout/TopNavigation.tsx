@@ -1,6 +1,7 @@
-import { Bell, MessageCircle, Sun, Moon } from "lucide-react";
+import { Bell, MessageCircle, Sun, Moon, MapPin, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/contexts/ThemeContext";
+import { toast } from "sonner";
 
 export function TopNavigation() {
   const navigate = useNavigate();
@@ -29,15 +30,23 @@ export function TopNavigation() {
         </button>
       </div>
 
-      {/* 2. Absolute Centered Brand Title */}
-      <div className="flex items-center justify-center">
+      {/* 2. Absolute Centered Brand Title & Location Selector Pill */}
+      <div className="flex flex-col items-center justify-center gap-0.5">
         <button
           onClick={() => navigate("/")}
-          className="flex items-center gap-2 hover:opacity-90 transition active:scale-95"
+          className="flex items-center gap-1 hover:opacity-90 transition active:scale-95"
         >
-          <span className="text-xl font-extrabold tracking-tight text-white font-display">
+          <span className="text-lg font-extrabold tracking-tight text-white font-display">
             Matisa
           </span>
+        </button>
+        <button
+          onClick={() => toast.info("Browsing Windhoek, Namibia • Tap to change city")}
+          className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-white/90 hover:text-white text-[10px] font-bold border border-white/15 transition active:scale-95"
+        >
+          <MapPin size={9} className="text-[#24A3C7]" />
+          <span>Windhoek</span>
+          <ChevronDown size={9} className="text-white/50" />
         </button>
       </div>
 
