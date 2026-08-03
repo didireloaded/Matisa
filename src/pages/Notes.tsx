@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Plus, Edit3, Image, Mic, AlignLeft } from "lucide-react";
+import { useState, useRef } from "react";
+import { Plus, Image, Mic, AlignLeft } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/common/Avatar";
 import { Button } from "@/components/ui/Button";
@@ -8,16 +7,19 @@ import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 import { useNotes } from "@/hooks/useNotes";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
+import { CreateSheet } from "@/components/create/CreateSheet";
 
 function FeedCard({ note }: { note: any }) {
-  // Simple version of FeedCard for Notes page, ideally this would be imported
   return (
     <Card variant="glass" className="mb-4 p-4 border border-[var(--color-border)]">
       <div className="flex items-start gap-3">
         <Avatar size={40} profile={note.profiles} />
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-white font-bold text-sm">{note.profiles?.display_name}</span>
+            <span className="text-white font-bold text-sm">
+              {note.profiles?.display_name || note.profiles?.username || "Creator"}
+            </span>
             <span className="text-[var(--color-text-muted)] text-xs">
               {new Date(note.created_at).toLocaleTimeString([], {
                 hour: "2-digit",
@@ -34,9 +36,12 @@ function FeedCard({ note }: { note: any }) {
 
 export function Notes() {
   const { profile } = useAuth();
-  const { notes, loading, createNote } = useNotes();
+  const { notes, loading, createNote, refreshNotes } = useNotes();
   const [content, setContent] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+  const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handlePost = async () => {
     if (!content.trim() || !profile) return;
@@ -48,6 +53,13 @@ export function Notes() {
     }
     setSubmitting(false);
   };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      toast.success(`Image attached: ${e.target.files[0].name}`);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-[100dvh] bg-[var(--color-background)] pb-28">
       <div className="px-5 pt-4 pb-2">
@@ -69,10 +81,26 @@ export function Notes() {
           </div>
           <div className="flex justify-between items-center pt-3 border-t border-[var(--color-border)]">
             <div className="flex gap-2 text-[var(--color-text-muted)]">
-              <button className="p-2 rounded-full hover:bg-[var(--color-surface-3)] transition">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-full hover:bg-[var(--color-surface-3)] text-white/70 hover:text-white transition"
+                aria-label="Add image"
+              >
                 <Image size={18} />
               </button>
-              <button className="p-2 rounded-full hover:bg-[var(--color-surface-3)] transition">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleFileChange}
+              />
+
+              <button
+                onClick={() => setIsVoiceModalOpen(true)}
+                className="p-2 rounded-full hover:bg-[var(--color-surface-3)] text-white/70 hover:text-white transition"
+                aria-label="Record voice note"
+              >
                 <Mic size={18} />
               </button>
             </div>
@@ -110,10 +138,30 @@ export function Notes() {
         )}
       </div>
 
-      {/* FAB */}
-      <button className="fixed bottom-[88px] right-5 w-14 h-14 bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] rounded-full flex items-center justify-center text-white shadow-lg hover:scale-105 transition-transform z-40">
+      {/* Frame-Constrained Floating FAB */}
+      <button
+        onClick={() => setIsCreateSheetOpen(true)}
+        className="fixed bottom-[88px] right-5 sm:right-[calc(50%-200px)] w-14 h-14 bg-gradient-to-br from-[#FF416C] to-[#8E2DE2] rounded-full flex items-center justify-center text-white shadow-xl hover:scale-105 active:scale-95 transition-transform z-40"
+        aria-label="Create new note"
+      >
         <Plus size={24} />
       </button>
+
+      {isVoiceModalOpen && (
+        <VoiceNoteRecorderModal
+          open={isVoiceModalOpen}
+          onClose={() => setIsVoiceModalOpen(false)}
+          onPublished={() => {
+            refreshNotes();
+            setIsVoiceModalOpen(false);
+          }}
+          mode="note"
+        />
+      )}
+
+      {isCreateSheetOpen && (
+        <CreateSheet open={isCreateSheetOpen} onClose={() => setIsCreateSheetOpen(false)} />
+      )}
     </div>
   );
 }

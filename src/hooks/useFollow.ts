@@ -15,20 +15,22 @@ export function useFollow(targetUserId: string | undefined) {
         if (mounted) setIsFollowing(false);
         return;
       }
-      
+
       const { data, error } = await supabase
         .from("follows")
-        .select("*")
+        .select("status")
         .eq("follower_id", profile.id)
         .eq("following_id", targetUserId)
         .maybeSingle();
-      
+
       if (mounted) {
         setIsFollowing(!!data && !error);
       }
     }
     checkStatus();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [profile?.id, targetUserId]);
 
   const toggleFollow = async () => {
@@ -37,27 +39,42 @@ export function useFollow(targetUserId: string | undefined) {
       return;
     }
     if (profile.id === targetUserId) return;
-    
+
     setLoading(true);
     const newStatus = !isFollowing;
     setIsFollowing(newStatus); // optimistic update
-    
+
     try {
       if (newStatus) {
         const { error } = await supabase.rpc("follow_user", {
           p_follower: profile.id,
-          p_following: targetUserId
+          p_following: targetUserId,
         });
-        if (error) throw error;
+        if (error) {
+          // Fallback to direct INSERT if RPC function doesn't exist
+          const { error: directErr } = await supabase
+            .from("follows")
+            .insert({ follower_id: profile.id, following_id: targetUserId, status: "accepted" });
+          if (directErr && directErr.code !== "23505") throw directErr;
+        }
+        toast.success("Following author!");
       } else {
         const { error } = await supabase.rpc("unfollow_user", {
           p_follower: profile.id,
-          p_following: targetUserId
+          p_following: targetUserId,
         });
-        if (error) throw error;
+        if (error) {
+          // Fallback to direct DELETE
+          const { error: directErr } = await supabase
+            .from("follows")
+            .delete()
+            .match({ follower_id: profile.id, following_id: targetUserId });
+          if (directErr) throw directErr;
+        }
+        toast.info("Unfollowed author");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Failed to update follow status:", err);
       toast.error("Failed to update follow status.");
       setIsFollowing(!newStatus); // revert
     } finally {

@@ -161,8 +161,12 @@ export function Activity() {
 
                   <div className="min-w-0 flex-1">
                     <p className="text-xs text-white leading-snug">
-                      <span className="font-bold">{actor.display_name || actor.name}</span>{" "}
-                      <span className="text-white/70">{notif.content || "liked your Note"}</span>
+                      <span className="font-bold">
+                        {actor.display_name || actor.full_name || actor.username || actor.name}
+                      </span>{" "}
+                      <span className="text-white/70">
+                        {notif.message || notif.content || "interacted with your profile"}
+                      </span>
                     </p>
                     <span className="text-[10px] text-[#24A3C7] font-semibold mt-0.5 block">
                       {timeAgo(notif.created_at || new Date().toISOString())}

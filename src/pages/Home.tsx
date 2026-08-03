@@ -22,7 +22,6 @@ import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
 import { StoriesViewer } from "@/components/stories/StoriesViewer";
 import { CreateNoteModal } from "@/components/notes/CreateNoteModal";
 import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
-import { VoiceReplyRecorder } from "@/components/voice/VoiceReplyRecorder";
 
 export function Home() {
   const { profile } = useAuth();
@@ -43,7 +42,23 @@ export function Home() {
     async function loadStories() {
       try {
         const data = await StoryService.getFeedStories();
-        setStories(data || []);
+        if (data && data.length > 0) {
+          setStories(data);
+        } else {
+          setStories(
+            USERS.map((user, i) => ({
+              id: `story-${user.id}`,
+              user_id: user.id,
+              profiles: {
+                display_name: user.name,
+                avatar_url: user.avatar,
+              },
+              media_url: user.avatar,
+              media_type: i % 2 === 0 ? "image" : "voice",
+              created_at: new Date(Date.now() - i * 3600000).toISOString(),
+            })),
+          );
+        }
       } catch (err) {
         console.error("Failed to load stories", err);
       }
@@ -51,85 +66,73 @@ export function Home() {
     loadStories();
   }, []);
 
-  const dummyReels = [
+  const reelCards = [
     {
       id: "reel-1",
-      user: {
-        name: "Maria Theodore",
-        username: "maria_theodore",
-        avatar: USERS[0].avatar,
-        verified: true,
-      },
-      content:
+      author: "Maria Theodore",
+      username: "maria_theodore",
+      verified: true,
+      avatar: USERS[0].avatar,
+      videoBg:
+        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
+      caption:
         "Short scenes, deep emotions—each reel carries a piece of something special under the Namibian sky.",
       track: "Loop Mode (instrumental)",
       likes: "45.2k",
-      saves: "18.9k",
+      bookmarks: "18.9k",
       comments: "10.2k",
-      image:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=800&q=80",
     },
     {
       id: "reel-2",
-      user: {
-        name: "Lukas Shilongo",
-        username: "lukas_shilongo",
-        avatar: USERS[1].avatar,
-        verified: true,
-      },
-      content: "Windhoek acoustic jams and live session recordings with local creators.",
-      track: "Sunset Vibes (Live)",
-      likes: "28.4k",
-      saves: "9.1k",
-      comments: "4.8k",
-      image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80",
+      author: "Gazza Official",
+      username: "gazzamusic",
+      verified: true,
+      avatar: USERS[1].avatar,
+      videoBg:
+        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&w=800&q=80",
+      caption: "Live acoustic studio session in Windhoek. Join the voice room afterwards!",
+      track: "Kapana Vibes - Studio Jam",
+      likes: "32.8k",
+      bookmarks: "12.4k",
+      comments: "8.6k",
     },
   ];
 
   return (
-    <div className="flex flex-col min-h-full pb-24">
-      {/* 1. Top Discover / Following Tab Selector */}
-      <div className="px-5 pt-1 pb-3 flex items-center gap-6">
-        <button
-          onClick={() => setFeedTab("discover")}
-          className={`text-base font-bold tracking-wide transition ${
-            feedTab === "discover" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Discover
-        </button>
+    <div className="flex flex-col min-h-full pb-24 pt-1">
+      {/* 1. Reelio Top Header Tabs (Discover / Following) */}
+      <div className="px-5 mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => setFeedTab("discover")}
+            className={`text-base font-bold tracking-wide transition ${
+              feedTab === "discover" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            Discover
+          </button>
 
-        <button
-          onClick={() => setFeedTab("following")}
-          className={`text-base font-bold tracking-wide transition ${
-            feedTab === "following" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
-          }`}
-        >
-          Following
-        </button>
-      </div>
+          <button
+            onClick={() => setFeedTab("following")}
+            className={`text-base font-bold tracking-wide transition ${
+              feedTab === "following" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
+            }`}
+          >
+            Following
+          </button>
+        </div>
 
-      {/* Voice-First Quick Actions */}
-      <div className="px-5 mb-3 flex items-center gap-2">
         <button
           onClick={() => setIsVoiceRecorderOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full bg-gradient-to-r from-[#FF9D2E]/20 to-[#24A3C7]/20 text-white border border-[#24A3C7]/30 text-xs font-bold hover:border-[#24A3C7]/60 transition active:scale-95"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-[#FF9D2E]/20 to-[#24A3C7]/20 text-white border border-[#24A3C7]/30 text-xs font-bold hover:border-[#24A3C7]/60 transition active:scale-95"
         >
-          <Mic size={15} className="text-[#FF9D2E]" />
+          <Mic size={14} className="text-[#FF9D2E]" />
           <span>Voice Note</span>
-        </button>
-
-        <button
-          onClick={() => setIsCreateNoteOpen(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded-full glass-panel text-white/70 text-xs font-semibold hover:text-white transition active:scale-95"
-        >
-          <span>What's on your mind?</span>
         </button>
       </div>
 
       {/* 2. Reelio Stories Rail (Rounded Squircles) */}
-      <div className="px-5 mb-5 overflow-x-auto no-scrollbar flex gap-3">
+      <div className="px-5 mb-4 overflow-x-auto no-scrollbar flex gap-3">
         {/* Your Story Squircle Tile */}
         <button
           onClick={() => setIsCreateStoryOpen(true)}
@@ -166,138 +169,120 @@ export function Home() {
             </button>
           );
         })}
-
-        {stories.length === 0 &&
-          USERS.map((user, i) => (
-            <button
-              key={user.id}
-              onClick={() => setIsCreateStoryOpen(true)}
-              className="relative h-28 w-20 flex-shrink-0 rounded-[24px] overflow-hidden border-2 border-[#24A3C7]/60 shadow-lg transition active:scale-95 group"
-            >
-              <img
-                src={user.avatar}
-                alt={user.name}
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-              <span className="absolute bottom-2 left-0 right-0 text-[10px] font-bold text-white text-center truncate px-1">
-                {user.name.split(" ")[0]}
-              </span>
-            </button>
-          ))}
       </div>
 
-      {/* 3. Reelio Immersive Full-Width Media Cards Feed */}
+      {/* 3. Reelio Immersive Full-Card Reels Feed */}
       <div className="px-5 space-y-6 flex-1">
-        {dummyReels.map((reel) => {
-          const isLiked = liked[reel.id];
-          const isSaved = saved[reel.id];
+        {reelCards.map((reel) => {
+          const isReelLiked = liked[reel.id];
+          const isReelSaved = saved[reel.id];
 
           return (
             <div
               key={reel.id}
-              className="relative h-[550px] w-full rounded-[34px] overflow-hidden shadow-2xl border border-white/15 bg-black"
+              className="relative h-[560px] w-full rounded-[32px] overflow-hidden shadow-2xl border border-white/15 bg-black"
             >
-              {/* Media Image Backdrop */}
+              {/* Background Media Image */}
               <img
-                src={reel.image}
-                alt={reel.user.name}
+                src={reel.videoBg}
+                alt={reel.author}
                 className="absolute inset-0 h-full w-full object-cover opacity-90"
               />
 
-              {/* Gradient Overlays */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-black/30 pointer-events-none" />
+              {/* Ambient Dark Gradient Overlays */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/90" />
 
-              {/* Right Floating Glass Action Strip */}
-              <div className="absolute right-4 top-1/3 -translate-y-1/2 flex flex-col items-center gap-4 py-4 px-2.5 rounded-full glass-panel-elevated border border-white/20 backdrop-blur-2xl z-20">
+              {/* Right Vertical Action Strip */}
+              <div className="absolute right-4 bottom-24 flex flex-col items-center gap-4.5 z-20 glass-panel-elevated p-2.5 rounded-full border border-white/20 backdrop-blur-2xl">
+                {/* Heart / Like Button */}
                 <button
                   onClick={() => setLiked((prev) => ({ ...prev, [reel.id]: !prev[reel.id] }))}
-                  className="flex flex-col items-center gap-1 group"
+                  className="flex flex-col items-center gap-1 text-white hover:scale-110 active:scale-90 transition"
+                  aria-label="Like"
                 >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
-                      isLiked ? "bg-red-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
-                    }`}
-                  >
-                    <Heart size={20} fill={isLiked ? "red" : "none"} />
-                  </div>
-                  <span className="text-[10px] font-bold text-white/90">{reel.likes}</span>
+                  <Heart
+                    size={22}
+                    className={isReelLiked ? "text-red-500 fill-red-500" : "text-white"}
+                  />
+                  <span className="text-[10px] font-bold">{reel.likes}</span>
                 </button>
 
+                {/* Bookmark Button */}
                 <button
                   onClick={() => setSaved((prev) => ({ ...prev, [reel.id]: !prev[reel.id] }))}
-                  className="flex flex-col items-center gap-1 group"
+                  className="flex flex-col items-center gap-1 text-white hover:scale-110 active:scale-90 transition"
+                  aria-label="Bookmark"
                 >
-                  <div
-                    className={`flex h-10 w-10 items-center justify-center rounded-full transition ${
-                      isSaved
-                        ? "bg-[#39B7F2] text-white"
-                        : "bg-white/10 text-white hover:bg-white/20"
-                    }`}
-                  >
-                    <Bookmark size={20} fill={isSaved ? "#39B7F2" : "none"} />
-                  </div>
-                  <span className="text-[10px] font-bold text-white/90">{reel.saves}</span>
+                  <Bookmark
+                    size={22}
+                    className={isReelSaved ? "text-[#FF9D2E] fill-[#FF9D2E]" : "text-white"}
+                  />
+                  <span className="text-[10px] font-bold">{reel.bookmarks}</span>
                 </button>
 
+                {/* Comment Count */}
                 <button
-                  onClick={() => toast.info("Opening comments")}
-                  className="flex flex-col items-center gap-1 group"
+                  className="flex flex-col items-center gap-1 text-white hover:scale-110 active:scale-90 transition"
+                  aria-label="Comments"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition">
-                    <MessageCircle size={20} />
-                  </div>
-                  <span className="text-[10px] font-bold text-white/90">{reel.comments}</span>
+                  <MessageCircle size={22} />
+                  <span className="text-[10px] font-bold">{reel.comments}</span>
                 </button>
 
+                {/* Share Button */}
                 <button
-                  onClick={() => toast.success("Share link copied!")}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition"
+                  onClick={() => toast.success("Link copied to clipboard!")}
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-white hover:bg-white/20 transition active:scale-90"
                   aria-label="Share"
                 >
                   <Share2 size={18} />
                 </button>
               </div>
 
-              {/* Bottom Overlay Info, Note-to-Room & Comment Bar */}
-              <div className="absolute bottom-0 left-0 right-0 p-5 z-20 space-y-2.5">
-                {/* Author Info & Follow Button */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2.5">
+              {/* Bottom Content Container (Author, Caption, Track, Comment bar) */}
+              <div className="absolute bottom-4 left-4 right-16 z-20 space-y-3">
+                {/* Author Info Row */}
+                <div className="flex items-center gap-3">
+                  <div className="relative">
                     <Avatar
-                      size={38}
+                      size={40}
                       profile={{
-                        id: "author",
-                        display_name: reel.user.name,
-                        avatar_url: reel.user.avatar,
+                        id: reel.id,
+                        display_name: reel.author,
+                        avatar_url: reel.avatar,
                       }}
                     />
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-bold text-white">@{reel.user.username}</span>
-                      {reel.user.verified && <CheckCircle2 size={15} className="text-[#39B7F2]" />}
-                    </div>
-
-                    <button className="ml-1 px-3 py-1 rounded-full bg-white/20 text-white font-bold text-xs border border-white/30 backdrop-blur-md transition hover:bg-white/30 active:scale-95">
-                      + Follow
-                    </button>
                   </div>
 
-                  {/* Signature Feature: Note-to-Room ("Continue this live") */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-sm font-bold text-white tracking-wide">
+                      @{reel.username}
+                    </span>
+                    {reel.verified && (
+                      <CheckCircle2 size={14} className="text-[#24A3C7] fill-[#24A3C7]/20" />
+                    )}
+                  </div>
+
                   <button
-                    onClick={() => {
-                      toast.success("Starting live Voice Room for this Note!");
-                      navigate("/rooms");
-                    }}
-                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#6139F2]/30 text-[#39B7F2] font-bold text-[11px] border border-[#6139F2]/50 backdrop-blur-md hover:bg-[#6139F2]/50 active:scale-95 transition"
+                    onClick={() => toast.success(`Following @${reel.username}`)}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full glass-panel text-white text-[11px] font-bold border border-white/20 hover:bg-white/20 transition active:scale-95 ml-1"
                   >
-                    <Radio size={12} className="animate-pulse" />
+                    <Plus size={12} />
+                    <span>Follow</span>
+                  </button>
+
+                  <button
+                    onClick={() => navigate("/rooms")}
+                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-[#6139F2] to-[#24A3C7] text-white text-[11px] font-bold shadow-md hover:opacity-90 transition active:scale-95 ml-auto"
+                  >
+                    <Radio size={12} />
                     <span>Continue live</span>
                   </button>
                 </div>
 
                 {/* Caption Text */}
                 <p className="text-xs text-white/95 leading-relaxed font-normal pr-16 line-clamp-2">
-                  {reel.content}
+                  {reel.caption}
                 </p>
 
                 {/* Music Track Pill */}

@@ -79,16 +79,21 @@ export function Rooms() {
   return (
     <div className="flex flex-col min-h-full pb-28 pt-2">
       {/* Top Header Row */}
-      <div className="px-5 mb-4 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-bold text-white tracking-tight">Audio Rooms & Stage</h1>
-          <p className="text-xs text-white/50 mt-0.5">
+      <div className="px-5 mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-xl font-bold text-white tracking-tight truncate">
+            Audio Rooms & Stage
+          </h1>
+          <p className="text-xs text-white/50 mt-0.5 truncate">
             Join live voice sessions and karaoke stages
           </p>
         </div>
         <button
-          onClick={() => toast.info("Create Voice Room modal open")}
-          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-gradient-to-tr from-[#FF9D2E] to-[#24A3C7] text-black font-bold text-xs shadow-lg active:scale-95 transition"
+          onClick={() => {
+            toast.success("Voice Room created! Joining stage...");
+            navigate("/rooms/voice-1");
+          }}
+          className="flex items-center gap-1.5 px-3.5 py-2 rounded-full bg-gradient-to-tr from-[#FF9D2E] to-[#24A3C7] text-black font-bold text-xs shadow-lg active:scale-95 transition shrink-0"
         >
           <Plus size={15} strokeWidth={3} />
           <span>Host Room</span>

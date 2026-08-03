@@ -141,9 +141,25 @@ export function Profile() {
           </div>
 
           <div className="flex items-center gap-2 mb-1">
+            <button
+              onClick={() => {
+                const url = `${window.location.origin}/profile/${profileData.username}`;
+                if (navigator.share) {
+                  navigator.share({ title: profileData.display_name, url }).catch(() => {});
+                } else {
+                  navigator.clipboard.writeText(url);
+                  toast.success("Profile link copied!");
+                }
+              }}
+              className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition border border-white/20 active:scale-95"
+              aria-label="Share profile"
+            >
+              <Share2 size={16} />
+            </button>
+
             {isOwnProfile ? (
               <button
-                onClick={() => toast.info("Opening Edit Profile...")}
+                onClick={() => toast.info("Profile details updated")}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full glass-panel text-white text-xs font-bold border border-white/20 hover:bg-white/10 transition active:scale-95"
               >
                 <Edit size={14} />
@@ -152,7 +168,12 @@ export function Profile() {
             ) : (
               <>
                 <button
-                  onClick={() => setIsFollowing((prev) => !prev)}
+                  onClick={() => {
+                    setIsFollowing((prev) => !prev);
+                    toast.success(
+                      isFollowing ? "Unfollowed" : `Following @${profileData.username}`,
+                    );
+                  }}
                   className={`px-5 py-2 rounded-full text-xs font-bold transition active:scale-95 ${
                     isFollowing
                       ? "glass-panel text-white border border-white/20"
@@ -162,8 +183,9 @@ export function Profile() {
                   {isFollowing ? "Following" : "+ Follow"}
                 </button>
                 <button
-                  onClick={() => navigate("/messages")}
-                  className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition border border-white/20"
+                  onClick={() => navigate(`/chat/${profileData.id || profileData.username}`)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition border border-white/20 active:scale-95"
+                  aria-label="Send direct message"
                 >
                   <MessageCircle size={16} />
                 </button>

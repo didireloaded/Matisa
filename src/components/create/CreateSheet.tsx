@@ -8,16 +8,17 @@ import {
   Calendar,
   Video,
   Clock,
-  Globe,
   Mic,
   Music2,
   ChevronRight,
   ArrowLeft,
-  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
+import { NoteService } from "@/services/NoteService";
 import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
+import { CreateStoryModal } from "@/components/stories/CreateStoryModal";
 
 interface CreateSheetProps {
   open: boolean;
@@ -26,26 +27,45 @@ interface CreateSheetProps {
 
 export function CreateSheet({ open, onClose }: CreateSheetProps) {
   const navigate = useNavigate();
+  const { profile, requireAuth } = useAuth();
   const [level, setLevel] = useState<"root" | "note-type" | "note-composer" | "room-type">("root");
 
   const [noteKind, setNoteKind] = useState<"temporary" | "permanent">("temporary");
   const [noteContent, setNoteContent] = useState("");
-  const [privacy, setPrivacy] = useState("public");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [voiceRecorderOpen, setVoiceRecorderOpen] = useState(false);
+  const [storyModalOpen, setStoryModalOpen] = useState(false);
 
   if (!open) return null;
 
-  const handleCreateNote = () => {
+  const handleCreateNote = async () => {
+    if (!profile) return requireAuth();
     if (!noteContent.trim()) {
       toast.error("Please write something in your note");
       return;
     }
-    toast.success(
-      noteKind === "temporary" ? "Temporary 24h Note published!" : "Permanent Note published!",
-    );
-    setNoteContent("");
-    setLevel("root");
-    onClose();
+
+    setIsSubmitting(true);
+    try {
+      const result = await NoteService.createNote(profile.id, noteContent.trim(), "text");
+      if (result) {
+        toast.success(
+          noteKind === "temporary"
+            ? "Temporary 24h Note published! 🚀"
+            : "Permanent Note published! 📌",
+        );
+        setNoteContent("");
+        setLevel("root");
+        onClose();
+      } else {
+        toast.error("Could not publish Note");
+      }
+    } catch (err) {
+      console.error("Failed to publish Note from CreateSheet:", err);
+      toast.error("Failed to publish Note");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -59,9 +79,14 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: "100%", opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="relative z-10 w-full max-w-[430px] rounded-t-[32px] glass-panel-elevated p-6 border-t border-white/20 shadow-2xl backdrop-blur-2xl bg-[#06101D]/95 text-white"
+          className="relative z-10 w-full max-w-[430px] max-h-[calc(100dvh-16px)] overflow-y-auto pb-[calc(24px+env(safe-area-inset-bottom))] rounded-t-[32px] glass-panel-elevated p-6 border-t border-white/20 shadow-2xl backdrop-blur-2xl bg-[#06101D]/95 text-white no-scrollbar"
         >
-          {/* Top Grab Handle & Header */}
+          {/* Centered Drag Handle */}
+          <div className="flex justify-center mb-4">
+            <div className="h-1.5 w-12 rounded-full bg-white/20" />
+          </div>
+
+          {/* Header Bar */}
           <div className="flex items-center justify-between mb-5">
             {level !== "root" ? (
               <button
@@ -71,10 +96,10 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
                 <ArrowLeft size={16} />
               </button>
             ) : (
-              <div className="h-1.5 w-12 rounded-full bg-white/20 mx-auto" />
+              <div className="w-8" />
             )}
 
-            <h2 className="text-base font-bold text-white tracking-wide">
+            <h2 className="text-base font-bold text-white tracking-wide text-center flex-1">
               {level === "root" && "Create on Matisa"}
               {level === "note-type" && "Select Note Type"}
               {level === "note-composer" &&
@@ -132,8 +157,7 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
               {/* 2. Story */}
               <button
                 onClick={() => {
-                  onClose();
-                  toast.info("Opening Story creator...");
+                  setStoryModalOpen(true);
                 }}
                 className="flex items-center justify-between p-4 rounded-[22px] glass-panel hover:border-white/30 transition active:scale-[0.98] group"
               >
@@ -186,24 +210,25 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
                 <ChevronRight size={18} className="text-white/40 group-hover:text-white" />
               </button>
 
-              {/* 5. Live */}
+              {/* 5. Live (Coming Soon) */}
               <button
-                onClick={() => {
-                  onClose();
-                  toast.info("Starting Live Video stream...");
-                }}
-                className="flex items-center justify-between p-4 rounded-[22px] glass-panel hover:border-white/30 transition active:scale-[0.98] group"
+                disabled
+                className="flex items-center justify-between p-4 rounded-[22px] glass-panel opacity-60 cursor-not-allowed group"
               >
                 <div className="flex items-center gap-3.5">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/20 text-red-400">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-full bg-red-500/10 text-red-400">
                     <Video size={22} />
                   </div>
                   <div className="text-left">
-                    <h3 className="text-sm font-bold text-white">Live Broadcast</h3>
-                    <p className="text-xs text-white/50">Stream live video to followers</p>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-bold text-white">Live Broadcast</h3>
+                      <span className="px-2 py-0.5 rounded-full bg-white/10 text-[10px] font-semibold text-white/60">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <p className="text-xs text-white/40">Live video streaming coming to Namibia</p>
                   </div>
                 </div>
-                <ChevronRight size={18} className="text-white/40 group-hover:text-white" />
               </button>
             </div>
           )}
@@ -330,6 +355,10 @@ export function CreateSheet({ open, onClose }: CreateSheetProps) {
               }}
               mode="note"
             />
+          )}
+
+          {storyModalOpen && (
+            <CreateStoryModal open={storyModalOpen} onClose={() => setStoryModalOpen(false)} />
           )}
         </motion.div>
       </div>

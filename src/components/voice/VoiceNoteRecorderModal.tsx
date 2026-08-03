@@ -16,6 +16,7 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { VoiceWaveform } from "@/components/ui/VoiceWaveform";
+import { NoteService } from "@/services/NoteService";
 
 interface VoiceNoteRecorderModalProps {
   open: boolean;
@@ -191,6 +192,28 @@ export function VoiceNoteRecorderModal({
 
       const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
       const publicUrl = publicData.publicUrl;
+
+      if (mode === "note" && session?.user) {
+        if (noteLifetime === "temporary") {
+          await NoteService.createTemporaryNote(
+            session.user.id,
+            caption.trim(),
+            "voice",
+            publicUrl,
+            elapsed,
+            liveAmplitudes,
+          );
+        } else {
+          await NoteService.createPermanentNote(
+            session.user.id,
+            caption.trim(),
+            "voice",
+            publicUrl,
+            elapsed,
+            liveAmplitudes,
+          );
+        }
+      }
 
       onPublished?.(publicUrl);
 

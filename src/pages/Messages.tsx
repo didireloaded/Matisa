@@ -7,6 +7,7 @@ import { Avatar } from "@/components/common/Avatar";
 import { USERS } from "@/data/dummy";
 import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
 import { VoicePlayer } from "@/components/ui/VoicePlayer";
+import { toast } from "sonner";
 
 export function Messages() {
   const { profile } = useAuth();
@@ -111,6 +112,12 @@ export function Messages() {
     loadConvs();
   }, [profile]);
 
+  const displayConversations = conversations.filter((c) => {
+    if (activeTab === "unread") return c.unread;
+    if (activeTab === "requests") return c.is_request;
+    return true; // inbox
+  });
+
   return (
     <div className="flex flex-col min-h-full pb-28 pt-2">
       {/* 1. Reelio Inbox Top Header */}
@@ -126,6 +133,7 @@ export function Messages() {
         <h1 className="text-xl font-bold text-white tracking-tight font-display">Message</h1>
 
         <button
+          onClick={() => toast.info("Message inbox options")}
           className="flex h-10 w-10 items-center justify-center rounded-full glass-panel text-white hover:bg-white/10 transition border border-white/15 active:scale-95"
           aria-label="Options"
         >
@@ -283,7 +291,7 @@ export function Messages() {
             </div>
           </div>
         ) : (
-          conversations.map((c) => {
+          displayConversations.map((c) => {
             const other = c.otherProfile || USERS[0];
             return (
               <div

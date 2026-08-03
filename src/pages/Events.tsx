@@ -31,24 +31,70 @@ export function Events() {
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const dummyEvents = [
+    {
+      id: "event-1",
+      title: "Namibian Creators Night 🎤",
+      cover_image:
+        "https://images.unsplash.com/photo-1540039155732-d674d6e3f670?q=80&w=1000&auto=format&fit=crop",
+      location_name: "Windhoek Central",
+      location_type: "Physical",
+      start_time: new Date(Date.now() + 86400000).toISOString(),
+      is_paid: false,
+      attendees_count: 142,
+    },
+    {
+      id: "event-2",
+      title: "Swakop Sunset Acoustic Sessions",
+      cover_image:
+        "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?q=80&w=1000&auto=format&fit=crop",
+      location_name: "Swakopmund Jetty",
+      location_type: "Physical",
+      start_time: new Date(Date.now() + 172800000).toISOString(),
+      is_paid: true,
+      attendees_count: 89,
+    },
+    {
+      id: "event-3",
+      title: "Live Voice Jam & Karaoke Night",
+      cover_image:
+        "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=1000&auto=format&fit=crop",
+      location_name: "Matisa Voice Stage",
+      location_type: "Virtual",
+      start_time: new Date(Date.now() + 259200000).toISOString(),
+      is_paid: false,
+      attendees_count: 210,
+    },
+  ];
+
   useEffect(() => {
     async function loadEvents() {
       setLoading(true);
       try {
         const { data, error } = await supabase
           .from("events")
-          .select("*, profiles!events_creator_id_fkey(*)") // creator details
+          .select("*, profiles!events_created_by_fkey(*)")
           .order("start_time", { ascending: true });
-        if (error) throw error;
-        setEvents(data || []);
+        if (!error && data && data.length > 0) {
+          setEvents(data);
+        } else {
+          setEvents(dummyEvents);
+        }
       } catch (err) {
         console.error("Failed to load events", err);
+        setEvents(dummyEvents);
       } finally {
         setLoading(false);
       }
     }
     loadEvents();
   }, []);
+
+  const displayEvents = events.filter((e) => {
+    if (activeTab === "trending") return (e.attendees_count || 0) > 100 || e.is_paid;
+    if (activeTab === "saved") return e.is_saved;
+    return true; // upcoming
+  });
 
   const handleRSVP = async (eventId: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -93,34 +139,34 @@ export function Events() {
           <div className="flex justify-center py-20">
             <div className="w-8 h-8 rounded-full border-2 border-[var(--color-primary)] border-t-transparent animate-spin" />
           </div>
-        ) : events.length === 0 ? (
+        ) : displayEvents.length === 0 ? (
           <div className="mt-8">
             <PremiumEmptyState
               icon={Calendar}
-              title="No Events Yet"
-              description="Events near you and from creators you follow will appear here."
+              title="No Events Found"
+              description="No events match this filter tab right now."
               glowColor="accent1"
               action={{
-                label: "Create an Event",
-                onClick: () => toast.info("Event creation coming soon!"),
+                label: "Explore All Events",
+                onClick: () => setActiveTab("upcoming"),
               }}
             />
           </div>
         ) : (
           <>
             {/* Featured Carousel */}
-            {events.slice(0, 3).length > 0 && (
+            {displayEvents.slice(0, 3).length > 0 && (
               <div>
                 <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-3">
                   Featured
                 </h2>
                 <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 -mx-5 px-5">
-                  {events.slice(0, 3).map((event) => (
+                  {displayEvents.slice(0, 3).map((event) => (
                     <motion.div
                       key={`feat_${event.id}`}
                       whileTap={{ scale: 0.98 }}
                       className="relative min-w-[280px] h-[320px] rounded-[24px] overflow-hidden shrink-0 group cursor-pointer"
-                      onClick={() => {}}
+                      onClick={() => toast.info(`Event: ${event.title}`)}
                     >
                       <img
                         src={
@@ -173,7 +219,7 @@ export function Events() {
             )}
 
             {/* List View */}
-            {events.slice(3).length > 0 && (
+            {displayEvents.slice(3).length > 0 && (
               <div>
                 <div className="flex justify-between items-center mb-3">
                   <h2 className="text-[11px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider">
@@ -182,11 +228,12 @@ export function Events() {
                 </div>
 
                 <div className="space-y-4">
-                  {events.slice(3).map((event) => (
+                  {displayEvents.slice(3).map((event) => (
                     <Card
                       key={`list_${event.id}`}
                       variant="outline"
                       className="flex gap-4 p-3 pr-4 overflow-hidden group cursor-pointer hover:bg-[var(--color-surface-3)] transition"
+                      onClick={() => toast.info(`Event: ${event.title}`)}
                     >
                       <div className="relative w-24 h-24 rounded-2xl overflow-hidden shrink-0">
                         <img

@@ -8,9 +8,12 @@ import {
   ArrowLeft,
   Heart,
   LogOut,
-  Radio,
   Music2,
-  Sparkles,
+  UserPlus,
+  Shield,
+  MessageSquare,
+  Lock,
+  X,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +29,15 @@ export function KaraokeRoom() {
   const { profile } = useAuth();
   const { joinRoom, leaveRoom, isMuted: isContextMuted, toggleMute } = useVoice();
   const [roomData, setRoomData] = useState<any>(null);
-  const [floatingHearts, setFloatingHearts] = useState<{ id: string }[]>([]);
+  const [floatingHearts, setFloatingHearts] = useState<{ id: string; x: number }[]>([]);
+  const [isFollowingSinger, setIsFollowingSinger] = useState(false);
+  const [queueList, setQueueList] = useState([
+    { id: "q1", name: "Michelle V.", avatar: USERS[1].avatar, song: "Midnight Sunset" },
+    { id: "q2", name: "DJ Castro", avatar: USERS[2].avatar, song: "Windhoek Beats" },
+  ]);
+  const [isQueueOpen, setIsQueueOpen] = useState(false);
+  const [isHostControlsOpen, setIsHostControlsOpen] = useState(false);
+  const [isQueueLocked, setIsQueueLocked] = useState(false);
 
   useEffect(() => {
     if (!roomId) return;
@@ -52,10 +63,27 @@ export function KaraokeRoom() {
 
   const handleSendReaction = () => {
     const id = Math.random().toString(36).substring(2, 9);
-    setFloatingHearts((prev) => [...prev, { id }]);
+    const x = Math.random() * 60 + 20;
+    setFloatingHearts((prev) => [...prev, { id, x }]);
     setTimeout(() => {
       setFloatingHearts((prev) => prev.filter((h) => h.id !== id));
-    }, 2000);
+    }, 1800);
+  };
+
+  const handleJoinQueue = () => {
+    if (isQueueLocked) {
+      return toast.error("Queue is locked by host");
+    }
+    toast.success("Joined singer queue!");
+    setQueueList((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(),
+        name: profile?.display_name || "You",
+        avatar: profile?.avatar_url || USERS[0].avatar,
+        song: "Namibian Sunrise",
+      },
+    ]);
   };
 
   const host = roomData?.profiles || USERS[0];
@@ -69,7 +97,7 @@ export function KaraokeRoom() {
       </div>
 
       {/* Top Bar Navigation */}
-      <div className="relative z-20 flex items-center justify-between px-5 pt-12 pb-4 glass-header">
+      <div className="relative z-20 flex items-center justify-between px-5 pt-10 pb-4 glass-header">
         <div className="flex items-center gap-3.5">
           <button
             onClick={handleLeave}
@@ -80,18 +108,25 @@ export function KaraokeRoom() {
           </button>
           <div>
             <h1 className="text-base font-bold text-white leading-tight">
-              {roomData?.title || "Windhoek Karaoke & Audio Lounge"}
+              {roomData?.title || "Windhoek Karaoke Stage 🎤"}
             </h1>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="h-2 w-2 rounded-full bg-red-500 animate-ping" />
-              <span className="text-[11px] font-bold text-red-400 uppercase tracking-wider">
-                LIVE STAGE
+              <span className="h-2 w-2 rounded-full bg-[#FF9D2E] animate-ping" />
+              <span className="text-[11px] font-bold text-[#FF9D2E] uppercase tracking-wider">
+                KARAOKE LIVE STAGE
               </span>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setIsHostControlsOpen(!isHostControlsOpen)}
+            className="flex h-9 w-9 items-center justify-center rounded-full glass-panel text-[#FF9D2E] border border-[#FF9D2E]/40 active:scale-95"
+            aria-label="Host Tools"
+          >
+            <Shield size={17} />
+          </button>
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full glass-panel text-xs text-white/80 font-semibold">
             <Users size={14} className="text-[#39B7F2]" />
             <span>142</span>
@@ -108,10 +143,11 @@ export function KaraokeRoom() {
               <motion.div
                 key={h.id}
                 initial={{ opacity: 0, y: 100, scale: 0.5 }}
-                animate={{ opacity: 1, y: -200, scale: 1.4 }}
+                animate={{ opacity: 1, y: -220, scale: 1.5 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 1.8, ease: "easeOut" }}
-                className="absolute bottom-20 right-12 text-[#FF9D2E]"
+                style={{ left: `${h.x}%` }}
+                className="absolute bottom-20 text-[#FF9D2E]"
               >
                 <Heart size={36} fill="#FF9D2E" className="drop-shadow-lg" />
               </motion.div>
@@ -140,27 +176,142 @@ export function KaraokeRoom() {
             </div>
           </div>
 
-          <h2 className="mt-4 text-xl font-bold text-white tracking-tight">
-            {host.display_name || host.name || "Host Performer"}
-          </h2>
+          <div className="flex items-center gap-2 mt-4">
+            <h2 className="text-xl font-bold text-white tracking-tight">
+              {host.display_name || host.name || "Host Performer"}
+            </h2>
+            <button
+              onClick={() => {
+                setIsFollowingSinger(!isFollowingSinger);
+                toast.success(isFollowingSinger ? "Unfollowed performer" : "Following performer!");
+              }}
+              className="p-1.5 rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95"
+            >
+              <UserPlus size={15} />
+            </button>
+          </div>
           <span className="mt-1 px-3 py-1 rounded-full bg-[#FF9D2E]/15 text-[#FF9D2E] text-xs font-bold border border-[#FF9D2E]/30 uppercase tracking-wider">
-            On Mic • Live Singer
+            On Stage • Live Singer
           </span>
         </div>
 
         {/* Lyrics Display Banner */}
-        <div className="mt-8 w-full max-w-[340px] rounded-[22px] glass-panel-elevated p-4 text-center border border-white/10">
+        <div className="mt-6 w-full max-w-[340px] rounded-[22px] glass-panel-elevated p-4 text-center border border-white/10">
           <p className="text-[11px] font-bold uppercase tracking-wider text-[#39B7F2]">
-            Current Track
+            Current Song
           </p>
           <h3 className="text-sm font-bold text-white mt-0.5">Kapana Vibes — Gaza Jam Session</h3>
           <p className="text-xs italic text-white/70 mt-2 font-serif">
-            "Under the Windhoek sky, we sing as one..."
+            "Under the Namibian sky, we sing as one..."
           </p>
+        </div>
+
+        {/* Singer Queue Action Row */}
+        <div className="mt-4 flex items-center gap-3">
+          <button
+            onClick={handleJoinQueue}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-[#FF9D2E] to-[#24A3C7] text-black font-bold text-xs shadow-lg active:scale-95 transition"
+          >
+            <Music2 size={15} />
+            <span>Request to Sing</span>
+          </button>
+
+          <button
+            onClick={() => setIsQueueOpen(!isQueueOpen)}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-full glass-panel text-white text-xs font-bold border border-white/15 active:scale-95 transition"
+          >
+            <span>Queue ({queueList.length})</span>
+          </button>
         </div>
       </div>
 
-      {/* Floating Bottom Audio Controls */}
+      {/* Drawer: Singer Queue */}
+      {isQueueOpen && (
+        <div className="absolute inset-x-0 bottom-24 z-40 p-4 bg-[#06101D]/95 glass-panel-elevated border-t border-white/20 rounded-t-[28px] max-h-60 overflow-y-auto space-y-2">
+          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+            Upcoming Singer Queue
+          </h3>
+          {queueList.map((q, idx) => (
+            <div
+              key={q.id}
+              className="flex items-center justify-between p-2 rounded-2xl glass-panel text-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <span className="font-bold text-[#FF9D2E]">#{idx + 1}</span>
+                <Avatar
+                  size={32}
+                  profile={{ id: q.id, display_name: q.name, avatar_url: q.avatar }}
+                />
+                <div>
+                  <h4 className="font-bold text-white leading-tight">{q.name}</h4>
+                  <span className="text-[10px] text-white/50">{q.song}</span>
+                </div>
+              </div>
+              {profile && (
+                <button
+                  onClick={() => {
+                    setQueueList((prev) => prev.filter((item) => item.id !== q.id));
+                    toast.success("Removed from queue");
+                  }}
+                  aria-label="Remove from queue"
+                  className="text-white/40 hover:text-white text-[10px]"
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Drawer: Host Controls */}
+      {isHostControlsOpen && (
+        <div className="absolute inset-x-0 bottom-24 z-40 p-5 bg-[#06101D]/95 glass-panel-elevated border-t border-[#FF9D2E]/40 rounded-t-[28px] space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="text-xs font-bold text-[#FF9D2E] uppercase tracking-wider">
+              Host Session Controls
+            </h3>
+            <button onClick={() => setIsHostControlsOpen(false)} aria-label="Close Host Tools">
+              <X size={16} />
+            </button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs">
+            <button
+              onClick={() => {
+                setIsQueueLocked(!isQueueLocked);
+                toast.info(isQueueLocked ? "Queue unlocked" : "Queue locked");
+              }}
+              className="p-2.5 rounded-xl glass-panel text-white font-bold flex items-center justify-center gap-1.5"
+            >
+              <Lock size={14} />
+              <span>{isQueueLocked ? "Unlock Queue" : "Lock Queue"}</span>
+            </button>
+            <button
+              onClick={() => toast.info("Performance time set to 3 mins")}
+              className="p-2.5 rounded-xl glass-panel text-white font-bold"
+            >
+              Max Time: 3m
+            </button>
+            <button
+              onClick={() => toast.info("Singer muted")}
+              className="p-2.5 rounded-xl glass-panel text-white font-bold"
+            >
+              Mute Singer
+            </button>
+            <button
+              onClick={() => {
+                toast.success("Session ended for everyone");
+                handleLeave();
+              }}
+              className="p-2.5 rounded-xl bg-red-500/20 text-red-400 font-bold border border-red-500/30"
+            >
+              End Room
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Bottom Controls */}
       <div className="relative z-20 p-5 pb-safe glass-header">
         <div className="mx-auto flex max-w-[360px] items-center justify-between rounded-full glass-panel-elevated px-5 py-3 border border-white/15 shadow-2xl">
           <button

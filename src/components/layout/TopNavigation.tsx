@@ -12,7 +12,10 @@ export function TopNavigation() {
         className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/10"
         aria-label="Menu Settings"
       >
-        <Menu size={18} />
+        <div className="flex flex-col gap-1 w-4">
+          <span className="h-[2px] w-full bg-white rounded-full" />
+          <span className="h-[2px] w-full bg-white rounded-full" />
+        </div>
       </button>
 
       {/* Center Brand Title */}

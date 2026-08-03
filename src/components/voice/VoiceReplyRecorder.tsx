@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { VoiceWaveform } from "@/components/ui/VoiceWaveform";
 import { Avatar } from "@/components/common/Avatar";
+import { NoteService } from "@/services/NoteService";
 
 interface VoiceReplyProps {
   noteId: string;
@@ -117,6 +118,8 @@ export function VoiceReplyRecorder({ noteId, onSent }: VoiceReplyProps) {
         audio_url: pub.publicUrl,
         duration_seconds: elapsed,
       });
+
+      await NoteService.addNoteComment(noteId, session.user.id, null, pub.publicUrl, "voice");
 
       toast.success("Voice reply sent — Pass the Mic! 🎤");
       discard();
