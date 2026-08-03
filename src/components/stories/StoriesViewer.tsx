@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -42,6 +43,15 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
   const [floatingReactions, setFloatingReactions] = useState<
     { id: number; emoji: string; x: number }[]
   >([]);
+
+  // Lock body scroll while viewing story
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
 
   const currentStory = stories[currentIndex];
 
@@ -89,18 +99,19 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
 
   const handleTap = (e: React.MouseEvent<HTMLDivElement>) => {
     const width = e.currentTarget.offsetWidth;
-    const x = e.nativeEvent.offsetX;
-    if (x < width / 3) {
+    const x = e.clientX;
+    if (x < width * 0.35) {
       handlePrev();
     } else {
       handleNext();
     }
   };
 
-  const triggerReaction = (emoji: string) => {
+  const handleSendEmoji = (emoji: string) => {
     const id = Date.now();
-    const x = Math.random() * 60 + 20; // 20% to 80% screen width
+    const x = Math.random() * 60 + 20;
     setFloatingReactions((prev) => [...prev, { id, emoji, x }]);
+    toast.success(`Reaction ${emoji} sent to @${currentStory.username}!`);
     setTimeout(() => {
       setFloatingReactions((prev) => prev.filter((r) => r.id !== id));
     }, 1500);
@@ -114,13 +125,13 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
 
   if (!currentStory) return null;
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="fixed inset-0 z-50 bg-black text-white flex flex-col overflow-hidden select-none"
+        className="fixed inset-0 z-[120] bg-black text-white flex flex-col overflow-hidden select-none"
       >
         {/* Story Background Container with Tap & Press to Pause */}
         <div
@@ -280,7 +291,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
               key={emoji}
               onClick={(e) => {
                 e.stopPropagation();
-                triggerReaction(emoji);
+                handleSendEmoji(emoji);
               }}
               className="px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 backdrop-blur-md text-base border border-white/15 transition active:scale-125"
             >
@@ -320,7 +331,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
             onClick={(e) => {
               e.stopPropagation();
               setIsLiked(!isLiked);
-              if (!isLiked) triggerReaction("❤️");
+              if (!isLiked) handleSendEmoji("❤️");
             }}
             aria-label="Like Story"
           >
@@ -340,7 +351,8 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
           </button>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }
 
