@@ -165,8 +165,8 @@ export function Events() {
       <div className="px-4 py-3 flex gap-2 overflow-x-auto no-scrollbar">
         {[
           { id: "all", label: "All Events" },
-          { id: "in_person", label: "📍 Physical" },
-          { id: "virtual", label: "🎙️ Live Virtual" },
+          { id: "in_person", label: "Physical" },
+          { id: "virtual", label: "Live Virtual" },
           { id: "saved", label: "Saved" },
         ].map((tab) => (
           <button

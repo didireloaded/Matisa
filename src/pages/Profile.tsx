@@ -94,7 +94,7 @@ export function Profile() {
     display_name: currentUser?.display_name || "Hanna Dowie",
     username: currentUser?.username || "hanna_d",
     avatar_url: currentUser?.avatar_url || USERS[0].avatar,
-    bio: "Windhoek born 🌿 Creative director & storyteller",
+    bio: "Windhoek born • Creative director & storyteller",
     location: "Windhoek, Namibia",
     followers_count: 1240,
     following_count: 380,
@@ -315,7 +315,7 @@ export function Profile() {
             ))
           ) : (
             <div className="glass-panel p-4 rounded-[22px] text-xs text-white/90 leading-relaxed border border-white/10">
-              "Swakopmund sunsets could cure anything honestly 🌅 Fog rolling over the dunes..."
+              "Swakopmund sunsets could cure anything honestly. Fog rolling over the dunes..."
               <div className="mt-2 text-[10px] text-white/50 font-semibold">
                 Posted 2h ago • 12 replies
               </div>

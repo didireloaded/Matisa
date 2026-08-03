@@ -100,7 +100,7 @@ export function CreateVoiceRoomModal({ open, onClose }: CreateVoiceRoomModalProp
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="e.g., Friday Night Vibes 🎤"
+                placeholder="e.g., Friday Night Vibes"
                 maxLength={40}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground focus:border-[#F44336] focus:outline-none focus:ring-1 focus:ring-[#F44336]"
               />

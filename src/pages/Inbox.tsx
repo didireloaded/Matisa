@@ -16,7 +16,7 @@ const conversations = [
     id: '2',
     name: 'Jason Mutonga',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    lastMessage: 'The voice room was fire last night 🔥',
+    lastMessage: 'The voice room was great last night',
     time: '1h',
     unread: 0,
     online: false,

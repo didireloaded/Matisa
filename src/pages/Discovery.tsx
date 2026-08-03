@@ -96,7 +96,7 @@ export function Discovery() {
             },
             {
               id: "room-2",
-              title: "Swakopmund Karaoke Stage 🎤",
+              title: "Swakopmund Karaoke Stage",
               host: "Michelle V.",
               avatar:
                 "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80",

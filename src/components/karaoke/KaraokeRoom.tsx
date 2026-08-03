@@ -109,10 +109,10 @@ export function KaraokeRoom() {
           </button>
           <div>
             <h1 className="text-base font-bold text-white leading-tight">
-              {roomData?.title || "Windhoek Karaoke Stage 🎤"}
+              {roomData?.title || "Windhoek Karaoke Stage"}
             </h1>
             <div className="flex items-center gap-1.5 mt-0.5">
-              <span className="h-2 w-2 rounded-full bg-[#FF9D2E] animate-ping" />
+              <div className="w-2 h-2 rounded-full bg-[#FF9D2E] shadow-[0_0_8px_rgba(255,157,46,0.6)]" />
               <span className="text-[11px] font-bold text-[#FF9D2E] uppercase tracking-wider">
                 KARAOKE LIVE STAGE
               </span>

@@ -112,7 +112,7 @@ export function Home() {
       avatar: USERS[2].avatar,
       videoBg:
         "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=800&q=80",
-      caption: "Swakopmund Sunset Jam Session — live voice notes dropping tonight 🎤",
+      caption: "Swakopmund Sunset Jam Session — live voice notes dropping tonight",
       likesCount: 215,
       bookmarksCount: 67,
       commentsCount: 42,

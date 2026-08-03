@@ -23,7 +23,7 @@ export function LiveRoomCard() {
         </div>
       </div>
 
-      <h3 className="text-white text-xl font-bold mb-2">Late Night R&B Karaoke 🎤</h3>
+      <h3 className="text-white text-xl font-bold mb-2">Late Night R&B Karaoke</h3>
       <p className="text-white/60 text-sm mb-6">Hosted by @sarah_music • 4 friends inside</p>
 
       <div className="flex items-center gap-3">

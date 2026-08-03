@@ -27,8 +27,7 @@ export function NoteDetail() {
         const fallbackNote: Note = {
           id: noteId || "demo-note-1",
           user_id: "usr-1",
-          content:
-            "Windhoek acoustic session dropping live tonight on Matisa! 🌅 Join us in Katutura or listen live in the room.",
+          content: "Windhoek acoustic session dropping live tonight on Matisa! Join us in Katutura or listen live in the room.",
           created_at: new Date().toISOString(),
           type: "text",
           note_kind: "permanent",
