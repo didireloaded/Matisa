@@ -1,6 +1,5 @@
-import { useState, useRef } from "react";
 import { Play, Pause, Mic } from "lucide-react";
-import { motion } from "framer-motion";
+import { useRecordedVoicePlayback } from "@/features/recorded-voice";
 
 interface ProfileVoiceIntroProps {
   audioUrl?: string;
@@ -12,34 +11,25 @@ interface ProfileVoiceIntroProps {
 
 export function ProfileVoiceIntro({
   audioUrl,
-  durationSeconds = 0,
-  waveform = Array(20).fill(10),
+  durationSeconds = 15,
+  waveform = Array(20).fill(40),
   isOwner = false,
   onRecordNew,
 }: ProfileVoiceIntroProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playback = useRecordedVoicePlayback();
+  const playbackId = `profile-intro-${audioUrl}`;
+  const isPlayingThis = playback.activeId === playbackId && playback.isPlaying;
+  const progress = isPlayingThis
+    ? (playback.currentTime / (playback.duration || durationSeconds || 1)) * 100
+    : 0;
 
   const togglePlayback = () => {
-    if (!audioRef.current && audioUrl) return;
-    if (isPlaying) {
-      audioRef.current?.pause();
+    if (!audioUrl) return;
+    if (isPlayingThis) {
+      playback.pause();
     } else {
-      audioRef.current?.play();
+      playback.play(playbackId, audioUrl, durationSeconds);
     }
-    setIsPlaying(!isPlaying);
-  };
-
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-    const current = audioRef.current.currentTime;
-    setProgress((current / durationSeconds) * 100);
-  };
-
-  const handleEnded = () => {
-    setIsPlaying(false);
-    setProgress(0);
   };
 
   if (!audioUrl) {
@@ -61,9 +51,9 @@ export function ProfileVoiceIntro({
     <div className="flex items-center gap-3 bg-white/5 backdrop-blur-md rounded-full pl-2 pr-4 py-1.5 border border-white/10 w-fit">
       <button
         onClick={togglePlayback}
-        className="w-8 h-8 rounded-full bg-[var(--primary)] flex items-center justify-center text-white hover:scale-105 transition-transform"
+        className="w-8 h-8 rounded-full bg-[#24A3C7] flex items-center justify-center text-white hover:scale-105 transition-transform shadow-md"
       >
-        {isPlaying ? (
+        {isPlayingThis ? (
           <Pause className="w-4 h-4" fill="currentColor" />
         ) : (
           <Play className="w-4 h-4 pl-0.5" fill="currentColor" />
@@ -78,8 +68,8 @@ export function ProfileVoiceIntro({
               key={i}
               className="w-1 flex-1 rounded-full overflow-hidden transition-all duration-300"
               style={{
-                height: isPlaying ? `${Math.max(20, height)}%` : "20%",
-                backgroundColor: isPlayed ? "var(--primary)" : "rgba(255,255,255,0.2)",
+                height: isPlayingThis ? `${Math.max(20, height)}%` : "30%",
+                backgroundColor: isPlayed ? "#24A3C7" : "rgba(255,255,255,0.2)",
               }}
             />
           );
@@ -87,16 +77,6 @@ export function ProfileVoiceIntro({
       </div>
 
       <span className="text-xs font-bold text-white/70">{durationSeconds}s</span>
-
-      {audioUrl && (
-        <audio
-          ref={audioRef}
-          src={audioUrl}
-          onTimeUpdate={handleTimeUpdate}
-          onEnded={handleEnded}
-          className="hidden"
-        />
-      )}
     </div>
   );
 }

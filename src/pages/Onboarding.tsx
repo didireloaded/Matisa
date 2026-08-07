@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
 import { AudioRecorder } from "@/components/ui/AudioRecorder";
 import {
   UserPlus,
@@ -47,6 +48,7 @@ export function Onboarding() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
   const [voiceUrl, setVoiceUrl] = useState<string | null>(null);
+  const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
   const [suggestedUsers, setSuggestedUsers] = useState<any[]>([]);
   const [followedIds, setFollowedIds] = useState<string[]>([]);
 
@@ -311,11 +313,28 @@ export function Onboarding() {
                     <p className="text-white font-bold">Intro recorded!</p>
                   </div>
                 ) : (
-                  <div className="bg-[var(--color-surface-2)] p-6 rounded-[24px] border border-[var(--color-border)] text-center">
-                    <AudioRecorder onUploadSuccess={handleVoiceRecording} />
+                  <div className="text-center space-y-4">
+                    <button
+                      onClick={() => setIsVoiceModalOpen(true)}
+                      className="px-6 py-3.5 rounded-full bg-gradient-to-r from-[#FF9D2E] to-[#24A3C7] text-white font-bold text-sm shadow-lg active:scale-95 transition"
+                    >
+                      Record Voice Intro (30s)
+                    </button>
                   </div>
                 )}
               </div>
+
+              {isVoiceModalOpen && (
+                <VoiceNoteRecorderModal
+                  open={isVoiceModalOpen}
+                  onClose={() => setIsVoiceModalOpen(false)}
+                  onPublished={(url) => {
+                    handleVoiceRecording(url);
+                    setIsVoiceModalOpen(false);
+                  }}
+                  mode="intro"
+                />
+              )}
 
               <div className="flex gap-3">
                 <Button

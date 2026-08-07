@@ -14,6 +14,7 @@ import {
 import { Track } from "livekit-client";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { livekitAdapter } from "@/integrations";
 
 type Reaction = { id: number; emoji: string; x: number };
 
@@ -21,10 +22,64 @@ export function LiveRoom() {
   const { profile } = useAuth();
   const { id: roomId } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [token, setToken] = useState("dev-token"); // Mock token for now
-  const serverUrl = import.meta.env.VITE_LIVEKIT_URL || "wss://fallback.livekit.cloud";
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoadingToken, setIsLoadingToken] = useState(true);
+  const [livekitError, setLivekitError] = useState<string | null>(null);
+  const serverUrl = import.meta.env.VITE_LIVEKIT_URL || "wss://matisa-bpp40i58.livekit.cloud";
 
-  if (!token) return null;
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchToken() {
+      const participantName =
+        profile?.username || profile?.full_name || `user-${Date.now().toString().slice(-4)}`;
+      const targetRoom = roomId || "matisa-voice-room";
+
+      const res = await livekitAdapter.fetchRoomToken(targetRoom, participantName);
+
+      if (isMounted) {
+        if (res.token) {
+          setToken(res.token);
+        } else {
+          setLivekitError(res.error || "LiveVoice rooms are unavailable.");
+        }
+        setIsLoadingToken(false);
+      }
+    }
+
+    fetchToken();
+    return () => {
+      isMounted = false;
+    };
+  }, [roomId, profile]);
+
+  if (isLoadingToken) {
+    return (
+      <div className="h-[100dvh] w-full bg-[#06101D] flex flex-col items-center justify-center gap-3 text-white">
+        <div className="h-10 w-10 rounded-full border-2 border-[#24A3C7] border-t-transparent animate-spin" />
+        <p className="text-sm font-semibold text-white/80">Connecting to Live Voice Room...</p>
+      </div>
+    );
+  }
+
+  if (livekitError || !token) {
+    return (
+      <div className="h-[100dvh] w-full bg-[#06101D] flex flex-col items-center justify-center p-6 text-center text-white">
+        <div className="w-16 h-16 rounded-full bg-white/10 flex items-center justify-center mb-4">
+          <MicOff className="w-8 h-8 text-[#C8521A]" />
+        </div>
+        <h2 className="text-xl font-bold mb-2">Live Voice Unavailable</h2>
+        <p className="text-sm text-white/60 max-w-xs mb-6">
+          {livekitError || "LiveKit media server is not currently configured."}
+        </p>
+        <button
+          onClick={() => navigate(-1)}
+          className="px-6 py-3 bg-[#C8521A] text-white font-bold rounded-full shadow-lg hover:bg-[#a64013] transition"
+        >
+          Return to Rooms
+        </button>
+      </div>
+    );
+  }
 
   return (
     <LiveKitRoom

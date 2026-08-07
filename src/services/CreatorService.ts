@@ -1,5 +1,5 @@
 import { supabase } from "@/lib/supabase";
-import { Analytics } from "@/services/analytics";
+import { Analytics } from "@/lib/analytics";
 
 export interface CreatorProfile {
   id: string;
@@ -28,10 +28,12 @@ export const CreatorService = {
     try {
       const { data, error } = await supabase
         .from("creator_profiles")
-        .select(`
+        .select(
+          `
           *,
           profiles(display_name, avatar_url, follower_count, username, bio, location)
-        `)
+        `,
+        )
         .order("created_at", { ascending: false }) // Or we can order by profiles.follower_count if we had an RPC or joined view
         .limit(limit);
 
@@ -58,10 +60,12 @@ export const CreatorService = {
       // Prioritize verified creators with the most followers
       const { data, error } = await supabase
         .from("creator_profiles")
-        .select(`
+        .select(
+          `
           *,
           profiles(display_name, avatar_url, follower_count, username, bio, location, cover_url)
-        `)
+        `,
+        )
         .eq("is_verified", true)
         .limit(5);
 
@@ -71,10 +75,12 @@ export const CreatorService = {
         // Fallback to any creator if no verified ones exist
         const { data: fallbackData } = await supabase
           .from("creator_profiles")
-          .select(`*, profiles(display_name, avatar_url, follower_count, username, bio, location, cover_url)`)
+          .select(
+            `*, profiles(display_name, avatar_url, follower_count, username, bio, location, cover_url)`,
+          )
           .limit(1);
-        
-        return fallbackData?.[0] as CreatorProfile || null;
+
+        return (fallbackData?.[0] as CreatorProfile) || null;
       }
 
       // Pick the one with the most followers
@@ -96,30 +102,28 @@ export const CreatorService = {
    */
   async becomeCreator(userId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
-        .from("creator_profiles")
-        .insert({
-          user_id: userId,
-          is_verified: false,
-          monetization_enabled: false,
-        });
+      const { error } = await supabase.from("creator_profiles").insert({
+        user_id: userId,
+        is_verified: false,
+        monetization_enabled: false,
+      });
 
       if (error) {
         // If they are already a creator, it might throw a unique constraint error (23505)
-        if (error.code === '23505') return true; 
+        if (error.code === "23505") return true;
         throw error;
       }
 
       // Update their profile is_creator status (if we have an RPC or if the backend handles it)
       // Since is_creator is often inferred or tracked via this table, inserting might be enough.
       // But let's also try to update the `profiles` or `users` table if `is_creator` column exists.
-      
+
       Analytics.track("became_creator", { user_id: userId });
-      
+
       return true;
     } catch (err) {
       console.error("Failed to enroll creator:", err);
       return false;
     }
-  }
+  },
 };

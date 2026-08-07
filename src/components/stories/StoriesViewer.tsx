@@ -58,7 +58,11 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
   useEffect(() => {
     if (isPaused) return;
     setProgress(0);
-    const duration = 5000; // 5s per story
+
+    // Voice stories advance based on their actual recording duration, other stories default to 5s
+    const voiceDurationSecs =
+      currentStory?.mediaType === "voice" ? currentStory.content?.duration || 15 : 5;
+    const duration = voiceDurationSecs * 1000;
     const interval = 50;
     const step = (interval / duration) * 100;
 
@@ -79,7 +83,7 @@ export function StoriesViewer({ stories, initialIndex = 0, onClose }: StoriesVie
     }, interval);
 
     return () => clearInterval(timer);
-  }, [currentIndex, stories.length, onClose, isPaused]);
+  }, [currentIndex, stories.length, onClose, isPaused, currentStory]);
 
   const handleNext = () => {
     if (currentIndex < stories.length - 1) {

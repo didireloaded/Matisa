@@ -4,6 +4,7 @@ import { X, Video, Settings, Play, Users, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { muxAdapter } from "@/integrations";
 
 interface CreateLiveStreamModalProps {
   open: boolean;
@@ -23,6 +24,15 @@ export function CreateLiveStreamModal({ open, onClose }: CreateLiveStreamModalPr
     setLoading(true);
 
     try {
+      if (muxAdapter.isAvailable()) {
+        const streamRes = await muxAdapter.createLiveStream(title.trim());
+        if (!streamRes.available && streamRes.error) {
+          toast.error(streamRes.error);
+          setLoading(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.from("live_streams").insert({
         user_id: profile.id,
         title: title.trim(),
@@ -116,7 +126,11 @@ export function CreateLiveStreamModal({ open, onClose }: CreateLiveStreamModalPr
                 disabled={!title.trim() || loading}
                 className="w-full mt-4 py-4 rounded-full bg-white text-black font-black text-lg flex items-center justify-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.3)] hover:scale-[1.02] active:scale-95 disabled:opacity-50 disabled:active:scale-100 transition-all"
               >
-                {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Play className="w-6 h-6 fill-current" />}
+                {loading ? (
+                  <Loader2 className="w-6 h-6 animate-spin" />
+                ) : (
+                  <Play className="w-6 h-6 fill-current" />
+                )}
                 {loading ? "STARTING..." : "START BROADCAST"}
               </button>
             </div>

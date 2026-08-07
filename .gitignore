@@ -45,3 +45,8 @@ test-results/
 scratch/
 *.zip
 Social Video Streaming Mobile App UI_UX __ Behance.html
+
+# Native Mobile Platforms (Capacitor)
+android/
+ios/
+

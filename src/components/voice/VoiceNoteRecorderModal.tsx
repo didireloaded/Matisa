@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+// src/components/voice/VoiceNoteRecorderModal.tsx
+import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -12,239 +13,181 @@ import {
   Clock,
   FileText,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { VoiceWaveform } from "@/components/ui/VoiceWaveform";
-import { NoteService } from "@/services/NoteService";
+import {
+  VoiceMode,
+  VOICE_LIMITS,
+  useRecordedVoice,
+  useRecordedVoicePlayback,
+  publishVoiceNoteAdapter,
+  sendVoiceMessageAdapter,
+  saveVoiceIntroAdapter,
+  publishVoiceStoryAdapter,
+  sendVoiceReplyAdapter,
+} from "@/features/recorded-voice";
+import { VoicemailService } from "@/features/voicemail/services/VoicemailService";
 
 interface VoiceNoteRecorderModalProps {
   open: boolean;
   onClose: () => void;
-  onPublished?: (url: string) => void;
-  mode?: "note" | "reply" | "message" | "voicemail" | "story";
-  /** Max recording seconds. Default 120 (2 min). */
-  maxDuration?: number;
+  onPublished?: (urlOrPath: string) => void;
+  mode?: VoiceMode;
+  recipientId?: string;
+  conversationId?: string;
+  targetId?: string;
 }
-
-type RecorderState = "idle" | "recording" | "preview" | "uploading";
 
 export function VoiceNoteRecorderModal({
   open,
   onClose,
   onPublished,
   mode = "note",
-  maxDuration = 120,
+  recipientId,
+  conversationId,
+  targetId,
 }: VoiceNoteRecorderModalProps) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
+  const { state, startRecording, stopRecording, cancelRecording } = useRecordedVoice(mode);
+  const playback = useRecordedVoicePlayback();
 
-  const [state, setState] = useState<RecorderState>("idle");
-  const [elapsed, setElapsed] = useState(0);
-  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playProgress, setPlayProgress] = useState(0);
-  const [caption, setCaption] = useState("");
   const [noteLifetime, setNoteLifetime] = useState<"temporary" | "permanent">("temporary");
-  const [permissionDenied, setPermissionDenied] = useState(false);
+  const [caption, setCaption] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [previewObjectUrl, setPreviewObjectUrl] = useState<string | null>(null);
 
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const [liveAmplitudes, setLiveAmplitudes] = useState<number[]>([]);
-
-  // Prevent background scrolling while open
+  // Lock body scroll while modal is open
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
+    const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = prevOverflow;
     };
   }, [open]);
 
-  const stopAllMedia = useCallback(() => {
-    if (timerRef.current) clearInterval(timerRef.current);
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    mediaRecorderRef.current = null;
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-  }, [audioUrl]);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && state === "recording") {
-      mediaRecorderRef.current.stop();
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-  }, [state]);
-
-  // Cleanup on unmount
+  // Create temporary object URL for previewing the recording locally
   useEffect(() => {
-    return () => {
-      stopAllMedia();
-    };
-  }, [stopAllMedia]);
-
-  // Auto-stop at max duration
-  useEffect(() => {
-    if (state === "recording" && elapsed >= maxDuration) {
-      stopRecording();
-    }
-  }, [elapsed, maxDuration, state, stopRecording]);
-
-  const startRecording = async () => {
-    setPermissionDenied(false);
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
-
-      const audioCtx = new AudioContext();
-      const source = audioCtx.createMediaStreamSource(stream);
-      const analyser = audioCtx.createAnalyser();
-      analyser.fftSize = 64;
-      source.connect(analyser);
-      analyserRef.current = analyser;
-
-      const recorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = recorder;
-      chunksRef.current = [];
-
-      recorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+    if (state.recording?.blob) {
+      const url = URL.createObjectURL(state.recording.blob);
+      setPreviewObjectUrl(url);
+      return () => {
+        URL.revokeObjectURL(url);
       };
-
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
-        setAudioBlob(blob);
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-        streamRef.current = null;
-        setState("preview");
-      };
-
-      recorder.start();
-      setState("recording");
-      setElapsed(0);
-      setLiveAmplitudes([]);
-
-      timerRef.current = window.setInterval(() => {
-        setElapsed((p) => p + 1);
-
-        if (analyserRef.current) {
-          const data = new Uint8Array(analyserRef.current.frequencyBinCount);
-          analyserRef.current.getByteFrequencyData(data);
-          const avg = data.reduce((a, b) => a + b, 0) / data.length;
-          const normalized = Math.min(100, Math.max(10, (avg / 128) * 100));
-          setLiveAmplitudes((prev) => [...prev.slice(-59), normalized]);
-        }
-      }, 1000);
-    } catch (err: any) {
-      console.error("Mic access denied:", err);
-      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-        setPermissionDenied(true);
-      } else {
-        toast.error("Could not access microphone");
-      }
-    }
-  };
-
-  const discardRecording = () => {
-    if (audioUrl) URL.revokeObjectURL(audioUrl);
-    setAudioBlob(null);
-    setAudioUrl(null);
-    setElapsed(0);
-    setPlayProgress(0);
-    setIsPlaying(false);
-    setLiveAmplitudes([]);
-    setState("idle");
-  };
-
-  const togglePreviewPlay = () => {
-    if (!audioRef.current || !audioUrl) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
     } else {
-      audioRef.current.play().catch(() => setIsPlaying(false));
-      setIsPlaying(true);
+      setPreviewObjectUrl(null);
     }
+  }, [state.recording]);
+
+  const activeUserId = session?.user?.id || profile?.id || "demo-user-123";
+  const maxLimit = VOICE_LIMITS[mode];
+
+  const handleClose = () => {
+    playback.stop();
+    cancelRecording();
+    setCaption("");
+    onClose();
   };
 
-  const publishVoiceNote = async () => {
-    if (!audioBlob || !session?.user) {
-      toast.error("No recording to publish");
+  const handlePublish = async () => {
+    if (!state.recording) {
+      toast.error("No recording available");
       return;
     }
 
-    setState("uploading");
+    setIsSubmitting(true);
     try {
-      const fileName = `${session.user.id}/${Date.now()}.webm`;
-      const bucket = mode === "voicemail" ? "voicemail" : "voice_notes";
+      let resultPathOrUrl = "";
 
-      const { error: uploadErr } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, audioBlob, { contentType: "audio/webm" });
-
-      if (uploadErr) throw uploadErr;
-
-      const { data: publicData } = supabase.storage.from(bucket).getPublicUrl(fileName);
-      const publicUrl = publicData.publicUrl;
-
-      if (mode === "note" && session?.user) {
-        if (noteLifetime === "temporary") {
-          await NoteService.createTemporaryNote(
-            session.user.id,
-            caption.trim(),
-            "voice",
-            publicUrl,
-            elapsed,
-            liveAmplitudes,
+      switch (mode) {
+        case "note": {
+          const noteRes = await publishVoiceNoteAdapter(
+            state.recording,
+            activeUserId,
+            noteLifetime,
+            caption,
           );
-        } else {
-          await NoteService.createPermanentNote(
-            session.user.id,
-            caption.trim(),
-            "voice",
-            publicUrl,
-            elapsed,
-            liveAmplitudes,
+          resultPathOrUrl = (noteRes as any)?.audio_url || "";
+          toast.success(
+            noteLifetime === "temporary"
+              ? "Voice Note published! Disappears in 24h."
+              : "Voice Note published!",
           );
+          break;
+        }
+
+        case "message": {
+          if (!conversationId) {
+            toast.error("Missing conversation details");
+            setIsSubmitting(false);
+            return;
+          }
+          const msgRes = await sendVoiceMessageAdapter(
+            state.recording,
+            conversationId,
+            activeUserId,
+          );
+          resultPathOrUrl = msgRes?.media_path || "";
+          toast.success("Voice message sent!");
+          break;
+        }
+
+        case "voicemail": {
+          if (!recipientId) {
+            toast.error("Recipient required for voicemail");
+            setIsSubmitting(false);
+            return;
+          }
+          const vmRes = await VoicemailService.sendVoicemail({
+            senderId: activeUserId,
+            recipientId,
+            recording: state.recording,
+          });
+          resultPathOrUrl = vmRes?.storage_path || "";
+          toast.success("Voicemail sent!");
+          break;
+        }
+
+        case "intro": {
+          const introRes = await saveVoiceIntroAdapter(state.recording, activeUserId);
+          resultPathOrUrl = introRes.publicUrl;
+          toast.success("Voice Intro saved to profile!");
+          break;
+        }
+
+        case "story": {
+          const storyRes = await publishVoiceStoryAdapter(state.recording, activeUserId, caption);
+          resultPathOrUrl = storyRes?.media_url || "";
+          toast.success("Voice Story published!");
+          break;
+        }
+
+        case "reply": {
+          if (!recipientId) {
+            toast.error("Recipient required for voice reply");
+            setIsSubmitting(false);
+            return;
+          }
+          const replyRes = await sendVoiceReplyAdapter(state.recording, activeUserId, recipientId, {
+            noteId: targetId,
+          });
+          resultPathOrUrl = replyRes?.storage_path || "";
+          toast.success("Private Voice Reply sent!");
+          break;
         }
       }
 
-      onPublished?.(publicUrl);
-
-      toast.success(
-        mode === "reply"
-          ? "Voice reply sent!"
-          : mode === "voicemail"
-            ? "Voicemail sent!"
-            : mode === "message"
-              ? "Voice message sent!"
-              : noteLifetime === "temporary"
-                ? "Voice Note published! Disappears in 24h."
-                : "Voice Note published!",
-      );
-
-      // Reset state
-      discardRecording();
-      onClose();
+      onPublished?.(resultPathOrUrl);
+      handleClose();
     } catch (err: any) {
-      console.error("Upload failed:", err);
-      toast.error("Upload failed — tap to retry");
-      setState("preview");
+      console.error("Publish voice error:", err);
+      // DO NOT destroy recording on failure - allow user to tap Retry
+      toast.error("Upload failed — tap Publish to retry");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -256,10 +199,12 @@ export function VoiceNoteRecorderModal({
 
   if (!open) return null;
 
+  const isPreviewingThis = playback.activeId === "modal-preview" && playback.isPlaying;
+
   return createPortal(
     <AnimatePresence>
-      <div className="fixed inset-0 z-[120] flex items-end justify-center bg-black/70 backdrop-blur-sm">
-        <div className="absolute inset-0" onClick={onClose} />
+      <div className="fixed inset-0 z-[250] flex items-end justify-center bg-black/70 backdrop-blur-sm">
+        <div className="absolute inset-0" onClick={handleClose} />
 
         <motion.div
           initial={{ y: "100%", opacity: 0 }}
@@ -270,48 +215,46 @@ export function VoiceNoteRecorderModal({
         >
           {/* Header */}
           <div className="flex items-center justify-between mb-5">
-            <h2 className="text-base font-bold text-white tracking-wide">
-              {mode === "reply" && "Voice Reply"}
-              {mode === "voicemail" && "Leave Voicemail"}
-              {mode === "message" && "Voice Message"}
-              {mode === "story" && "Voice Story"}
-              {mode === "note" && "Voice Note"}
-            </h2>
+            <div>
+              <h2 className="text-base font-bold text-white tracking-wide">
+                {mode === "reply" && "Private Voice Reply"}
+                {mode === "voicemail" && "Leave Voicemail"}
+                {mode === "message" && "Voice Message"}
+                {mode === "story" && "Voice Story"}
+                {mode === "intro" && "Profile Voice Intro"}
+                {mode === "note" && "Voice Note"}
+              </h2>
+              <p className="text-[11px] text-white/50">Max duration: {formatTime(maxLimit)}</p>
+            </div>
             <button
-              onClick={() => {
-                discardRecording();
-                onClose();
-              }}
+              onClick={handleClose}
               className="flex h-8 w-8 items-center justify-center rounded-full glass-panel text-white/60 hover:text-white"
             >
               <X size={18} />
             </button>
           </div>
 
-          {/* Permission Denied State */}
-          {permissionDenied && (
-            <div className="flex flex-col items-center gap-3 py-8 text-center">
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500/20 text-red-400">
-                <AlertCircle size={28} />
+          {/* Permission Denied / Error State */}
+          {state.permissionDenied && (
+            <div className="flex flex-col items-center gap-3 py-6 text-center">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-500/20 text-red-400">
+                <AlertCircle size={26} />
               </div>
-              <p className="text-sm font-semibold text-white">Microphone Access Denied</p>
+              <p className="text-sm font-semibold text-white">Microphone Permission Denied</p>
               <p className="text-xs text-white/50 max-w-[280px]">
-                Please allow microphone access in your browser settings to record voice.
+                {state.errorMessage || "Please allow microphone access in your browser settings."}
               </p>
               <button
-                onClick={() => {
-                  setPermissionDenied(false);
-                  startRecording();
-                }}
-                className="mt-2 px-5 py-2 rounded-full bg-[#24A3C7] text-white font-bold text-xs active:scale-95"
+                onClick={startRecording}
+                className="mt-2 px-5 py-2 rounded-full bg-[#24A3C7] text-white font-bold text-xs active:scale-95 transition"
               >
                 Try Again
               </button>
             </div>
           )}
 
-          {/* Idle State — Big Mic Button */}
-          {state === "idle" && !permissionDenied && (
+          {/* IDLE State */}
+          {state.status === "idle" && !state.permissionDenied && (
             <div className="flex flex-col items-center gap-5 py-6">
               <button
                 onClick={startRecording}
@@ -323,10 +266,10 @@ export function VoiceNoteRecorderModal({
               <p className="text-xs text-white/50">Tap to start recording</p>
 
               {mode === "note" && (
-                <div className="flex items-center gap-2 mt-2">
+                <div className="flex items-center gap-2 mt-1">
                   <button
                     onClick={() => setNoteLifetime("temporary")}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${
                       noteLifetime === "temporary"
                         ? "bg-[#FF9D2E]/20 text-[#FF9D2E] border border-[#FF9D2E]/40"
                         : "glass-panel text-white/50"
@@ -337,7 +280,7 @@ export function VoiceNoteRecorderModal({
                   </button>
                   <button
                     onClick={() => setNoteLifetime("permanent")}
-                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition ${
                       noteLifetime === "permanent"
                         ? "bg-[#39B7F2]/20 text-[#39B7F2] border border-[#39B7F2]/40"
                         : "glass-panel text-white/50"
@@ -351,43 +294,35 @@ export function VoiceNoteRecorderModal({
             </div>
           )}
 
-          {/* Recording State — Live Waveform & Timer */}
-          {state === "recording" && (
+          {/* RECORDING State */}
+          {state.status === "recording" && (
             <div className="flex flex-col items-center gap-5 py-4">
-              {/* Live pulsing indicator */}
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-red-500 animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
                 <span className="text-sm font-bold text-red-400">Recording</span>
                 <span className="text-sm font-mono text-white/80 ml-1">
-                  {formatTime(elapsed)} / {formatTime(maxDuration)}
+                  {formatTime(state.elapsedSeconds)} / {formatTime(maxLimit)}
                 </span>
               </div>
 
-              {/* Live waveform visualization */}
+              {/* Live Waveform */}
               <div className="w-full h-16 flex items-center justify-center gap-0.5 px-4">
-                {liveAmplitudes.map((amp, i) => (
+                {state.liveAmplitudes.map((amp, i) => (
                   <motion.div
                     key={i}
                     className="w-1 rounded-full bg-gradient-to-t from-[#FF9D2E] to-[#24A3C7]"
                     animate={{ height: `${Math.max(8, amp * 0.6)}px` }}
-                    transition={{ duration: 0.15 }}
+                    transition={{ duration: 0.1 }}
                   />
                 ))}
-                {/* Fill remaining bars with static placeholders */}
-                {Array.from({ length: Math.max(0, 60 - liveAmplitudes.length) }).map((_, i) => (
-                  <div key={`empty-${i}`} className="w-1 h-2 rounded-full bg-white/10" />
-                ))}
+                {Array.from({ length: Math.max(0, 60 - state.liveAmplitudes.length) }).map(
+                  (_, i) => (
+                    <div key={`empty-${i}`} className="w-1 h-2 rounded-full bg-white/10" />
+                  ),
+                )}
               </div>
 
-              {/* Progress bar */}
-              <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-gradient-to-r from-[#FF9D2E] to-red-500 transition-all"
-                  style={{ width: `${(elapsed / maxDuration) * 100}%` }}
-                />
-              </div>
-
-              {/* Stop button */}
+              {/* Stop Button */}
               <button
                 onClick={stopRecording}
                 className="flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-[0_0_20px_rgba(239,68,68,0.5)] active:scale-90 transition"
@@ -398,16 +333,25 @@ export function VoiceNoteRecorderModal({
             </div>
           )}
 
-          {/* Preview State — Playback, Caption, Publish */}
-          {state === "preview" && audioUrl && (
+          {/* PREVIEW State */}
+          {state.status === "preview" && state.recording && (
             <div className="space-y-4">
-              {/* Playback controls */}
               <div className="flex items-center gap-3 glass-panel p-3 rounded-[22px]">
                 <button
-                  onClick={togglePreviewPlay}
+                  onClick={() => {
+                    if (isPreviewingThis) {
+                      playback.pause();
+                    } else {
+                      playback.play(
+                        "modal-preview",
+                        previewObjectUrl || "#",
+                        state.recording!.durationSeconds,
+                      );
+                    }
+                  }}
                   className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#24A3C7] text-white shadow-md active:scale-90 transition"
                 >
-                  {isPlaying ? (
+                  {isPreviewingThis ? (
                     <Pause size={18} fill="white" />
                   ) : (
                     <Play size={18} fill="white" className="ml-0.5" />
@@ -416,8 +360,10 @@ export function VoiceNoteRecorderModal({
 
                 <div className="flex-1">
                   <VoiceWaveform
-                    waveform={liveAmplitudes.length > 5 ? liveAmplitudes : undefined}
-                    progress={playProgress}
+                    waveform={state.recording.waveform}
+                    progress={
+                      isPreviewingThis ? (playback.currentTime / (playback.duration || 1)) * 100 : 0
+                    }
                     height={32}
                     activeColor="#24A3C7"
                     inactiveColor="rgba(36, 163, 199, 0.2)"
@@ -425,30 +371,18 @@ export function VoiceNoteRecorderModal({
                 </div>
 
                 <span className="text-xs font-mono text-white/60 w-10 text-right">
-                  {formatTime(elapsed)}
+                  {formatTime(state.recording.durationSeconds)}
                 </span>
               </div>
 
-              {/* Hidden audio element for playback */}
-              <audio
-                ref={audioRef}
-                src={audioUrl}
-                onTimeUpdate={() => {
-                  if (audioRef.current) {
-                    const pct =
-                      (audioRef.current.currentTime / (audioRef.current.duration || 1)) * 100;
-                    setPlayProgress(pct);
-                  }
-                }}
-                onEnded={() => {
-                  setIsPlaying(false);
-                  setPlayProgress(0);
-                }}
-                className="hidden"
-              />
+              {/* File size indicator */}
+              <div className="flex items-center justify-between text-[11px] text-white/40 px-1">
+                <span>Format: {state.recording.extension.toUpperCase()}</span>
+                <span>{(state.recording.fileSizeBytes / 1024).toFixed(1)} KB</span>
+              </div>
 
-              {/* Optional caption */}
-              {(mode === "note" || mode === "reply") && (
+              {/* Optional Caption */}
+              {(mode === "note" || mode === "story" || mode === "reply") && (
                 <input
                   type="text"
                   value={caption}
@@ -458,12 +392,12 @@ export function VoiceNoteRecorderModal({
                 />
               )}
 
-              {/* Lifetime selector for notes */}
+              {/* Lifetime selector for Notes */}
               {mode === "note" && (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={() => setNoteLifetime("temporary")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition ${
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition ${
                       noteLifetime === "temporary"
                         ? "bg-[#FF9D2E]/20 text-[#FF9D2E] border border-[#FF9D2E]/40"
                         : "glass-panel text-white/50"
@@ -473,7 +407,7 @@ export function VoiceNoteRecorderModal({
                   </button>
                   <button
                     onClick={() => setNoteLifetime("permanent")}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold transition ${
+                    className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition ${
                       noteLifetime === "permanent"
                         ? "bg-[#39B7F2]/20 text-[#39B7F2] border border-[#39B7F2]/40"
                         : "glass-panel text-white/50"
@@ -484,11 +418,12 @@ export function VoiceNoteRecorderModal({
                 </div>
               )}
 
-              {/* Action buttons */}
+              {/* Action Buttons */}
               <div className="flex items-center gap-3 pt-1">
                 <button
-                  onClick={discardRecording}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-full glass-panel text-red-400 text-xs font-bold border border-red-500/30 hover:bg-red-500/10 transition active:scale-95"
+                  onClick={cancelRecording}
+                  disabled={isSubmitting}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-full glass-panel text-red-400 text-xs font-bold border border-red-500/30 hover:bg-red-500/10 transition active:scale-95 disabled:opacity-50"
                 >
                   <Trash2 size={14} />
                   <span>Discard</span>
@@ -496,34 +431,46 @@ export function VoiceNoteRecorderModal({
 
                 <button
                   onClick={startRecording}
-                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-full glass-panel text-white/70 text-xs font-bold hover:bg-white/10 transition active:scale-95"
+                  disabled={isSubmitting}
+                  className="flex items-center gap-1.5 px-4 py-2.5 rounded-full glass-panel text-white/70 text-xs font-bold hover:bg-white/10 transition active:scale-95 disabled:opacity-50"
                 >
-                  <Mic size={14} />
-                  <span>Re-record</span>
+                  <RotateCcw size={14} />
+                  <span>Retake</span>
                 </button>
 
                 <button
-                  onClick={publishVoiceNote}
-                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-gradient-to-r from-[#24A3C7] to-[#6139F2] text-white text-xs font-bold shadow-lg active:scale-95 transition"
+                  onClick={handlePublish}
+                  disabled={isSubmitting}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-full bg-gradient-to-r from-[#24A3C7] to-[#6139F2] text-white text-xs font-bold shadow-lg active:scale-95 transition disabled:opacity-50"
                 >
-                  <Send size={14} />
-                  <span>
-                    {mode === "reply"
-                      ? "Send Reply"
-                      : mode === "voicemail"
-                        ? "Send Voicemail"
-                        : "Publish"}
-                  </span>
+                  {isSubmitting ? (
+                    <div className="h-4 w-4 rounded-full border-2 border-white border-t-transparent animate-spin" />
+                  ) : (
+                    <>
+                      <Send size={14} />
+                      <span>
+                        {mode === "reply"
+                          ? "Send Reply"
+                          : mode === "voicemail"
+                            ? "Send Voicemail"
+                            : mode === "message"
+                              ? "Send Message"
+                              : mode === "intro"
+                                ? "Save Intro"
+                                : "Publish"}
+                      </span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Uploading State */}
-          {state === "uploading" && (
-            <div className="flex flex-col items-center gap-4 py-10">
+          {/* UPLOADING State */}
+          {isSubmitting && (
+            <div className="flex flex-col items-center gap-3 py-8">
               <div className="h-10 w-10 rounded-full border-2 border-[#24A3C7] border-t-transparent animate-spin" />
-              <p className="text-sm font-semibold text-white/80">Uploading voice...</p>
+              <p className="text-sm font-semibold text-white/80">Uploading voice media...</p>
             </div>
           )}
         </motion.div>

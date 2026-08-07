@@ -214,6 +214,7 @@ export function Profile() {
               setIsVoicemailOpen(false);
             }}
             mode="voicemail"
+            recipientId={profileData.id}
           />
         )}
 

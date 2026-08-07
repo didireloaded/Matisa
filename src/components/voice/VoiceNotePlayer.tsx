@@ -1,6 +1,7 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Play, Pause } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRecordedVoicePlayback } from "@/features/recorded-voice";
 import { Profile } from "../../types";
 
 interface VoiceNotePlayerProps {
@@ -32,36 +33,23 @@ export function VoiceNotePlayer({
   showReactions = true,
   listeningCount = 0,
 }: VoiceNotePlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const playback = useRecordedVoicePlayback();
+  const playbackId = `voice-note-${audioUrl}`;
+  const isPlaying = playback.activeId === playbackId && playback.isPlaying;
+  const progress = isPlaying
+    ? (playback.currentTime / (playback.duration || durationSeconds || 1)) * 100
+    : 0;
+
   const [activeReactions, setActiveReactions] = useState<
     { id: number; emoji: string; x: number }[]
   >([]);
 
   const togglePlayback = () => {
-    if (!audioRef.current) return;
     if (isPlaying) {
-      audioRef.current.pause();
-      setIsPlaying(false);
+      playback.pause();
     } else {
-      audioRef.current
-        .play()
-        .then(() => setIsPlaying(true))
-        .catch(() => setIsPlaying(false));
+      playback.play(playbackId, audioUrl, durationSeconds);
     }
-  };
-
-  const handleTimeUpdate = () => {
-    if (!audioRef.current) return;
-    const current = audioRef.current.currentTime;
-    const duration = audioRef.current.duration || durationSeconds || 1;
-    setProgress((current / duration) * 100);
-  };
-
-  const handleEnded = () => {
-    setIsPlaying(false);
-    setProgress(0);
   };
 
   const addReaction = (emoji: string) => {
@@ -184,14 +172,6 @@ export function VoiceNotePlayer({
           </button>
         </div>
       )}
-
-      <audio
-        ref={audioRef}
-        src={audioUrl}
-        onTimeUpdate={handleTimeUpdate}
-        onEnded={handleEnded}
-        className="hidden"
-      />
     </div>
   );
 }

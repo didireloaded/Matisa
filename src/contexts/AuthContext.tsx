@@ -2,7 +2,8 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import type { Profile } from "@/types";
-import { Analytics } from "@/services/analytics";
+import { Analytics } from "@/lib/analytics";
+import { onesignalAdapter } from "@/integrations";
 
 interface AuthCtx {
   session: Session | null;
@@ -92,6 +93,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       if (session?.user) {
         fetchProfile(session.user.id).finally(() => setLoading(false));
+        Analytics.identify(session.user.id);
+        onesignalAdapter.setExternalUserId(session.user.id);
         Analytics.track("app_opened", { source: "initial_load" });
       } else {
         setLoading(false);
@@ -105,6 +108,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       if (session?.user) {
         fetchProfile(session.user.id);
+        Analytics.identify(session.user.id);
+        onesignalAdapter.setExternalUserId(session.user.id);
         if (event === "SIGNED_IN") {
           Analytics.track("user_signed_in", { method: "email" });
         }
@@ -112,7 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setNeedsOnboarding(false);
         if (event === "SIGNED_OUT") {
-          Analytics.track("user_signed_out", {});
+          Analytics.track("user_signed_out");
+          Analytics.reset();
         }
       }
     });

@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { useComments } from "../../hooks/useComments";
 import { useAuth } from "../../contexts/AuthContext";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Mic } from "lucide-react";
 import { AudioPlayer } from "../ui/AudioPlayer";
-import { AudioRecorder } from "../ui/AudioRecorder";
+import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
 
 interface CommentsModalProps {
   postId: string;
@@ -20,6 +20,7 @@ export function CommentsModal({
   onClose,
 }: CommentsModalProps) {
   const [open, setOpen] = useState(true);
+  const [voiceReplyOpen, setVoiceReplyOpen] = useState(false);
   const { comments, isLoading, addComment } = useComments(postId);
   const { profile: session } = useAuth();
   const [content, setContent] = useState("");
@@ -142,26 +143,36 @@ export function CommentsModal({
               }}
             />
             <div className="flex items-center gap-1 pb-1">
-              {content.trim() ? (
-                <button
-                  onClick={handleSend}
-                  disabled={isSubmitting}
-                  className="p-2 bg-primary text-primary-foreground rounded-full hover:bg-primary/90 transition-transform active:scale-95 disabled:opacity-50"
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <Send className="w-5 h-5 ml-0.5" />
-                  )}
-                </button>
-              ) : (
-                <div className="p-1">
-                  <AudioRecorder onUploadSuccess={handleVoiceUpload} bucket="voice_notes" />
-                </div>
-              )}
+              <button
+                onClick={() => setVoiceReplyOpen(true)}
+                title="Send Private Voice Reply to Author"
+                className="p-2 text-white/60 hover:text-white transition"
+              >
+                <Mic className="w-5 h-5 text-[#24A3C7]" />
+              </button>
+              <button
+                onClick={handleSend}
+                disabled={!content.trim() || isSubmitting}
+                className="p-2 bg-[#24A3C7] text-white rounded-full hover:opacity-90 transition-transform active:scale-95 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                ) : (
+                  <Send className="w-5 h-5 ml-0.5" />
+                )}
+              </button>
             </div>
           </div>
         </div>
+
+        {voiceReplyOpen && (
+          <VoiceNoteRecorderModal
+            open={voiceReplyOpen}
+            onClose={() => setVoiceReplyOpen(false)}
+            mode="reply"
+            targetId={postId}
+          />
+        )}
       </DialogContent>
     </Dialog>
   );

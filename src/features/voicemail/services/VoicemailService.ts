@@ -55,4 +55,37 @@ export class VoicemailService {
   async markRead(messageId: string): Promise<void> {
     await this.store.updateStatus(messageId, "read");
   }
+
+  static async sendVoicemail(params: {
+    senderId: string;
+    recipientId: string;
+    recording: {
+      blob: Blob;
+      mimeType: string;
+      extension: string;
+      durationSeconds: number;
+      waveform: number[];
+    };
+  }) {
+    const { supabase } = await import("@/lib/supabase");
+    const { uploadRecordedVoice } = await import("@/features/recorded-voice");
+    const { VoicemailRepository } = await import("../repositories/VoicemailRepository");
+
+    const repo = new VoicemailRepository(supabase as any);
+    const uploadRes = await uploadRecordedVoice(
+      params.recording as any,
+      "voicemail",
+      params.senderId,
+      {
+        recipientId: params.recipientId,
+      },
+    );
+
+    return await repo.createRecord({
+      senderId: params.senderId,
+      recipientId: params.recipientId,
+      storagePath: uploadRes.path,
+      durationSeconds: params.recording.durationSeconds,
+    });
+  }
 }

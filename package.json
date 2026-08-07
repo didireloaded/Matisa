@@ -4,7 +4,7 @@
   "sideEffects": false,
   "type": "module",
   "scripts": {
-    "dev": "vite dev",
+    "dev": "vite dev --host",
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
@@ -17,7 +17,10 @@
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "cap:sync": "npm run build && cap sync",
+    "cap:android": "npm run build && cap open android",
+    "cap:ios": "npm run build && cap open ios"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -26,10 +29,14 @@
     ]
   },
   "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/core": "^8.5.0",
+    "@capacitor/ios": "^8.5.0",
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@fontsource-variable/geist": "^5.2.9",
     "@hookform/resolvers": "^5.2.2",
     "@livekit/components-react": "^2.9.21",
+    "@mux/mux-data-react-native-video": "^0.19.20",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-alert-dialog": "^1.1.15",
     "@radix-ui/react-aspect-ratio": "^1.1.8",
@@ -61,6 +68,7 @@
     "@tailwindcss/vite": "^4.2.1",
     "@tanstack/react-query": "^5.83.0",
     "@vercel/analytics": "^2.0.1",
+    "axios": "^1.19.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -98,12 +106,14 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^9.32.0",
     "@faker-js/faker": "^10.4.0",
     "@playwright/test": "^1.61.1",
     "@supabase/supabase-js": "^2.110.2",
+    "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
+    "@testing-library/react": "^16.0.0",
     "@types/node": "^22.16.5",
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
