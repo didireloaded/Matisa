@@ -17,10 +17,7 @@
     "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "prepare": "husky",
-    "cap:sync": "npm run build && cap sync",
-    "cap:android": "npm run build && cap open android",
-    "cap:ios": "npm run build && cap open ios"
+    "prepare": "husky"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -29,9 +26,6 @@
     ]
   },
   "dependencies": {
-    "@capacitor/android": "^8.5.0",
-    "@capacitor/core": "^8.5.0",
-    "@capacitor/ios": "^8.5.0",
     "@dataconnect/generated": "file:src/dataconnect-generated",
     "@fontsource-variable/geist": "^5.2.9",
     "@hookform/resolvers": "^5.2.2",
@@ -106,7 +100,6 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.5.0",
     "@eslint/js": "^9.32.0",
     "@faker-js/faker": "^10.4.0",
     "@playwright/test": "^1.61.1",
