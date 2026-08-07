@@ -4,6 +4,7 @@ import { Mic, Square, Loader2, Send } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
+import { Analytics } from "@/lib/analytics";
 
 interface VoiceRecorderModalProps {
   children: React.ReactNode;
@@ -112,6 +113,7 @@ export function VoiceRecorderModal({ children, onPostCreated }: VoiceRecorderMod
 
       if (postError) throw postError;
 
+      Analytics.track("voice_post_created", { duration_seconds: duration });
       toast.success("Voice note posted!");
       setOpen(false);
       if (onPostCreated) onPostCreated();

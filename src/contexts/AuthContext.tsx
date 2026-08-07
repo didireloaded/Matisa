@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 import type { Profile } from "@/types";
-import { Analytics } from "@/services/analytics";
+import { Analytics } from "@/lib/analytics";
 
 interface AuthCtx {
   session: Session | null;
@@ -26,6 +26,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [needsOnboarding, setNeedsOnboarding] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const requireAuth = () => setShowAuthModal(true);
+  const identifiedUserId = useRef<string | null>(null);
+
+  const identifyUser = (user: User) => {
+    if (identifiedUserId.current === user.id) return;
+
+    if (identifiedUserId.current) {
+      Analytics.reset();
+    }
+
+    Analytics.identify(user.id, {
+      email: user.email,
+    });
+    identifiedUserId.current = user.id;
+  };
 
   const fetchProfile = async (userId: string) => {
     // Simple select — no joins to tables that may not exist yet
@@ -91,6 +105,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
+        identifyUser(session.user);
         fetchProfile(session.user.id).finally(() => setLoading(false));
         Analytics.track("app_opened", { source: "initial_load" });
       } else {
@@ -104,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session?.user) {
+        identifyUser(session.user);
         fetchProfile(session.user.id);
         if (event === "SIGNED_IN") {
           Analytics.track("user_signed_in", { method: "email" });
@@ -113,6 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setNeedsOnboarding(false);
         if (event === "SIGNED_OUT") {
           Analytics.track("user_signed_out", {});
+          Analytics.reset();
+          identifiedUserId.current = null;
         }
       }
     });

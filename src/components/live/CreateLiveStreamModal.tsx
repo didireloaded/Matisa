@@ -4,6 +4,7 @@ import { X, Video, Settings, Play, Users, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Analytics } from "@/lib/analytics";
 
 interface CreateLiveStreamModalProps {
   open: boolean;
@@ -30,6 +31,8 @@ export function CreateLiveStreamModal({ open, onClose }: CreateLiveStreamModalPr
       });
 
       if (error) throw error;
+
+      Analytics.track("live_stream_started", { privacy });
       toast.success("You are now live!");
       setTitle("");
       onClose();

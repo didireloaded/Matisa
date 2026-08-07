@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { Analytics } from "@/lib/analytics";
 
 export function useFollow(targetUserId: string | undefined) {
   const { profile } = useAuth();
@@ -57,6 +58,7 @@ export function useFollow(targetUserId: string | undefined) {
             .insert({ follower_id: profile.id, following_id: targetUserId, status: "accepted" });
           if (directErr && directErr.code !== "23505") throw directErr;
         }
+        Analytics.track("user_followed");
         toast.success("Following author!");
       } else {
         const { error } = await supabase.rpc("unfollow_user", {
@@ -71,6 +73,7 @@ export function useFollow(targetUserId: string | undefined) {
             .match({ follower_id: profile.id, following_id: targetUserId });
           if (directErr) throw directErr;
         }
+        Analytics.track("user_unfollowed");
         toast.info("Unfollowed author");
       }
     } catch (err) {

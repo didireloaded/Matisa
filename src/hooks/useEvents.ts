@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { Analytics } from "@/lib/analytics";
 
 export interface Event {
   id: string;
@@ -106,6 +107,12 @@ export function useEvents(communityId?: string) {
       });
 
       if (error) throw error;
+
+      Analytics.track("event_created", {
+        event_type: eventData.event_type,
+        has_cover_image: Boolean(eventData.coverFile),
+        is_community_event: Boolean(eventData.community_id),
+      });
 
       // Refresh list
       await fetchEvents();

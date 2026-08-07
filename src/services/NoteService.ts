@@ -1,5 +1,6 @@
 import { supabase } from "../lib/supabase";
 import { AnalyticsAI } from "./ai/AnalyticsAI";
+import { Analytics } from "@/lib/analytics";
 
 export interface Note {
   id: string;
@@ -224,6 +225,7 @@ export const NoteService = {
       if (error) throw error;
 
       AnalyticsAI.trackEvent(userId, "note_created", data?.id || "", { type, noteKind });
+      Analytics.track("note_created", { note_kind: noteKind, note_type: type });
       return data;
     } catch (err) {
       console.error("Failed to create note:", err);
