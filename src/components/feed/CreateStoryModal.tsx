@@ -4,6 +4,7 @@ import { Camera, Image as ImageIcon, Send, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { toast } from "sonner";
+import { Analytics } from "@/lib/analytics";
 
 interface CreateStoryModalProps {
   children?: React.ReactNode;
@@ -72,6 +73,9 @@ export function CreateStoryModal({
 
       if (dbError) throw dbError;
 
+      Analytics.track("story_created", {
+        media_type: file.type.startsWith("video") ? "video" : "image",
+      });
       toast.success("Story posted!");
       setOpen(false);
       setPreviewUrl(null);

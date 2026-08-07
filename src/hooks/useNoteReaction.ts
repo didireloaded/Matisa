@@ -99,12 +99,13 @@ export function useNoteReaction(
             .delete()
             .match({ note_id: noteId, user_id: profile.id, reaction_type: prevReacted });
         }
-        await supabase.from("note_reactions").insert({
+        const { error } = await supabase.from("note_reactions").insert({
           note_id: noteId,
           user_id: profile.id,
           reaction_type: type,
         });
-        Analytics.track("Note Reacted", { noteId, type });
+        if (error) throw error;
+        Analytics.track("note_reacted", { reaction_type: type });
 
         // Fetch note author to send notification
         const { data: noteData } = await supabase

@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { supabase } from '../../lib/supabase';
 import { toast } from 'sonner';
 import { VoiceRecorderModal } from './VoiceRecorderModal';
+import { Analytics } from '@/lib/analytics';
 
 interface CreatePostModalProps {
   children?: React.ReactNode;
@@ -32,7 +33,8 @@ export function CreatePostModal({ children, onPostCreated, onClose, onSuccess }:
       ]);
 
       if (error) throw error;
-      
+
+      Analytics.track("post_created", { post_type: "text" });
       toast.success("Post created successfully!");
       setContent('');
       setOpen(false);
