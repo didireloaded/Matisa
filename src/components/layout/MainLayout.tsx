@@ -55,17 +55,23 @@ export function MainLayout() {
     const container = scrollContainerRef.current;
 
     const handleScroll = () => {
-      const currentScrollTop = container ? container.scrollTop : window.scrollY;
+      const currentScrollTop =
+        (container && container.scrollTop > 0 ? container.scrollTop : 0) ||
+        window.scrollY ||
+        document.documentElement.scrollTop ||
+        document.body.scrollTop ||
+        0;
+
       const difference = currentScrollTop - previousScrollTop.current;
 
-      // Always restore the full dock near the top.
+      // Always restore the full dock near top of page
       if (currentScrollTop < 20) {
         setIsDockCompact(false);
-      } else if (difference > 4 && currentScrollTop > 40) {
-        // Scrolling downward -> shrink & soften bottom dock to minimize distraction
+      } else if (difference > 3 && currentScrollTop > 30) {
+        // Browsing downward -> shrink bottom dock
         setIsDockCompact(true);
-      } else if (difference < -4) {
-        // Scrolling upward -> expand bottom dock
+      } else if (difference < -3) {
+        // Scrolling back upward -> expand bottom dock
         setIsDockCompact(false);
       }
 
@@ -76,12 +82,14 @@ export function MainLayout() {
       container.addEventListener("scroll", handleScroll, { passive: true });
     }
     window.addEventListener("scroll", handleScroll, { passive: true });
+    document.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
       if (container) {
         container.removeEventListener("scroll", handleScroll);
       }
       window.removeEventListener("scroll", handleScroll);
+      document.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
