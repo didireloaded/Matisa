@@ -1,32 +1,36 @@
 // src/pages/Inbox.tsx
-import { useNavigate } from 'react-router-dom';
-import { Search, MoreHorizontal } from 'lucide-react';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Search, MoreHorizontal, MessageSquare, Plus } from "lucide-react";
+import { useConversations } from "@/hooks/useMessages";
+import { SkeletonList } from "@/components/common/SkeletonLoader";
+import { PremiumEmptyState } from "@/components/common/PremiumEmptyState";
 
-const conversations = [
+const DEMO_CONVERSATIONS = [
   {
-    id: '1',
-    name: 'Hanna Dowie',
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop',
-    lastMessage: 'Hey! Want to collab on the next event?',
-    time: '2m',
+    id: "conv-demo-1",
+    name: "Hanna Dowie",
+    avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop",
+    lastMessage: "Hey! Want to collab on the next event?",
+    time: "2m",
     unread: 2,
     online: true,
   },
   {
-    id: '2',
-    name: 'Jason Mutonga',
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop',
-    lastMessage: 'The voice room was great last night',
-    time: '1h',
+    id: "conv-demo-2",
+    name: "Jason Mutonga",
+    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop",
+    lastMessage: "The voice room was great last night 🎙️",
+    time: "1h",
     unread: 0,
     online: false,
   },
   {
-    id: '3',
-    name: 'Windhoek Creators',
-    avatar: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&h=100&fit=crop',
-    lastMessage: 'Silas: Anyone free this weekend?',
-    time: '3h',
+    id: "conv-demo-3",
+    name: "Windhoek Creators",
+    avatar: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=100&h=100&fit=crop",
+    lastMessage: "Silas: Anyone free this weekend?",
+    time: "3h",
     unread: 5,
     online: true,
     isGroup: true,
@@ -35,61 +39,98 @@ const conversations = [
 
 export default function Inbox() {
   const navigate = useNavigate();
+  const { conversations, isLoading } = useConversations();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const activeConversations = conversations.length > 0 ? conversations : DEMO_CONVERSATIONS;
+
+  const filteredConversations = activeConversations.filter(
+    (conv) =>
+      conv.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      conv.lastMessage.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-[#06101D] text-white pb-28">
       {/* Header */}
-      <div className="sticky top-0 z-40 bg-black/80 backdrop-blur-xl border-b border-white/[0.06]">
-        <div className="flex items-center justify-between px-4 h-14">
-          <h1 className="text-white font-bold text-lg">Messages</h1>
-          <button className="w-9 h-9 rounded-full bg-white/5 flex items-center justify-center">
-            <MoreHorizontal className="w-5 h-5 text-white/60" />
-          </button>
+      <div className="sticky top-0 z-40 bg-[#06101D]/90 backdrop-blur-xl border-b border-white/[0.08] px-4 py-3">
+        <div className="flex items-center justify-between h-11">
+          <h1 className="text-white font-bold text-xl tracking-wide font-display">Messages</h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => navigate("/explore/people")}
+              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition active:scale-95 border border-white/10"
+              title="Start new chat"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+            <button className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:bg-white/20 transition border border-white/10">
+              <MoreHorizontal className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search Bar */}
       <div className="px-4 py-3">
-        <div className="flex items-center gap-3 px-4 py-2.5 bg-white/5 rounded-full border border-white/[0.06]">
-          <Search className="w-4 h-4 text-white/30" />
-          <span className="text-white/30 text-sm">Search messages...</span>
+        <div className="flex items-center gap-3 px-4 py-2.5 bg-white/5 rounded-full border border-white/10 focus-within:border-[#24A3C7]">
+          <Search className="w-4 h-4 text-white/40" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search messages or people..."
+            className="w-full bg-transparent text-white text-sm placeholder:text-white/40 outline-none"
+          />
         </div>
       </div>
 
-      {/* Conversations */}
-      <div className="px-4">
-        {conversations.map((conv) => (
-          <button
-            key={conv.id}
-            onClick={() => navigate(`/chat/${conv.id}`)}
-            className="w-full flex items-center gap-3 py-3 border-b border-white/[0.04] text-left"
-          >
-            <div className="relative">
-              <img
-                src={conv.avatar}
-                alt={conv.name}
-                className="w-12 h-12 rounded-full object-cover"
-              />
-              {conv.online && (
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <p className="text-white font-medium text-sm truncate">{conv.name}</p>
-                <span className="text-white/30 text-xs">{conv.time}</span>
-              </div>
-              <div className="flex items-center justify-between mt-0.5">
-                <p className="text-white/40 text-sm truncate">{conv.lastMessage}</p>
-                {conv.unread > 0 && (
-                  <span className="ml-2 px-2 py-0.5 bg-teal-400 text-black text-xs font-bold rounded-full">
-                    {conv.unread}
-                  </span>
+      {/* Conversations List */}
+      <div className="px-4 space-y-1">
+        {isLoading ? (
+          <SkeletonList />
+        ) : filteredConversations.length === 0 ? (
+          <div className="py-12 text-center">
+            <PremiumEmptyState
+              icon={MessageSquare}
+              title="No messages found"
+              description="Start a conversation with creators around Windhoek!"
+            />
+          </div>
+        ) : (
+          filteredConversations.map((conv) => (
+            <button
+              key={conv.id}
+              onClick={() => navigate(`/messages/${conv.id}`)}
+              className="w-full flex items-center gap-3 py-3 px-3 rounded-2xl hover:bg-white/5 transition text-left active:scale-[0.99] border-b border-white/[0.04]"
+            >
+              <div className="relative shrink-0">
+                <img
+                  src={conv.avatar}
+                  alt={conv.name}
+                  className="w-12 h-12 rounded-full object-cover border border-white/10 shadow-md"
+                />
+                {conv.online && (
+                  <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#06101D]" />
                 )}
               </div>
-            </div>
-          </button>
-        ))}
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center justify-between">
+                  <p className="text-white font-semibold text-sm truncate">{conv.name}</p>
+                  <span className="text-white/40 text-xs font-mono">{conv.time}</span>
+                </div>
+                <div className="flex items-center justify-between mt-1">
+                  <p className="text-white/60 text-xs truncate max-w-[220px]">{conv.lastMessage}</p>
+                  {conv.unread > 0 && (
+                    <span className="ml-2 px-2 py-0.5 bg-[#24A3C7] text-white text-[11px] font-bold rounded-full shadow-sm">
+                      {conv.unread}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </button>
+          ))
+        )}
       </div>
     </div>
   );

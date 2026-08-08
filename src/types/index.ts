@@ -253,15 +253,20 @@ export interface Follow {
 
 export interface Message {
   id: string;
-  room_id: string;
-  user_id: string;
+  room_id?: string;
+  user_id?: string;
+  conversation_id?: string;
+  sender_id?: string;
   user?: User;
   content: string;
   media?: Media[];
-  is_edited: boolean;
-  read_by: string[]; // Array of user IDs who read this message
+  kind?: string;
+  media_url?: string | null;
+  media_type?: string | null;
+  is_edited?: boolean;
+  read_by?: string[]; // Array of user IDs who read this message
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
   deleted_at?: string;
 }
 

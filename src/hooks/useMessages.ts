@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "@/contexts/AuthContext";
+import { MessageService, ConversationItem } from "@/services/messages";
 
 export interface Message {
   id: string;
@@ -10,52 +11,62 @@ export interface Message {
   media_url: string | null;
   media_type: "image" | "video" | "voice" | null;
   created_at: string;
-  profiles: {
+  profiles?: {
     username: string;
     full_name: string;
     avatar_url: string;
   };
 }
 
+export function useConversations() {
+  const { session, profile } = useAuth();
+  const [conversations, setConversations] = useState<ConversationItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const activeUserId = session?.user?.id || profile?.id || "demo-user-123";
+
+  const fetchConversations = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const data = await MessageService.getUserConversations(activeUserId);
+      setConversations(data);
+    } catch (err) {
+      console.error("Error fetching conversations:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [activeUserId]);
+
+  useEffect(() => {
+    fetchConversations();
+  }, [fetchConversations]);
+
+  return { conversations, isLoading, refreshConversations: fetchConversations };
+}
+
 export function useMessages(conversationId?: string) {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  const activeUserId = session?.user?.id || profile?.id || "demo-user-123";
+
   const fetchMessages = useCallback(async () => {
-    if (!conversationId || !session?.user) return;
+    if (!conversationId) return;
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from("messages")
-        .select(
-          `
-          id,
-          conversation_id,
-          sender_id,
-          content,
-          media_url,
-          media_type,
-          created_at,
-          profiles:sender_id (
-            username,
-            full_name,
-            avatar_url
-          )
-        `,
-        )
-        .eq("conversation_id", conversationId)
-        .order("created_at", { ascending: true });
+      const data = await MessageService.getMessages(conversationId);
+      setMessages(data as any as Message[]);
 
-      if (error) throw error;
-      if (data) setMessages(data as any as Message[]);
+      // Mark conversation read
+      MessageService.markConversationRead(conversationId, activeUserId);
     } catch (err) {
       console.error("Error fetching messages:", err);
     } finally {
       setIsLoading(false);
     }
-  }, [conversationId, session?.user]);
+  }, [conversationId, activeUserId]);
 
   useEffect(() => {
     fetchMessages();
@@ -63,48 +74,17 @@ export function useMessages(conversationId?: string) {
     if (!conversationId) return;
 
     // Real-time subscription to new messages
-    const channel = supabase
-      .channel(`messages:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        async (payload) => {
-          // Fetch the newly inserted message with profile data
-          const { data: newMsg } = await supabase
-            .from("messages")
-            .select(
-              `
-              id,
-              conversation_id,
-              sender_id,
-              content,
-              media_url,
-              media_type,
-              created_at,
-              profiles:sender_id (
-                username,
-                full_name,
-                avatar_url
-              )
-            `,
-            )
-            .eq("id", payload.new.id)
-            .single();
-
-          if (newMsg) {
-            setMessages((prev) => [...prev, newMsg as any as Message]);
-          }
-        },
-      )
-      .subscribe();
+    const channel = MessageService.subscribeToMessages(conversationId, (newMsg: any) => {
+      if (newMsg) {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === newMsg.id)) return prev;
+          return [...prev, newMsg as Message];
+        });
+      }
+    });
 
     return () => {
-      supabase.removeChannel(channel);
+      MessageService.unsubscribe(channel);
     };
   }, [conversationId, fetchMessages]);
 
@@ -113,56 +93,42 @@ export function useMessages(conversationId?: string) {
     mediaUrl?: string,
     mediaType?: "image" | "video" | "voice",
   ) => {
-    if (!conversationId || !session?.user) return;
+    if (!conversationId) return;
 
     try {
-      const { error } = await supabase.from("messages").insert({
-        conversation_id: conversationId,
-        sender_id: session.user.id,
-        content,
-        media_url: mediaUrl,
-        media_type: mediaType,
-      });
-
-      if (error) throw error;
-
-      // Update the conversation's updated_at timestamp to bubble it up in the inbox
-      await supabase
-        .from("conversations")
-        .update({ updated_at: new Date().toISOString() })
-        .eq("id", conversationId);
-
-      // Trigger Push Notification to the other participant(s)
-      const { data: convData } = await supabase
-        .from("conversation_participants")
-        .select("user_id")
-        .eq("conversation_id", conversationId)
-        .neq("user_id", session.user.id);
-
-      if (convData && convData.length > 0) {
-        // In a real app we might batch this, but for now we loop
-        for (const p of convData) {
-          supabase.functions
-            .invoke("send-notification", {
-              body: {
-                userId: p.user_id,
-                title: `New message from ${session.user.user_metadata?.full_name || "Someone"}`,
-                body: content
-                  ? content
-                  : mediaType === "voice"
-                    ? "Sent a voice note 🎤"
-                    : "Sent an attachment",
-                data: { url: `/messages/${conversationId}` },
-              },
-            })
-            .catch(console.error); // don't await/block
-        }
+      if (mediaUrl && (mediaType === "voice" || mediaType === "image")) {
+        // Direct media insertion
+        const { error } = await supabase.from("messages").insert({
+          conversation_id: conversationId,
+          sender_id: activeUserId,
+          content: content || (mediaType === "voice" ? "🎤 Voice message" : "Sent an image"),
+          media_url: mediaUrl,
+          media_type: mediaType,
+        });
+        if (error) throw error;
+      } else if (content) {
+        await MessageService.sendTextMessage(conversationId, activeUserId, content);
       }
+
+      // Optimistic append if realtime takes a moment
+      const tempId = `msg-local-${Date.now()}`;
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: tempId,
+          conversation_id: conversationId,
+          sender_id: activeUserId,
+          content: content || (mediaType === "voice" ? "🎤 Voice message" : "Attachment"),
+          media_url: mediaUrl || null,
+          media_type: mediaType || null,
+          created_at: new Date().toISOString(),
+        },
+      ]);
     } catch (err) {
       console.error("Error sending message:", err);
       throw err;
     }
   };
 
-  return { messages, isLoading, sendMessage };
+  return { messages, isLoading, sendMessage, refreshMessages: fetchMessages };
 }
