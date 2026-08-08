@@ -1,35 +1,101 @@
-import { supabase } from "../lib/supabase";
-import { Analytics } from "../lib/analytics";
+import { supabase } from "@/lib/supabase";
 
-export type ReportType = "post" | "user" | "voice_room" | "event" | "message";
+export interface SubmitReportInput {
+  targetType: "user" | "note" | "message" | "room" | "story" | "event";
+  targetId: string;
+  reason: string;
+  details?: string;
+}
 
 export const ModerationService = {
   /**
-   * Submit a report for abusive content, users, or rooms
+   * Submit a formal moderation report.
    */
-  async submitReport(
-    reporterId: string,
-    targetId: string,
-    targetType: ReportType,
-    reason: string,
-    details?: string,
-  ): Promise<{ success: boolean; error?: any }> {
-    try {
-      const { error } = await supabase.from("reports").insert({
-        reporter_id: reporterId,
-        target_id: targetId,
-        target_type: targetType,
-        reason,
-        details,
-      });
+  async submitReport(input: SubmitReportInput): Promise<string> {
+    const { data, error } = await supabase.rpc("submit_report", {
+      p_target_type: input.targetType,
+      p_target_id: input.targetId,
+      p_reason: input.reason,
+      p_details: input.details || null,
+    });
 
-      if (error) throw error;
+    if (error) {
+      // Fallback to direct insertion if RPC is not present
+      const { data: directData, error: directErr } = await supabase
+        .from("reports")
+        .insert({
+          target_type: input.targetType,
+          target_id: input.targetId,
+          reason: input.reason,
+          details: input.details || null,
+        })
+        .select("id")
+        .single();
 
-      Analytics.track("Report Submitted", { targetType, reason });
-      return { success: true };
-    } catch (error) {
-      console.error("Error submitting report:", error);
-      return { success: false, error };
+      if (directErr) throw directErr;
+      return directData.id;
+    }
+
+    return data;
+  },
+
+  /**
+   * Mute a user.
+   */
+  async muteUser(targetUserId: string): Promise<void> {
+    const { error } = await supabase.rpc("mute_user", {
+      p_muted_id: targetUserId,
+    });
+    if (error) {
+      const { error: directErr } = await supabase.from("mutes").insert({ muted_id: targetUserId });
+      if (directErr && directErr.code !== "23505") throw directErr;
+    }
+  },
+
+  /**
+   * Unmute a user.
+   */
+  async unmuteUser(targetUserId: string): Promise<void> {
+    const { error } = await supabase.rpc("unmute_user", {
+      p_muted_id: targetUserId,
+    });
+    if (error) {
+      const { error: directErr } = await supabase
+        .from("mutes")
+        .delete()
+        .eq("muted_id", targetUserId);
+      if (directErr) throw directErr;
+    }
+  },
+
+  /**
+   * Block a user.
+   */
+  async blockUser(targetUserId: string): Promise<void> {
+    const { error } = await supabase.rpc("block_user", {
+      p_blocked_id: targetUserId,
+    });
+    if (error) {
+      const { error: directErr } = await supabase
+        .from("blocks")
+        .insert({ blocked_id: targetUserId });
+      if (directErr && directErr.code !== "23505") throw directErr;
+    }
+  },
+
+  /**
+   * Unblock a user.
+   */
+  async unblockUser(targetUserId: string): Promise<void> {
+    const { error } = await supabase.rpc("unblock_user", {
+      p_blocked_id: targetUserId,
+    });
+    if (error) {
+      const { error: directErr } = await supabase
+        .from("blocks")
+        .delete()
+        .eq("blocked_id", targetUserId);
+      if (directErr) throw directErr;
     }
   },
 };
