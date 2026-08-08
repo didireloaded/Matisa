@@ -156,8 +156,10 @@ export function Home() {
         <div className="flex items-center gap-6">
           <button
             onClick={() => setFeedTab("discover")}
-            className={`text-base font-bold tracking-wide transition ${
-              feedTab === "discover" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
+            className={`pb-1 text-base font-bold tracking-wide transition relative ${
+              feedTab === "discover"
+                ? "text-white font-display border-b-2 border-[#FF9D2E]"
+                : "text-white/40 hover:text-white/70"
             }`}
           >
             Discover
@@ -165,8 +167,10 @@ export function Home() {
 
           <button
             onClick={() => setFeedTab("following")}
-            className={`text-base font-bold tracking-wide transition ${
-              feedTab === "following" ? "text-white scale-105" : "text-white/40 hover:text-white/70"
+            className={`pb-1 text-base font-bold tracking-wide transition relative ${
+              feedTab === "following"
+                ? "text-white font-display border-b-2 border-[#FF9D2E]"
+                : "text-white/40 hover:text-white/70"
             }`}
           >
             Following

@@ -220,10 +220,10 @@ export function NoteCard({ note }: NoteCardProps) {
           />
           <div className="flex flex-col min-w-0 flex-1">
             <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm font-bold text-white tracking-wide truncate group-hover:text-[#39B7F2] transition">
+              <span className="text-sm font-bold text-white tracking-wide truncate group-hover:text-[#FF9D2E] transition">
                 {authorName}
               </span>
-              <CheckCircle2 size={14} className="text-[#24A3C7] shrink-0" />
+              <CheckCircle2 size={14} className="text-[#FF9D2E] fill-[#FF9D2E]/20 shrink-0" />
             </div>
             <span className="text-xs text-white/50 truncate">
               @{authorUsername} • {formattedTime}
@@ -236,10 +236,10 @@ export function NoteCard({ note }: NoteCardProps) {
           <button
             onClick={toggleFollow}
             disabled={followLoading}
-            className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
+            className={`flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
               isFollowing
                 ? "bg-white/10 text-white/70 border border-white/20 hover:bg-white/20"
-                : "bg-gradient-to-r from-[#FF9D2E] to-[#24A3C7] text-white shadow-md hover:opacity-90"
+                : "bg-[#FF9D2E] text-black shadow-md hover:bg-[#FF9D2E]/90"
             }`}
           >
             {isFollowing ? (
