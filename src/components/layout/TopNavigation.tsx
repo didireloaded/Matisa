@@ -32,7 +32,7 @@ export function TopNavigation() {
   return (
     <>
       <header
-        className="sticky top-0 z-40 grid grid-cols-3 items-center px-5 pb-3 bg-gradient-to-b from-[#06101D] via-[#06101D]/90 to-transparent backdrop-blur-md"
+        className="sticky top-0 z-40 grid grid-cols-3 items-center px-5 pb-3 bg-gradient-to-b from-[#0D0B0A] via-[#0D0B0A]/95 to-transparent backdrop-blur-md"
         style={{
           paddingTop: "calc(12px + env(safe-area-inset-top))",
         }}
@@ -44,7 +44,7 @@ export function TopNavigation() {
             className={`flex h-9 w-9 items-center justify-center rounded-full transition active:scale-95 border ${
               isOutdoorMode
                 ? "bg-amber-500/20 text-amber-500 border-amber-500/30"
-                : "bg-white/10 text-white/80 border-white/10 hover:bg-white/20"
+                : "bg-white/10 text-white/80 border-white/15 hover:bg-white/20"
             }`}
             title={isOutdoorMode ? "Switch to Sleek Dark Mode" : "Switch to Sunlight Outdoor Mode"}
             aria-label="Toggle Outdoor Sunlight Contrast Mode"
@@ -59,7 +59,7 @@ export function TopNavigation() {
             onClick={() => navigate("/")}
             className="flex items-center gap-1 hover:opacity-90 transition active:scale-95"
           >
-            <span className="text-lg font-extrabold tracking-tight text-white font-display">
+            <span className="text-xl font-black tracking-tight text-white font-display">
               Matisa
             </span>
           </button>
@@ -67,7 +67,7 @@ export function TopNavigation() {
             onClick={() => setIsCityModalOpen(true)}
             className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/10 text-white/90 hover:text-white text-[10px] font-bold border border-white/15 transition active:scale-95"
           >
-            <MapPin size={9} className="text-[#24A3C7]" />
+            <MapPin size={9} className="text-[#FF9D2E]" />
             <span>{selectedCity}</span>
             <ChevronDown size={9} className="text-white/50" />
           </button>
@@ -77,7 +77,7 @@ export function TopNavigation() {
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={() => navigate("/activity")}
-            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/10"
+            className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/15"
             aria-label="Notifications"
           >
             <Bell size={17} />
@@ -85,22 +85,22 @@ export function TopNavigation() {
 
           <button
             onClick={() => navigate("/messages")}
-            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/10"
+            className="relative flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 transition active:scale-95 border border-white/15"
             aria-label="Messages"
           >
             <MessageCircle size={17} />
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.9)]" />
+            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-[#FF9D2E] shadow-[0_0_6px_#FF9D2E]" />
           </button>
         </div>
       </header>
 
       {/* Real City Selector Modal */}
       {isCityModalOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xs rounded-[28px] glass-panel-elevated p-5 bg-[#06101D] text-white border border-white/20 shadow-2xl">
+        <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-xs rounded-[28px] glass-panel-elevated p-5 bg-[#171412] text-white border border-white/20 shadow-2xl">
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/10">
               <div className="flex items-center gap-2">
-                <MapPin size={16} className="text-[#24A3C7]" />
+                <MapPin size={16} className="text-[#FF9D2E]" />
                 <h3 className="text-sm font-bold">Select Your City</h3>
               </div>
               <button
@@ -120,7 +120,7 @@ export function TopNavigation() {
                     onClick={() => handleSelectCity(city)}
                     className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition ${
                       isSelected
-                        ? "bg-[#24A3C7] text-white font-bold"
+                        ? "bg-[#FF9D2E] text-black font-bold"
                         : "hover:bg-white/10 text-white/80"
                     }`}
                   >

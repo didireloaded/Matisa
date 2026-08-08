@@ -17,10 +17,10 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
 
   return (
     <nav
-      className={`fixed left-1/2 z-50 grid grid-cols-5 items-center -translate-x-1/2 overflow-hidden rounded-full border border-white/20 bg-black/60 shadow-2xl backdrop-blur-2xl transition-all duration-300 ease-out hover:opacity-100 ${
+      className={`fixed left-1/2 z-50 grid grid-cols-5 items-center -translate-x-1/2 overflow-hidden rounded-full border border-white/20 bg-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-2xl transition-all duration-300 ease-out hover:opacity-100 ${
         compact
-          ? "bottom-3 h-11 w-[70%] max-w-[280px] px-1 opacity-80 translate-y-1 scale-95"
-          : "bottom-4 h-14 w-[92%] max-w-[390px] px-2 opacity-100 translate-y-0 scale-100"
+          ? "bottom-3 h-11 w-[72%] max-w-[290px] px-1 opacity-85 translate-y-1 scale-95"
+          : "bottom-5 h-14 w-[92%] max-w-[390px] px-2 opacity-100 translate-y-0 scale-100"
       }`}
       style={{
         marginBottom: "env(safe-area-inset-bottom)",
@@ -29,7 +29,7 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
       {/* 1. Home */}
       <Link
         to="/"
-        className="flex items-center justify-center py-1.5 rounded-full transition active:scale-95 text-white/50 hover:text-white"
+        className="relative flex items-center justify-center py-1.5 transition active:scale-95 text-white/60 hover:text-white"
         aria-label="Home"
       >
         <div
@@ -39,12 +39,15 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
         >
           <Home size={20} strokeWidth={isHomeActive ? 2.5 : 2} />
         </div>
+        {isHomeActive && (
+          <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#FF9D2E] shadow-[0_0_8px_#FF9D2E]" />
+        )}
       </Link>
 
       {/* 2. Explore */}
       <Link
         to="/explore"
-        className="flex items-center justify-center py-1.5 rounded-full transition active:scale-95 text-white/50 hover:text-white"
+        className="relative flex items-center justify-center py-1.5 transition active:scale-95 text-white/60 hover:text-white"
         aria-label="Explore"
       >
         <div
@@ -54,12 +57,15 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
         >
           <Search size={20} strokeWidth={isExploreActive ? 2.5 : 2} />
         </div>
+        {isExploreActive && (
+          <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#FF9D2E] shadow-[0_0_8px_#FF9D2E]" />
+        )}
       </Link>
 
-      {/* 3. Center Create Trigger (Raised circular white pill) */}
+      {/* 3. Center Create Trigger (Raised circular white button matching blueprint) */}
       <button
         onClick={onOpenCreate}
-        className={`mx-auto flex shrink-0 items-center justify-center rounded-full bg-white text-black shadow-[0_0_16px_rgba(255,255,255,0.4)] border border-white/80 active:scale-90 transition-all duration-300 hover:scale-105 ${
+        className={`mx-auto flex shrink-0 items-center justify-center rounded-full bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.45)] border border-white active:scale-90 transition-all duration-300 hover:scale-105 ${
           compact ? "h-8 w-8" : "h-10 w-10"
         }`}
         aria-label="Create"
@@ -70,7 +76,7 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
       {/* 4. Rooms */}
       <Link
         to="/rooms"
-        className="flex items-center justify-center py-1.5 rounded-full transition active:scale-95 text-white/50 hover:text-white"
+        className="relative flex items-center justify-center py-1.5 transition active:scale-95 text-white/60 hover:text-white"
         aria-label="Rooms"
       >
         <div
@@ -80,12 +86,15 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
         >
           <Radio size={20} strokeWidth={isRoomsActive ? 2.5 : 2} />
         </div>
+        {isRoomsActive && (
+          <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#FF9D2E] shadow-[0_0_8px_#FF9D2E]" />
+        )}
       </Link>
 
       {/* 5. Profile */}
       <Link
         to="/profile"
-        className="flex items-center justify-center py-1.5 rounded-full transition active:scale-95 text-white/50 hover:text-white"
+        className="relative flex items-center justify-center py-1.5 transition active:scale-95 text-white/60 hover:text-white"
         aria-label="Profile"
       >
         <div
@@ -95,6 +104,9 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
         >
           <User size={20} strokeWidth={isProfileActive ? 2.5 : 2} />
         </div>
+        {isProfileActive && (
+          <span className="absolute bottom-1 w-1.5 h-1.5 rounded-full bg-[#FF9D2E] shadow-[0_0_8px_#FF9D2E]" />
+        )}
       </Link>
     </nav>
   );

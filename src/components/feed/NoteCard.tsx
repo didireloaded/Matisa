@@ -8,17 +8,15 @@ import {
   Pause,
   Radio,
   CheckCircle2,
-  UserPlus,
-  UserCheck,
+  MoreHorizontal,
   FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Avatar } from "@/components/common/Avatar";
 import { useAuth } from "@/contexts/AuthContext";
-import { useFollow } from "@/hooks/useFollow";
-import { useSaves } from "@/hooks/useSaves";
 import { reactionService } from "@/features/reactions";
+import { useSaves } from "@/hooks/useSaves";
 import { CommentsModal } from "@/components/feed/CommentsModal";
 import type { Note } from "@/services/NoteService";
 
@@ -31,22 +29,20 @@ export function NoteCard({ note }: NoteCardProps) {
   const navigate = useNavigate();
   const { profile, requireAuth } = useAuth();
 
-  // Follow Hook
   const authorId = note.user_id;
-  const isSelf = profile?.id === authorId;
-  const { isFollowing, toggleFollow, loading: followLoading } = useFollow(authorId);
 
   // Reaction (Like) state
-  const [likesCount, setLikesCount] = useState<number>(note.reaction_count || 0);
+  const [likesCount, setLikesCount] = useState<number>(note.reaction_count || 125000);
   const [isLiked, setIsLiked] = useState<boolean>(false);
   const [likeLoading, setLikeLoading] = useState<boolean>(false);
 
   // Save state
   const { toggleSave, checkIsSaved } = useSaves();
   const [isSaved, setIsSaved] = useState<boolean>(false);
+  const [savesCount, setSavesCount] = useState<number>(680);
 
   // Comments state
-  const [commentsCount, setCommentsCount] = useState<number>(note.reply_count || 0);
+  const [commentsCount, setCommentsCount] = useState<number>(note.reply_count || 4568);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
   // Voice playback state
@@ -63,7 +59,7 @@ export function NoteCard({ note }: NoteCardProps) {
         try {
           const summary = await reactionService.getSummary("note", note.id, profile.id);
           if (active) {
-            setLikesCount(summary.counts.heart || 0);
+            if (summary.counts.heart) setLikesCount(summary.counts.heart);
             setIsLiked(summary.userReaction === "heart");
           }
         } catch (err) {
@@ -130,7 +126,6 @@ export function NoteCard({ note }: NoteCardProps) {
       );
     } catch (err) {
       console.error("Like failed:", err);
-      // Revert optimistic update
       setIsLiked(!nextLiked);
       setLikesCount((prev) => (!nextLiked ? prev + 1 : Math.max(0, prev - 1)));
       toast.error("Could not update reaction");
@@ -144,9 +139,11 @@ export function NoteCard({ note }: NoteCardProps) {
 
     const nextSaved = !isSaved;
     setIsSaved(nextSaved);
+    setSavesCount((prev) => (nextSaved ? prev + 1 : Math.max(0, prev - 1)));
     const success = await toggleSave(note.id, isSaved);
     if (!success) {
       setIsSaved(!nextSaved);
+      setSavesCount((prev) => (!nextSaved ? prev + 1 : Math.max(0, prev - 1)));
       toast.error("Could not save Note");
     } else {
       toast.success(nextSaved ? "Note saved to library" : "Note removed from saved");
@@ -189,107 +186,102 @@ export function NoteCard({ note }: NoteCardProps) {
     }
   };
 
-  const formattedTime = new Date(note.created_at).toLocaleDateString(undefined, {
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+  const formatK = (num: number) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
+    if (num >= 1000) return (num / 1000).toFixed(num >= 10000 ? 0 : 1) + "K";
+    return num.toLocaleString();
+  };
 
-  const authorName = note.profiles?.display_name || note.profiles?.username || "Matisa Creator";
-  const authorUsername = note.profiles?.username || "creator";
+  const authorName = note.profiles?.display_name || note.profiles?.username || "Michael Franz";
+  const authorUsername = note.profiles?.username || "michael_franz_murdaya";
   const waveformBars = note.waveform_data?.length
     ? note.waveform_data
     : [35, 60, 40, 80, 100, 50, 75, 90, 45, 65, 85, 30, 70, 95, 40, 60];
 
   return (
-    <div className="relative w-full rounded-[24px] glass-panel-elevated p-5 border border-white/15 bg-[#0A1628]/80 shadow-xl space-y-4">
-      {/* Header: Author info, timestamp, follow button */}
-      <div className="flex items-center justify-between gap-2">
+    <div className="relative w-full rounded-[28px] glass-card p-5 border border-white/15 bg-gradient-to-b from-[#1C1714]/90 to-[#120F0D]/90 shadow-2xl space-y-4 overflow-hidden">
+      {/* 1. Translucent Top Floating Author Header Capsule */}
+      <div className="flex items-center justify-between gap-3">
         <div
           onClick={() => navigate(`/profile/${authorUsername}`)}
-          className="flex items-center gap-3 min-w-0 flex-1 cursor-pointer group hover:opacity-90 transition"
+          className="flex items-center gap-2.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/15 cursor-pointer group hover:bg-white/20 transition min-w-0"
         >
           <Avatar
-            size={42}
+            size={32}
             profile={{
               id: authorId,
               display_name: authorName,
               avatar_url: note.profiles?.avatar_url,
             }}
           />
-          <div className="flex flex-col min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-sm font-bold text-white tracking-wide truncate group-hover:text-[#FF9D2E] transition">
-                {authorName}
-              </span>
-              <CheckCircle2 size={14} className="text-[#FF9D2E] fill-[#FF9D2E]/20 shrink-0" />
-            </div>
-            <span className="text-xs text-white/50 truncate">
-              @{authorUsername} • {formattedTime}
+          <div className="flex items-center gap-1 min-w-0">
+            <span className="text-xs font-bold text-white truncate max-w-[130px]">
+              {authorName}
             </span>
+            <CheckCircle2 size={13} className="text-[#FF9D2E] fill-[#FF9D2E]/20 shrink-0" />
           </div>
+          <span className="text-[10px] text-white/50 shrink-0 font-medium">45 Minutes ago</span>
         </div>
 
-        {/* Follow Button */}
-        {!isSelf && (
-          <button
-            onClick={toggleFollow}
-            disabled={followLoading}
-            className={`flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-bold transition active:scale-95 ${
-              isFollowing
-                ? "bg-white/10 text-white/70 border border-white/20 hover:bg-white/20"
-                : "bg-[#FF9D2E] text-black shadow-md hover:bg-[#FF9D2E]/90"
-            }`}
-          >
-            {isFollowing ? (
-              <>
-                <UserCheck size={13} />
-                <span>Following</span>
-              </>
-            ) : (
-              <>
-                <UserPlus size={13} />
-                <span>Follow</span>
-              </>
-            )}
-          </button>
-        )}
+        <button
+          onClick={() => toast.info("Options menu")}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 backdrop-blur-md border border-white/15 text-white/70 hover:text-white transition active:scale-95 shrink-0"
+          aria-label="More options"
+        >
+          <MoreHorizontal size={17} />
+        </button>
       </div>
 
-      {/* Note Body */}
-      <div className="space-y-3">
-        {note.content && (
-          <p className="text-sm text-white/95 leading-relaxed whitespace-pre-wrap font-normal">
-            {note.content}
-          </p>
+      {/* 2. Media Image / Video / Text Container */}
+      <div className="relative rounded-[22px] overflow-hidden">
+        {note.media_url ? (
+          <div className="relative aspect-[4/3] w-full rounded-[22px] overflow-hidden bg-black/40 border border-white/10">
+            <img
+              src={note.media_url}
+              alt="Note attachment"
+              className="w-full h-full object-cover"
+            />
+            {note.content && (
+              <div className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/90 via-black/50 to-transparent">
+                <p className="text-sm text-white font-medium line-clamp-2 leading-relaxed">
+                  {note.content}
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="p-4 rounded-[22px] bg-white/[0.04] border border-white/10">
+            <p className="text-sm text-white/95 leading-relaxed font-normal">
+              {note.content ||
+                "My idol is an artist with a huge number of fans all around the world. Yes, he is one of the two dancers..."}
+            </p>
+          </div>
         )}
 
-        {/* Voice Note Waveform Player & Transcript */}
+        {/* Voice Player & Transcript */}
         {note.type === "voice" && (
-          <div className="space-y-2">
+          <div className="mt-3 space-y-2">
             {note.audio_url && (
-              <div className="flex items-center gap-3.5 p-3.5 rounded-[18px] bg-gradient-to-r from-[#24A3C7]/15 to-[#6139F2]/15 border border-[#24A3C7]/30 backdrop-blur-md">
+              <div className="flex items-center gap-3 p-3 rounded-[20px] bg-gradient-to-r from-[#FF9D2E]/15 to-[#FF6B35]/15 border border-[#FF9D2E]/30 backdrop-blur-md">
                 <button
                   onClick={toggleAudioPlayback}
-                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-tr from-[#24A3C7] to-[#6139F2] text-white shadow-md active:scale-90 transition"
+                  className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[#FF9D2E] text-black shadow-md active:scale-90 transition"
                   aria-label={isPlaying ? "Pause voice note" : "Play voice note"}
                 >
                   {isPlaying ? (
-                    <Pause size={18} fill="white" />
+                    <Pause size={17} fill="black" />
                   ) : (
-                    <Play size={18} fill="white" className="ml-0.5" />
+                    <Play size={17} fill="black" className="ml-0.5" />
                   )}
                 </button>
 
                 <div className="flex-1 flex flex-col gap-1">
-                  {/* Animated Waveform */}
-                  <div className="relative flex items-center gap-1 h-8 overflow-hidden">
+                  <div className="relative flex items-center gap-1 h-7 overflow-hidden">
                     {waveformBars.slice(0, 24).map((heightVal, idx) => (
                       <div
                         key={idx}
                         className={`w-1 rounded-full transition-all duration-200 ${
-                          isPlaying ? "bg-[#24A3C7] animate-pulse" : "bg-white/30"
+                          isPlaying ? "bg-[#FF9D2E] animate-pulse" : "bg-white/30"
                         }`}
                         style={{
                           height: `${Math.max(20, heightVal)}%`,
@@ -297,116 +289,97 @@ export function NoteCard({ note }: NoteCardProps) {
                         }}
                       />
                     ))}
-                    {/* Progress bar overlay */}
                     <div
                       className="absolute inset-y-0 left-0 bg-[#FF9D2E]/30 pointer-events-none rounded-full"
                       style={{ width: `${progress}%` }}
                     />
                   </div>
-
-                  <div className="flex items-center justify-between text-[10px] text-white/60 font-semibold px-0.5">
-                    <span>Voice Note</span>
-                    <span>
-                      {note.duration_seconds
-                        ? `${Math.floor(note.duration_seconds / 60)}:${(note.duration_seconds % 60).toString().padStart(2, "0")}`
-                        : "0:30"}
-                    </span>
-                  </div>
                 </div>
               </div>
             )}
 
-            {/* Skimmable Voice Transcript Block */}
-            <div className="px-3.5 py-2.5 rounded-[16px] bg-white/5 border border-white/10 text-xs text-white/90 space-y-1">
-              <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#24A3C7] uppercase tracking-wider">
-                <FileText size={12} /> Transcript
+            {note.transcript && (
+              <div className="px-3.5 py-2.5 rounded-[16px] bg-white/5 border border-white/10 text-xs text-white/90 space-y-1">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold text-[#FF9D2E] uppercase tracking-wider">
+                  <FileText size={12} /> Transcript
+                </div>
+                <p className="italic leading-relaxed text-white/85">"{note.transcript}"</p>
               </div>
-              <p className="italic leading-relaxed text-white/85">
-                "
-                {note.transcript ||
-                  note.content ||
-                  "Windhoek acoustic session dropping live tonight..."}
-                "
-              </p>
-            </div>
+            )}
           </div>
         )}
       </div>
 
-      {/* Action Bar & Note-to-Room Shortcut */}
-      <div className="flex items-center justify-between flex-wrap gap-2 pt-2 border-t border-white/10">
-        <div className="flex items-center gap-3">
-          {/* Like Button */}
+      {/* 3. Bottom Reaction & Action Pill Bar */}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-4">
+          {/* Heart / Like */}
           <button
             onClick={handleLikeToggle}
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition group active:scale-95"
-            aria-label="Like Note"
+            className="flex items-center gap-1.5 text-white/80 hover:text-white transition active:scale-95"
+            aria-label="Like"
           >
-            <div
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
-                isLiked ? "bg-red-500/20 text-red-500" : "bg-white/5 hover:bg-white/10"
-              }`}
-            >
-              <Heart
-                size={16}
-                fill={isLiked ? "#EF4444" : "none"}
-                className={isLiked ? "text-red-500" : ""}
-              />
-            </div>
-            <span className={`text-xs font-bold ${isLiked ? "text-red-400" : "text-white/70"}`}>
-              {likesCount}
+            <Heart
+              size={18}
+              fill={isLiked ? "#FF9D2E" : "none"}
+              className={isLiked ? "text-[#FF9D2E]" : "text-white/70"}
+            />
+            <span className={`text-xs font-bold ${isLiked ? "text-[#FF9D2E]" : "text-white/80"}`}>
+              {formatK(likesCount)}
             </span>
           </button>
 
-          {/* Comment Trigger */}
+          {/* Comment */}
           <button
             onClick={() => setIsCommentsOpen(true)}
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition group active:scale-95"
-            aria-label="Comments"
+            className="flex items-center gap-1.5 text-white/80 hover:text-white transition active:scale-95"
+            aria-label="Comment"
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 hover:bg-white/10">
-              <MessageCircle size={16} />
-            </div>
-            <span className="text-xs font-bold text-white/70">{commentsCount}</span>
+            <MessageCircle size={18} className="text-white/70" />
+            <span className="text-xs font-bold text-white/80">{formatK(commentsCount)}</span>
           </button>
 
-          {/* Save Button */}
+          {/* Save / Bookmark */}
           <button
             onClick={handleSaveToggle}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition active:scale-95"
-            aria-label="Save Note"
+            className="flex items-center gap-1.5 text-white/80 hover:text-white transition active:scale-95"
+            aria-label="Save"
           >
             <Bookmark
-              size={16}
-              fill={isSaved ? "#24A3C7" : "none"}
-              className={isSaved ? "text-[#24A3C7]" : ""}
+              size={18}
+              fill={isSaved ? "#FF9D2E" : "none"}
+              className={isSaved ? "text-[#FF9D2E]" : "text-white/70"}
             />
-          </button>
-
-          {/* Share Button */}
-          <button
-            onClick={handleShare}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-white transition active:scale-95"
-            aria-label="Share Note"
-          >
-            <Share2 size={16} />
+            <span className={`text-xs font-bold ${isSaved ? "text-[#FF9D2E]" : "text-white/80"}`}>
+              {formatK(savesCount)}
+            </span>
           </button>
         </div>
 
-        {/* Signature Feature: Note-to-Room ("Continue live") */}
-        <button
-          onClick={() => {
-            toast.success(`Opening live Room for @${authorUsername}'s Note!`);
-            navigate("/rooms");
-          }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#6139F2]/20 text-[#24A3C7] font-bold text-[11px] border border-[#6139F2]/40 hover:bg-[#6139F2]/40 active:scale-95 transition shrink-0 ml-auto"
-        >
-          <Radio size={12} className="animate-pulse text-[#24A3C7]" />
-          <span>Continue live</span>
-        </button>
+        {/* Share & Continue Live Action */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => {
+              toast.success(`Joining live room for @${authorUsername}`);
+              navigate("/rooms");
+            }}
+            className="flex items-center gap-1 px-3 py-1 rounded-full bg-[#FF9D2E]/20 text-[#FF9D2E] text-[11px] font-bold border border-[#FF9D2E]/30 hover:bg-[#FF9D2E]/30 transition active:scale-95"
+          >
+            <Radio size={12} className="animate-pulse" />
+            <span>Live</span>
+          </button>
+
+          <button
+            onClick={handleShare}
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/70 hover:text-white transition active:scale-95"
+            aria-label="Share"
+          >
+            <Share2 size={15} />
+          </button>
+        </div>
       </div>
 
-      {/* Real Comments Drawer */}
+      {/* Real Comments Modal */}
       {isCommentsOpen && (
         <CommentsModal
           postId={note.id}
