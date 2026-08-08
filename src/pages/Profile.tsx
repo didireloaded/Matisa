@@ -12,10 +12,10 @@ import {
   Edit,
   Share2,
   PhoneCall,
+  X,
 } from "lucide-react";
 import { VoiceIntroPlayer } from "@/components/voice/VoiceIntroPlayer";
 import { VoiceNoteRecorderModal } from "@/components/voice/VoiceNoteRecorderModal";
-import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { Avatar } from "@/components/common/Avatar";
@@ -35,6 +35,29 @@ export function Profile() {
   const [userNotes, setUserNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editBio, setEditBio] = useState("");
+  const [editLocation, setEditLocation] = useState("");
+
+  const handleSaveProfile = () => {
+    setUserProfile((prev: any) => ({
+      ...(prev || {}),
+      display_name: editName.trim() || profileData.display_name,
+      bio: editBio.trim() || profileData.bio,
+      location: editLocation.trim() || profileData.location,
+    }));
+    setIsEditModalOpen(false);
+    toast.success("Profile details updated successfully!");
+  };
+
+  const openEditModal = () => {
+    setEditName(profileData.display_name || "");
+    setEditBio(profileData.bio || "");
+    setEditLocation(profileData.location || "");
+    setIsEditModalOpen(true);
+  };
 
   const isOwnProfile =
     !username || username === currentUser?.username || username === currentUser?.id;
@@ -162,7 +185,7 @@ export function Profile() {
 
             {isOwnProfile ? (
               <button
-                onClick={() => toast.info("Profile details updated")}
+                onClick={openEditModal}
                 className="flex items-center gap-1.5 px-4 py-2 rounded-full glass-panel text-white text-xs font-bold border border-white/20 hover:bg-white/10 transition active:scale-95"
               >
                 <Edit size={14} />
@@ -394,6 +417,73 @@ export function Profile() {
           </div>
         )}
       </div>
+
+      {/* Edit Profile Modal */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-[28px] glass-panel-elevated p-6 bg-[#06101D] text-white border border-white/20 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-white/10">
+              <h3 className="text-base font-bold">Edit Profile Details</h3>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1 text-white/50 hover:text-white"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div>
+                <label className="block text-white/60 mb-1 font-semibold">Display Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Your display name..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-white/30 outline-none focus:border-[#24A3C7]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-white/60 mb-1 font-semibold">Location</label>
+                <input
+                  type="text"
+                  value={editLocation}
+                  onChange={(e) => setEditLocation(e.target.value)}
+                  placeholder="City, Country..."
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-white/30 outline-none focus:border-[#24A3C7]"
+                />
+              </div>
+
+              <div>
+                <label className="block text-white/60 mb-1 font-semibold">Bio</label>
+                <textarea
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value)}
+                  placeholder="Tell people about yourself..."
+                  rows={3}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-white/5 border border-white/15 text-white placeholder-white/30 outline-none focus:border-[#24A3C7] resize-none"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 rounded-full glass-panel text-xs text-white/70 hover:text-white font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                className="px-5 py-2 rounded-full bg-[#24A3C7] text-white text-xs font-bold shadow-md active:scale-95 transition"
+              >
+                Save Changes
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
