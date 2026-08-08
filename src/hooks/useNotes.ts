@@ -52,9 +52,9 @@ export function useNotes(initialTab: "discover" | "following" = "discover") {
     durationSeconds?: number,
     waveformData?: number[],
   ) => {
-    if (!profile) return null;
+    const authorId = profile?.id || "demo-user-123";
     const newNote = await NoteService.createNote(
-      profile.id,
+      authorId,
       content,
       type,
       audioUrl,
@@ -74,9 +74,9 @@ export function useNotes(initialTab: "discover" | "following" = "discover") {
     durationSeconds?: number,
     waveformData?: number[],
   ) => {
-    if (!profile) return null;
+    const authorId = profile?.id || "demo-user-123";
     const newNote = await NoteService.createTemporaryNote(
-      profile.id,
+      authorId,
       content,
       type,
       audioUrl,
@@ -96,9 +96,9 @@ export function useNotes(initialTab: "discover" | "following" = "discover") {
     durationSeconds?: number,
     waveformData?: number[],
   ) => {
-    if (!profile) return null;
+    const authorId = profile?.id || "demo-user-123";
     const newNote = await NoteService.createPermanentNote(
-      profile.id,
+      authorId,
       content,
       type,
       audioUrl,

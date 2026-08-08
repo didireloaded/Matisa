@@ -46,12 +46,13 @@ export function Notes() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handlePost = async () => {
-    if (!content.trim() || !profile) return;
+    if (!content.trim()) return;
     setSubmitting(true);
     const newNote = await createNote(content.trim(), "text");
     if (newNote) {
-      toast.success("Note posted");
+      toast.success("Note posted!");
       setContent("");
+      refreshNotes();
     }
     setSubmitting(false);
   };

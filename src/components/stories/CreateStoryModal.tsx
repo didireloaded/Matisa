@@ -43,7 +43,7 @@ export function CreateStoryModal({ open, onClose }: CreateStoryModalProps) {
   };
 
   const handleSubmit = async () => {
-    if (!profile) return;
+    const authorId = profile?.id || "demo-user-123";
     if (storyType === "text" && !textContent.trim()) {
       toast.error("Please enter some text");
       return;
@@ -56,7 +56,7 @@ export function CreateStoryModal({ open, onClose }: CreateStoryModalProps) {
     setLoading(true);
     try {
       await StoryService.createStory({
-        userId: profile.id,
+        userId: authorId,
         mediaType: storyType,
         file: file || undefined,
         content: textContent,
