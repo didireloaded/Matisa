@@ -272,76 +272,127 @@ export function Profile() {
         </div>
       </div>
 
-      {/* 3. Single Continuous Scroll Activity Stream */}
-      <div className="px-5 mt-5 space-y-5 flex-1">
-        {/* Availability Status Badge */}
-        <div className="flex items-center gap-2 p-3.5 rounded-[20px] bg-gradient-to-r from-emerald-500/10 to-[#24A3C7]/10 border border-emerald-500/30">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
-          <span className="text-xs font-semibold text-emerald-300">
-            Available for collaboration & voice rooms in Windhoek
-          </span>
-        </div>
-
-        {/* Upcoming Events Section */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
-              <Calendar size={13} className="text-[#FF9D2E]" /> Upcoming Events
-            </h3>
-          </div>
-          <div className="p-4 rounded-[22px] glass-panel-elevated border border-[#FF9D2E]/30 flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-bold text-white">Windhoek Street Food Festival</h4>
-              <p className="text-[11px] text-white/60">Sat, Aug 30 • Independence Ave</p>
-            </div>
-            <span className="px-3 py-1 rounded-full bg-[#FF9D2E]/15 text-[#FF9D2E] text-[10px] font-bold border border-[#FF9D2E]/30">
-              Going
-            </span>
-          </div>
-        </div>
-
-        {/* Recent Notes Stream */}
-        <div className="space-y-2.5">
-          <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
-            <FileText size={13} className="text-[#24A3C7]" /> Recent Notes & Voice Posts
-          </h3>
-          {userNotes.length > 0 ? (
-            userNotes.map((note) => (
-              <div
-                key={note.id}
-                className="glass-panel p-4 rounded-[22px] text-xs text-white leading-relaxed"
+      {/* 3. Filterable Profile Navigation Tabs (Posts, Voice, Events, Videos, Saved) */}
+      <div className="px-5 mt-5 border-b border-white/10">
+        <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar pb-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition shrink-0 ${
+                  isActive
+                    ? "bg-[#24A3C7] text-white shadow-md"
+                    : "glass-panel text-white/60 hover:text-white border border-white/10"
+                }`}
               >
-                {note.content}
-              </div>
-            ))
-          ) : (
-            <div className="glass-panel p-4 rounded-[22px] text-xs text-white/90 leading-relaxed border border-white/10">
-              "Swakopmund sunsets could cure anything honestly. Fog rolling over the dunes..."
-              <div className="mt-2 text-[10px] text-white/50 font-semibold">
-                Posted 2h ago • 12 replies
-              </div>
-            </div>
-          )}
+                <Icon size={14} />
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* Recent Rooms Hosted */}
-        <div className="space-y-2.5">
-          <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
-            <Mic size={13} className="text-[#6139F2]" /> Recent Voice Rooms
-          </h3>
-          <div className="p-4 rounded-[22px] glass-panel border border-[#6139F2]/30 flex items-center justify-between">
-            <div>
-              <h4 className="text-xs font-bold text-white">Afro-pop & Acoustic Jam Session</h4>
-              <p className="text-[11px] text-white/60">89 listeners • Hosted 2 days ago</p>
+      {/* 4. Tab Content Area */}
+      <div className="px-5 mt-4 space-y-4 flex-1">
+        {activeTab === "notes" && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 p-3.5 rounded-[20px] bg-gradient-to-r from-emerald-500/10 to-[#24A3C7]/10 border border-emerald-500/30">
+              <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)] shrink-0" />
+              <span className="text-xs font-semibold text-emerald-300">
+                Available for collaboration & voice rooms in Windhoek
+              </span>
             </div>
-            <button
-              onClick={() => navigate("/rooms")}
-              className="px-3 py-1 rounded-full bg-[#6139F2]/20 text-[#24A3C7] text-[10px] font-bold border border-[#6139F2]/40"
-            >
-              Replay
-            </button>
+
+            <div className="space-y-2.5">
+              <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+                <FileText size={13} className="text-[#24A3C7]" /> Posts & Notes
+              </h3>
+              {userNotes.length > 0 ? (
+                userNotes.map((note) => (
+                  <div
+                    key={note.id}
+                    className="glass-panel p-4 rounded-[22px] text-xs text-white leading-relaxed space-y-2 border border-white/10"
+                  >
+                    <p>{note.content}</p>
+                    <div className="text-[10px] text-white/50 font-semibold flex items-center justify-between">
+                      <span>Posted recently</span>
+                      <span>{note.likes_count || 0} likes</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="glass-panel p-4 rounded-[22px] text-xs text-white/90 leading-relaxed border border-white/10">
+                  "Swakopmund sunsets could cure anything honestly. Fog rolling over the dunes..."
+                  <div className="mt-2 text-[10px] text-white/50 font-semibold flex items-center justify-between">
+                    <span>Posted 2h ago</span>
+                    <span>12 replies</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
+        )}
+
+        {activeTab === "voice" && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+              <Mic size={13} className="text-[#6139F2]" /> Voice Notes & Audio Content
+            </h3>
+            <div className="p-4 rounded-[22px] glass-panel border border-[#6139F2]/30 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-white">Afro-pop & Acoustic Jam Session</h4>
+                <p className="text-[11px] text-white/60">89 listeners • Recorded Voice Room</p>
+              </div>
+              <button
+                onClick={() => navigate("/rooms")}
+                className="px-3 py-1 rounded-full bg-[#6139F2]/20 text-[#24A3C7] text-[10px] font-bold border border-[#6139F2]/40 active:scale-95 transition"
+              >
+                Listen
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "events" && (
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider flex items-center gap-1.5">
+              <Calendar size={13} className="text-[#FF9D2E]" /> Upcoming & Past Events
+            </h3>
+            <div className="p-4 rounded-[22px] glass-panel-elevated border border-[#FF9D2E]/30 flex items-center justify-between">
+              <div>
+                <h4 className="text-xs font-bold text-white">Windhoek Street Food Festival</h4>
+                <p className="text-[11px] text-white/60">Sat, Aug 30 • Independence Ave</p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-[#FF9D2E]/15 text-[#FF9D2E] text-[10px] font-bold border border-[#FF9D2E]/30">
+                Going
+              </span>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "videos" && (
+          <div className="space-y-3 text-center py-8 glass-panel rounded-[22px] border border-white/10">
+            <Video size={28} className="mx-auto text-white/40 mb-2" />
+            <h4 className="text-sm font-bold text-white">No Videos Uploaded Yet</h4>
+            <p className="text-xs text-white/50 max-w-xs mx-auto">
+              Short videos and highlights will appear here.
+            </p>
+          </div>
+        )}
+
+        {activeTab === "saved" && (
+          <div className="space-y-3 text-center py-8 glass-panel rounded-[22px] border border-white/10">
+            <Bookmark size={28} className="mx-auto text-[#24A3C7] mb-2" />
+            <h4 className="text-sm font-bold text-white">Saved Content</h4>
+            <p className="text-xs text-white/50 max-w-xs mx-auto">
+              Notes, events, and voice posts you bookmark will be stored here privately.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

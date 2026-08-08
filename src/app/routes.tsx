@@ -1,6 +1,8 @@
 import { lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 
+import ProtectedRoute from "@/components/common/ProtectedRoute";
+
 const MainLayout = lazy(() =>
   import("@/components/layout/MainLayout").then((m) => ({ default: m.MainLayout })),
 );
@@ -10,15 +12,10 @@ const Notes = lazy(() => import("@/pages/Notes").then((m) => ({ default: m.Notes
 const Events = lazy(() => import("@/pages/Events").then((m) => ({ default: m.Events })));
 const Activity = lazy(() => import("@/pages/Activity").then((m) => ({ default: m.Activity })));
 const Profile = lazy(() => import("@/pages/Profile").then((m) => ({ default: m.Profile })));
-const Messages = lazy(() => import("@/pages/Messages").then((m) => ({ default: m.Messages })));
 const Settings = lazy(() => import("@/pages/Settings").then((m) => ({ default: m.Settings })));
 const Auth = lazy(() => import("@/pages/Auth").then((m) => ({ default: m.Auth })));
 const Onboarding = lazy(() =>
   import("@/pages/Onboarding").then((m) => ({ default: m.Onboarding })),
-);
-const Chat = lazy(() => import("@/pages/Chat").then((m) => ({ default: m.Chat })));
-const KaraokeRoom = lazy(() =>
-  import("@/components/karaoke/KaraokeRoom").then((m) => ({ default: m.KaraokeRoom })),
 );
 const ExploreRooms = lazy(() => import("@/pages/ExploreRooms"));
 const ExploreEvents = lazy(() => import("@/pages/ExploreEvents"));
@@ -37,6 +34,9 @@ const NotFound = lazy(() =>
 );
 
 const Rooms = lazy(() => import("@/pages/Rooms").then((m) => ({ default: m.Rooms })));
+const KaraokeRoom = lazy(() =>
+  import("@/components/karaoke/KaraokeRoom").then((m) => ({ default: m.KaraokeRoom })),
+);
 
 export function AppRoutes() {
   return (
@@ -54,23 +54,93 @@ export function AppRoutes() {
         <Route path="/event/:eventId" element={<EventDetail />} />
         <Route path="/events/:id" element={<EventDetail />} />
         <Route path="/music" element={<Navigate to="/explore" replace />} />
-        <Route path="/activity" element={<Activity />} />
-        <Route path="/notifications" element={<Notifications />} />
+        <Route
+          path="/activity"
+          element={
+            <ProtectedRoute>
+              <Activity />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/profile" element={<Profile />} />
         <Route path="/profile/:username" element={<Profile />} />
-        <Route path="/inbox" element={<Inbox />} />
-        <Route path="/messages" element={<Inbox />} />
-        <Route path="/chat" element={<Inbox />} />
+        <Route
+          path="/inbox"
+          element={
+            <ProtectedRoute>
+              <Inbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/messages"
+          element={
+            <ProtectedRoute>
+              <Inbox />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute>
+              <Inbox />
+            </ProtectedRoute>
+          }
+        />
         <Route path="/rooms" element={<Rooms />} />
-        <Route path="/settings" element={<Settings />} />
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Settings />
+            </ProtectedRoute>
+          }
+        />
       </Route>
 
       <Route path="/auth" element={<Auth />} />
       <Route path="/onboarding" element={<Onboarding />} />
-      <Route path="/messages/new" element={<ChatRoom />} />
-      <Route path="/messages/:conversationId" element={<ChatRoom />} />
-      <Route path="/chat/:id" element={<ChatRoom />} />
-      <Route path="/chat/:conversationId" element={<ChatRoom />} />
+      <Route
+        path="/messages/new"
+        element={
+          <ProtectedRoute>
+            <ChatRoom />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/messages/:conversationId"
+        element={
+          <ProtectedRoute>
+            <ChatRoom />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat/:id"
+        element={
+          <ProtectedRoute>
+            <ChatRoom />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/chat/:conversationId"
+        element={
+          <ProtectedRoute>
+            <ChatRoom />
+          </ProtectedRoute>
+        }
+      />
       {/* Consolidated room routes — map all aliases cleanly */}
       <Route path="/rooms/:roomId" element={<KaraokeRoom />} />
       <Route path="/room/:roomId" element={<KaraokeRoom />} />
