@@ -53,28 +53,36 @@ export function MainLayout() {
 
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container) return;
 
     const handleScroll = () => {
-      const currentScrollTop = container.scrollTop;
+      const currentScrollTop = container ? container.scrollTop : window.scrollY;
       const difference = currentScrollTop - previousScrollTop.current;
 
       // Always restore the full dock near the top.
-      if (currentScrollTop < 24) {
+      if (currentScrollTop < 20) {
         setIsDockCompact(false);
-      } else if (difference > 6 && currentScrollTop > 72) {
-        // Browsing downward -> shrink dock
+      } else if (difference > 4 && currentScrollTop > 40) {
+        // Scrolling downward -> shrink & soften bottom dock to minimize distraction
         setIsDockCompact(true);
-      } else if (difference < -6) {
-        // Scrolling back toward top -> expand dock
+      } else if (difference < -4) {
+        // Scrolling upward -> expand bottom dock
         setIsDockCompact(false);
       }
 
       previousScrollTop.current = currentScrollTop;
     };
 
-    container.addEventListener("scroll", handleScroll, { passive: true });
-    return () => container.removeEventListener("scroll", handleScroll);
+    if (container) {
+      container.addEventListener("scroll", handleScroll, { passive: true });
+    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      if (container) {
+        container.removeEventListener("scroll", handleScroll);
+      }
+      window.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   return (

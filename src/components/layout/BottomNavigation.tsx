@@ -17,10 +17,10 @@ export function BottomNavigation({ onOpenCreate, compact = false }: BottomNaviga
 
   return (
     <nav
-      className={`fixed left-1/2 z-50 grid grid-cols-5 items-center -translate-x-1/2 overflow-hidden rounded-full border border-white/20 bg-[#06101D]/95 shadow-2xl backdrop-blur-2xl transition-all duration-300 ease-out ${
+      className={`fixed left-1/2 z-50 grid grid-cols-5 items-center -translate-x-1/2 overflow-hidden rounded-full border border-white/20 bg-[#06101D]/90 shadow-2xl backdrop-blur-2xl transition-all duration-300 ease-out hover:opacity-100 ${
         compact
-          ? "bottom-3 h-12 w-[76%] max-w-[310px] px-1.5 opacity-95"
-          : "bottom-4 h-14 w-[94%] max-w-[395px] px-2"
+          ? "bottom-3 h-10 w-[68%] max-w-[270px] px-1 opacity-75 translate-y-1 scale-95"
+          : "bottom-4 h-14 w-[94%] max-w-[395px] px-2 opacity-100 translate-y-0 scale-100"
       }`}
       style={{
         marginBottom: "env(safe-area-inset-bottom)",
